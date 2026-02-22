@@ -2,15 +2,95 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Events</title>
+    <title>Explore Events</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <h2>Available Events</h2>
 
-    <ul>
-        <li>Music Concert – Pune – ₹500</li>
-        <li>Tech Seminar – Mumbai – Free</li>
-        <li>Food Festival – Nagpur – ₹200</li>
-    </ul>
+<!-- NAVBAR (SAME AS HOME) -->
+<div class="navbar">
+    <div class="logo">EventSys</div>
+    <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="events.html">Events</a>
+        <a href="contact.html">Contact</a>
+        <a href="login.html">Login</a>
+        <a href="register.html">Register</a>
+    </div>
+</div>
+
+<!-- PAGE HEADER -->
+<section class="events-hero modern-events-hero">
+  <h1>Explore Events</h1>
+  <p>Find events and book your tickets easily</p>
+</section>
+
+<!-- EVENTS LIST -->
+<section class="events-wrapper">
+    <div class="events">
+
+        <div class="event-card">
+            <h3>🎵 Music Concert</h3>
+            <p>Pune</p>
+            <strong>₹500</strong>
+            <button onclick="bookEvent('Music Concert')">Book Ticket</button>
+        </div>
+
+        <div class="event-card">
+            <h3>💻 Tech Seminar</h3>
+            <p>Mumbai</p>
+            <strong>Free</strong>
+            <button onclick="bookEvent('Tech Seminar')">Book Ticket</button>
+        </div>
+
+        <div class="event-card">
+            <h3>🍔 Food Festival</h3>
+            <p>Nagpur</p>
+            <strong>₹200</strong>
+            <button onclick="bookEvent('Food Festival')">Book Ticket</button>
+        </div>
+
+        <div class="event-card">
+            <h3>🎭 Drama Night</h3>
+            <p>Pune</p>
+            <strong>₹300</strong>
+            <button onclick="bookEvent('Drama Night')">Book Ticket</button>
+        </div>
+
+        <div class="event-card">
+            <h3>🎤 Stand-up Comedy</h3>
+            <p>Bangalore</p>
+            <strong>₹400</strong>
+            <button onclick="bookEvent('Stand-up Comedy')">Book Ticket</button>
+        </div>
+
+        <div class="event-card">
+            <h3>🎮 Gaming Expo</h3>
+            <p>Pune</p>
+            <strong>₹350</strong>
+            <button onclick="bookEvent('Gaming Expo')">Book Ticket</button>
+        </div>
+
+        <!-- COPY THESE CARDS TO MAKE 20–30 EVENTS -->
+
+    </div>
+</section>
+
+<!-- EVENTS CONTENT ABOVE -->
+
+<footer>
+  © 2026 Event Management System
+</footer>
+
+<!-- BOOKING MODAL (MUST BE HERE) -->
+<div class="modal" id="bookingModal">
+  <div class="modal-content">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script src="js/script.js"></script>
 </body>
 </html>
