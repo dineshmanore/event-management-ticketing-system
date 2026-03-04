@@ -1,46 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Register | Event Management System</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create account | ShowNest</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-<!-- NAVBAR -->
-<div class="navbar">
-    <div class="logo">EventSys</div>
-    <div class="nav-links">
-        <a href="index.html">Home</a>
-        <a href="events.html">Events</a>
-        <a href="contact.html">Contact</a>
-        <a href="login.html">Login</a>
-    </div>
+<div class="auth-shell">
+  <button class="back-chip" onclick="goBack('index.html')">← Back</button>
+  <div class="auth-card bms-auth">
+    <h2>Create account</h2>
+    <p>Unlock faster bookings and personalized recommendations.</p>
+    <form>
+      <input type="text" placeholder="Full Name" required>
+      <input type="email" placeholder="Email" required>
+      <input type="password" placeholder="Password" required>
+      <input type="password" placeholder="Confirm Password" required>
+      <button type="submit">Create account</button>
+    </form>
+    <span>Already a member? <a href="login.html">Sign in</a></span>
+  </div>
 </div>
-
-<!-- REGISTER SECTION -->
-<section class="auth-section">
-    <div class="auth-card">
-        <h2>Create Account</h2>
-        <p>Register to book events</p>
-
-        <form>
-            <input type="text" placeholder="Full Name" required>
-            <input type="email" placeholder="Email address" required>
-            <input type="password" placeholder="Password" required>
-            <input type="password" placeholder="Confirm Password" required>
-
-            <button type="submit">Register</button>
-        </form>
-
-        <span>
-            Already have an account?
-            <a href="login.html">Login</a>
-        </span>
-    </div>
-</section>
-
+<script src="js/script.js"></script>
 </body>
 </html>
