@@ -1,44 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Login | Event Management System</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in | ShowNest</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-<!-- NAVBAR -->
-<div class="navbar">
-    <div class="logo">EventSys</div>
-    <div class="nav-links">
-        <a href="index.html">Home</a>
-        <a href="events.html">Events</a>
-        <a href="contact.html">Contact</a>
-        <a href="register.html">Register</a>
-    </div>
+<div class="auth-shell">
+  <button class="back-chip" onclick="goBack('index.html')">← Back</button>
+  <div class="auth-card bms-auth">
+    <h2>Get Started</h2>
+    <p>Use your mobile number or email to continue</p>
+    <form onsubmit="event.preventDefault(); loginUser();">
+      <input type="email" placeholder="Email" required>
+      <input type="password" placeholder="Password" required>
+      <button type="submit">Continue</button>
+    </form>
+    <span>New to BookMyShow style? <a href="register.html">Create account</a></span>
+  </div>
 </div>
-
-<!-- LOGIN SECTION -->
-<section class="auth-section">
-    <div class="auth-card">
-        <h2>Welcome Back</h2>
-        <p>Please login to continue</p>
-
-        <form>
-            <input type="email" placeholder="Email address" required>
-            <input type="password" placeholder="Password" required>
-
-            <button type="submit">Login</button>
-        </form>
-
-        <span>
-            Don’t have an account?
-            <a href="register.html">Register</a>
-        </span>
-    </div>
-</section>
-
+<script src="js/script.js"></script>
 </body>
 </html>

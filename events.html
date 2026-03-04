@@ -1,89 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Explore Events</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movies & Events | ShowNest</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-<!-- NAVBAR (SAME AS HOME) -->
-<div class="navbar">
-    <div class="logo">EventSys</div>
-    <div class="nav-links">
-        <a href="index.html">Home</a>
-        <a href="events.html">Events</a>
-        <a href="contact.html">Contact</a>
-        <a href="login.html">Login</a>
-        <a href="register.html">Register</a>
+<header>
+  <div class="top-nav">
+    <button class="back-chip" onclick="goBack('index.html')">← Back</button>
+    <div class="logo">book<span>my</span>show</div>
+    <div class="top-search">
+      <input id="searchInput" type="text" placeholder="Search for Movies, Events, Plays, Sports and Activities">
     </div>
-</div>
+    <div class="top-right">
+      <span class="location">Pune</span>
+      <a href="login.html" class="sign-btn">Sign in</a>
+    </div>
+  </div>
+</header>
 
-<!-- PAGE HEADER -->
-<section class="events-hero modern-events-hero">
-  <h1>Explore Events</h1>
-  <p>Find events and book your tickets easily</p>
+<section class="content-block">
+  <div class="section-heading">
+    <h2>Now Showing</h2>
+  </div>
+
+  <div class="events">
+    <article class="event-card">
+      <span class="event-type">Movie</span>
+      <h3>Kalki 2898 AD</h3>
+      <p>Phoenix Mall • Hindi, Telugu</p>
+      <strong>₹220 onwards</strong>
+      <button onclick="bookEvent('Kalki 2898 AD')">Book Tickets</button>
+    </article>
+
+    <article class="event-card">
+      <span class="event-type">Movie</span>
+      <h3>Deadpool & Wolverine</h3>
+      <p>PVR ICON • English</p>
+      <strong>₹350 onwards</strong>
+      <button onclick="bookEvent('Deadpool & Wolverine')">Book Tickets</button>
+    </article>
+
+    <article class="event-card">
+      <span class="event-type">Concert</span>
+      <h3>Arijit Singh Live</h3>
+      <p>Mahalaxmi Lawns • 7:00 PM</p>
+      <strong>₹1499 onwards</strong>
+      <button onclick="bookEvent('Arijit Singh Live')">Book Tickets</button>
+    </article>
+
+    <article class="event-card">
+      <span class="event-type">Sports</span>
+      <h3>India vs Australia T20</h3>
+      <p>Wankhede Stadium • 6:30 PM</p>
+      <strong>₹899 onwards</strong>
+      <button onclick="bookEvent('India vs Australia T20')">Book Tickets</button>
+    </article>
+
+    <article class="event-card">
+      <span class="event-type">Stand-up</span>
+      <h3>Zakir Khan Live</h3>
+      <p>Balewadi Stadium • 8:00 PM</p>
+      <strong>₹799 onwards</strong>
+      <button onclick="bookEvent('Zakir Khan Live')">Book Tickets</button>
+    </article>
+
+    <article class="event-card">
+      <span class="event-type">Play</span>
+      <h3>Hamlet by Theatre Co.</h3>
+      <p>City Theatre • 6:00 PM</p>
+      <strong>₹499 onwards</strong>
+      <button onclick="bookEvent('Hamlet by Theatre Co.')">Book Tickets</button>
+    </article>
+  </div>
 </section>
 
-<!-- EVENTS LIST -->
-<section class="events-wrapper">
-    <div class="events">
+<footer>© 2026 BookMyShow-style demo by ShowNest</footer>
 
-        <div class="event-card">
-            <h3>🎵 Music Concert</h3>
-            <p>Pune</p>
-            <strong>₹500</strong>
-            <button onclick="bookEvent('Music Concert')">Book Ticket</button>
-        </div>
-
-        <div class="event-card">
-            <h3>💻 Tech Seminar</h3>
-            <p>Mumbai</p>
-            <strong>Free</strong>
-            <button onclick="bookEvent('Tech Seminar')">Book Ticket</button>
-        </div>
-
-        <div class="event-card">
-            <h3>🍔 Food Festival</h3>
-            <p>Nagpur</p>
-            <strong>₹200</strong>
-            <button onclick="bookEvent('Food Festival')">Book Ticket</button>
-        </div>
-
-        <div class="event-card">
-            <h3>🎭 Drama Night</h3>
-            <p>Pune</p>
-            <strong>₹300</strong>
-            <button onclick="bookEvent('Drama Night')">Book Ticket</button>
-        </div>
-
-        <div class="event-card">
-            <h3>🎤 Stand-up Comedy</h3>
-            <p>Bangalore</p>
-            <strong>₹400</strong>
-            <button onclick="bookEvent('Stand-up Comedy')">Book Ticket</button>
-        </div>
-
-        <div class="event-card">
-            <h3>🎮 Gaming Expo</h3>
-            <p>Pune</p>
-            <strong>₹350</strong>
-            <button onclick="bookEvent('Gaming Expo')">Book Ticket</button>
-        </div>
-
-        <!-- COPY THESE CARDS TO MAKE 20–30 EVENTS -->
-
-    </div>
-</section>
-
-<!-- EVENTS CONTENT ABOVE -->
-
-<footer>
-  © 2026 Event Management System
-</footer>
-
-<!-- BOOKING MODAL (MUST BE HERE) -->
 <div class="modal" id="bookingModal">
   <div class="modal-content">
     <h3 id="modalTitle"></h3>

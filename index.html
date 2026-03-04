@@ -1,63 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Event Management System</title>
-
-    <!-- Modern font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookMyShow Style | ShowNest</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-<!-- NAVBAR -->
-<div class="navbar">
-    <div class="logo">EventSys</div>
-    <div class="nav-links">
-        <a href="index.html">Home</a>
-        <a href="events.html">Events</a>
-        <a href="contact.html">Contact</a>
-        <a href="login.html">Login</a>
-        <a href="register.html">Register</a>
+<header>
+  <div class="top-nav">
+    <div class="logo">book<span>my</span>show</div>
+    <div class="top-search">
+      <input type="text" placeholder="Search for Movies, Events, Plays, Sports and Activities">
     </div>
-</div>
-<!-- HERO SECTION -->
-<section class="hero-light">
-    <h1>Event Management<br>& Ticketing Platform</h1>
-    <p>Discover, explore, and book events with a modern experience</p>
-    <a href="events.html" class="primary-btn">Explore Events</a>
+    <div class="top-right">
+      <span class="location">Pune</span>
+      <a href="login.html" class="sign-btn">Sign in</a>
+    </div>
+  </div>
+  <nav class="sub-nav">
+    <div class="left-links">
+      <a href="events.html">Movies</a>
+      <a href="events.html">Stream</a>
+      <a href="events.html">Events</a>
+      <a href="events.html">Plays</a>
+      <a href="events.html">Sports</a>
+      <a href="events.html">Activities</a>
+    </div>
+    <div class="right-links">
+      <a href="register.html">ListYourShow</a>
+      <a href="contact.html">Help</a>
+    </div>
+  </nav>
+</header>
+
+<section class="hero-banner">
+  <div class="hero-content">
+    <p class="hero-tag">Recommended Movies</p>
+    <h1>Book tickets for the latest movies, concerts and events.</h1>
+    <a href="events.html" class="primary-btn">Book Now</a>
+  </div>
 </section>
 
-<!-- FEATURED EVENTS (PREVIEW ONLY) -->
-<section class="preview-section">
-    <h2>Featured Events</h2>
+<section class="content-block">
+  <div class="section-heading">
+    <h2>Recommended for You</h2>
+    <a href="events.html">See All ></a>
+  </div>
+  <div class="events">
+    <article class="event-card movie-card">
+      <div class="poster p1"></div>
+      <h3>Pushpa 2</h3>
+      <p>Action/Drama</p>
+      <strong>UA16+</strong>
+    </article>
 
-    <div class="events">
-        <div class="event-card">
-            <h3>🎵 Music Concert</h3>
-            <p>Pune</p>
-            <strong>₹500</strong>
-        </div>
+    <article class="event-card movie-card">
+      <div class="poster p2"></div>
+      <h3>Kalki 2898 AD</h3>
+      <p>Sci-Fi/Action</p>
+      <strong>UA13+</strong>
+    </article>
 
-        <div class="event-card">
-            <h3>💻 Tech Seminar</h3>
-            <p>Mumbai</p>
-            <strong>Free</strong>
-        </div>
+    <article class="event-card movie-card">
+      <div class="poster p3"></div>
+      <h3>Deadpool & Wolverine</h3>
+      <p>Action/Comedy</p>
+      <strong>A</strong>
+    </article>
 
-        <div class="event-card">
-            <h3>🍔 Food Festival</h3>
-            <p>Nagpur</p>
-            <strong>₹200</strong>
-        </div>
-    </div>
+    <article class="event-card movie-card">
+      <div class="poster p4"></div>
+      <h3>Inside Out 2</h3>
+      <p>Animation/Family</p>
+      <strong>U</strong>
+    </article>
+  </div>
 </section>
 
-<!-- FOOTER -->
-<footer>
-    © 2026 Event Management System
-</footer>
-
+<footer>© 2026 BookMyShow-style demo by ShowNest</footer>
 </body>
 </html>
