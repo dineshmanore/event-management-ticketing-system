@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Seats — ShowTime</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/seats.css">
+</head>
+<body class="seats-page">
+
+<header id="header"></header>
+
+<div class="seats-header">
+  <div>
+    <h2 id="seatsMovieTitle">Loading...</h2>
+    <p><i class="fa fa-map-marker-alt" style="color:#cc0c39;margin-right:6px"></i>PVR Cinemas, Baner Multiplex</p>
+  </div>
+</div>
+
+<!-- DATE STRIP -->
+<div class="date-time-strip" id="dateStrip"></div>
+
+<div class="seats-body">
+
+  <!-- SCREEN -->
+  <div class="screen-wrap">
+    <div class="screen-curve"></div>
+    <div class="screen-label">All eyes this way please!</div>
+  </div>
+
+  <!-- RECLINER TIER -->
+  <div class="seat-tier">
+    <div class="tier-header">
+      <span class="tier-name">RECLINER</span>
+      <span class="tier-price">₹500</span>
+    </div>
+    <div class="seat-grid" id="reclinerGrid"></div>
+  </div>
+
+  <!-- GOLD TIER -->
+  <div class="seat-tier">
+    <div class="tier-header">
+      <span class="tier-name">GOLD</span>
+      <span class="tier-price">₹350</span>
+    </div>
+    <div class="seat-grid" id="goldGrid"></div>
+  </div>
+
+  <!-- SILVER TIER -->
+  <div class="seat-tier">
+    <div class="tier-header">
+      <span class="tier-name">SILVER</span>
+      <span class="tier-price">₹200</span>
+    </div>
+    <div class="seat-grid" id="silverGrid"></div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-box available"></div><span>Available</span></div>
+    <div class="legend-item"><div class="legend-box selected"></div><span>Selected</span></div>
+    <div class="legend-item"><div class="legend-box booked"></div><span>Booked</span></div>
+  </div>
+
+</div>
+
+<!-- STICKY BOTTOM BAR -->
+<div class="sticky-bar hidden" id="stickyBar">
+  <div class="sticky-info">
+    <div class="tickets" id="stickyTickets">0 Tickets</div>
+    <div class="price-total" id="stickyPrice">₹0</div>
+  </div>
+  <button class="pay-btn" onclick="confirmSeats()">Pay Now</button>
+</div>
+
+<footer id="footer"></footer>
+
+<script src="components/header.js"></script>
+<script src="components/footer.js"></script>
+<script src="js/seats.js"></script>
+</body>
+</html>

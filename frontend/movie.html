@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie — ShowTime</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/cards.css">
+  <style>
+    .movie-banner-wrap {
+      position: relative;
+      height: 420px;
+      background: #000;
+      overflow: hidden;
+    }
+    .movie-banner-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center top;
+      filter: blur(1px) brightness(0.4);
+      transform: scale(1.05);
+    }
+    .movie-banner-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: flex-end;
+      height: 100%;
+      padding: 0 40px 36px;
+      gap: 30px;
+    }
+    .movie-poster-main {
+      width: 160px;
+      height: 230px;
+      object-fit: cover;
+      border-radius: 12px;
+      flex-shrink: 0;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+    .movie-main-info { color: white; flex: 1; }
+    .movie-main-info h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; line-height: 1.2; }
+    .movie-rating-row { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .rating-big { font-size: 22px; font-weight: 700; color: #1dc26b; }
+    .rating-big i { color: #f84464; margin-right: 4px; }
+    .votes-text { font-size: 13px; color: rgba(255,255,255,0.7); }
+    .movie-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .movie-tag {
+      border: 1px solid rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.9);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .book-tickets-btn {
+      background: #cc0c39;
+      color: white;
+      border: none;
+      padding: 14px 36px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      transition: background 0.2s;
+    }
+    .book-tickets-btn:hover { background: #a50930; }
+    .movie-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid #e0e0e0;
+      margin: 0 40px;
+      padding-top: 10px;
+      background: white;
+    }
+    .movie-tab {
+      padding: 14px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      color: #888;
+      transition: all 0.2s;
+    }
+    .movie-tab.active { color: #cc0c39; border-bottom-color: #cc0c39; }
+    .tab-content { display: none; padding: 30px 40px; }
+    .tab-content.active { display: block; }
+    .about-section h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: #2d2d2d; }
+    .about-section p { font-size: 14px; line-height: 1.8; color: #555; }
+    .cast-grid { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; }
+    .cast-card { flex-shrink: 0; text-align: center; width: 100px; }
+    .cast-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 8px;
+      border: 3px solid #e0e0e0;
+    }
+    .cast-name { font-size: 13px; font-weight: 600; }
+    .cast-role { font-size: 11px; color: #888; }
+    .similar-section { padding: 0 40px 40px; }
+    .similar-section h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+<header id="header"></header>
+
+<div class="movie-banner-wrap" id="movieBanner">
+  <div class="movie-banner-bg" id="bannerBg"></div>
+  <div class="movie-banner-content">
+    <img id="mainPoster" class="movie-poster-main" src="" alt="Movie Poster">
+    <div class="movie-main-info">
+      <h1 id="movieTitle">Loading...</h1>
+      <div class="movie-rating-row">
+        <span class="rating-big"><i class="fa fa-star"></i><span id="movieRating">0</span>/10</span>
+        <span class="votes-text"><span id="movieVotes">0</span> Votes</span>
+      </div>
+      <div class="movie-tags" id="movieTags"></div>
+      <button class="book-tickets-btn" onclick="goToSeats()">Book Tickets</button>
+    </div>
+  </div>
+</div>
+
+<div style="background:white;">
+  <div class="movie-tabs">
+    <div class="movie-tab active" onclick="switchTab(this, 'about')">About</div>
+    <div class="movie-tab" onclick="switchTab(this, 'cast')">Cast & Crew</div>
+  </div>
+
+  <div id="about" class="tab-content active">
+    <div class="about-section">
+      <h3>About the Movie</h3>
+      <p id="movieDesc">Loading description...</p>
+    </div>
+  </div>
+
+  <div id="cast" class="tab-content">
+    <div class="cast-grid" id="castGrid">
+      
+      
+  </div>
+</div>
+
+<div class="similar-section">
+  <h2>You Might Also Like</h2>
+  <div class="movie-row" id="similarMovies"></div>
+</div>
+
+<footer id="footer"></footer>
+
+<script src="components/header.js"></script>
+<script src="components/movieCard.js"></script>
+<script src="components/footer.js"></script>
+<script>
+const API = 'http://localhost:5000/api';
+
+const params = new URLSearchParams(window.location.search);
+const movieid = params.get('id');
+
+function formatVotes(votes) {
+  if (votes >= 1000000) return Math.round(votes / 1000000) + 'M+';
+  if (votes >= 1000) return Math.round(votes / 1000) + 'K+';
+  return votes;
+}
+
+async function loadMovie() {
+  try {
+    const res = await fetch(`${API}/movies/${movieid}`);
+    const movie = await res.json();
+
+    if (!movie || !movie.id) {
+      document.body.innerHTML = "<h1>Movie not found</h1>";
+      return;
+    }
+     
+    // ✅ TITLE
+    document.getElementById('movieTitle').innerText = movie.title;
+    
+    // CAST RENDER
+   const castContainer = document.getElementById('castGrid');
+
+    castContainer.innerHTML = movie.cast.map(actor => `
+     <div class="cast-card">
+     <img class="cast-avatar" src="${actor.image}" />
+      <div class="cast-name">${actor.name}</div>
+      <div class="cast-role">${actor.role}</div>
+     </div>
+    `).join('');
+
+    // ✅ RATING
+    document.getElementById('movieRating').innerText = movie.rating;
+
+    // ✅ VOTES
+    document.getElementById('movieVotes').innerText = formatVotes (movie.votes);
+
+    // ✅ DESCRIPTION
+    document.getElementById('movieDesc').innerText = movie.description;
+
+    // ✅ POSTER
+    document.getElementById('mainPoster').src = movie.poster;
+
+    // ✅ BANNER
+    document.getElementById('bannerBg').style.backgroundImage = `url(${movie.banner})`;
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+function switchTab(el, tabId) {
+  document.querySelectorAll('.movie-tab').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+  el.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+function goToSeats() {
+  window.location.href = `seats.html?id=${movieid}`;
+}
+
+loadMovie();
+loadSimilarMovies();
+
+async function loadSimilarMovies() {
+  try {
+    const res = await fetch(`${API}/movies`);
+    const movies = await res.json();
+
+    const container = document.getElementById('similarMovies');
+
+    container.innerHTML = movies
+      .filter(m => m.id != movieid)
+      .slice(0, 4)
+      .map(movie => createMovieCard(movie))
+      .join('');
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+</script>
+</body>
+</html>

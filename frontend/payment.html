@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment — ShowTime</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/style.css">
+  <style>
+    .payment-wrap { max-width: 1000px; margin: 30px auto; padding: 0 20px 60px; display: grid; grid-template-columns: 1fr 1.4fr; gap: 24px; }
+    .order-card, .pay-card { background: white; border-radius: 12px; border: 1px solid #e0e0e0; padding: 24px; }
+    .card-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
+    .order-movie { display: flex; gap: 16px; margin-bottom: 20px; }
+    .order-poster { width: 80px; height: 110px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+    .order-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .order-info p { font-size: 13px; color: #666; margin-bottom: 4px; }
+    .price-row { display: flex; justify-content: space-between; font-size: 14px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+    .price-row:last-child { border-bottom: none; }
+    .price-row.total { font-weight: 700; font-size: 16px; color: #cc0c39; margin-top: 8px; }
+    .coupon-row { display: flex; gap: 10px; margin-top: 16px; }
+    .coupon-input { flex: 1; padding: 10px 14px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; }
+    .coupon-input:focus { border-color: #cc0c39; }
+    .apply-btn { background: #fff; color: #cc0c39; border: 1.5px solid #cc0c39; padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; }
+    .pay-option { border: 1.5px solid #e0e0e0; border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+    .pay-option-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; cursor: pointer; font-size: 15px; font-weight: 600; transition: background 0.15s; }
+    .pay-option-header:hover { background: #fafafa; }
+    .pay-option-header i { color: #cc0c39; font-size: 18px; width: 24px; }
+    .pay-option-body { padding: 0 18px 16px; display: none; border-top: 1px solid #f0f0f0; }
+    .pay-option-body.open { display: block; }
+    .pay-input { width: 100%; padding: 11px 14px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; margin: 12px 0 10px; font-family: 'Poppins', sans-serif; outline: none; }
+    .pay-input:focus { border-color: #cc0c39; }
+    .pay-now-btn { width: 100%; padding: 14px; background: #cc0c39; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: 'Poppins', sans-serif; transition: background 0.2s; }
+    .pay-now-btn:hover { background: #a50930; }
+    .wallet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .wallet-btn { padding: 12px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; background: white; font-family: 'Poppins', sans-serif; transition: all 0.15s; }
+    .wallet-btn:hover { border-color: #cc0c39; color: #cc0c39; }
+    .secure-note { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888; margin-top: 16px; justify-content: center; }
+    .secure-note i { color: #1dc26b; }
+    @media (max-width: 768px) { .payment-wrap { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<header id="header"></header>
+
+<div class="page-header">
+  <h1>Complete Booking</h1>
+  <p>Secure payment powered by Razorpay</p>
+</div>
+
+<div class="payment-wrap">
+
+  <!-- ORDER SUMMARY -->
+  <div class="order-card">
+    <div class="card-title"><i class="fa fa-ticket-alt" style="color:#cc0c39;margin-right:8px"></i>Order Summary</div>
+    <div class="order-movie">
+      <img class="order-poster" id="orderPoster" src="https://via.placeholder.com/80x110/cc0c39/white?text=Movie" alt="">
+      <div class="order-info">
+        <h3 id="orderTitle">Loading...</h3>
+        <p><i class="fa fa-map-marker-alt" style="margin-right:5px;color:#cc0c39"></i>PVR Cinemas, Baner</p>
+        <p><i class="fa fa-calendar" style="margin-right:5px;color:#cc0c39"></i><span id="orderDate">Today</span></p>
+        <p><i class="fa fa-clock" style="margin-right:5px;color:#cc0c39"></i>7:30 PM</p>
+      </div>
+    </div>
+
+    <div class="price-row">
+      <span>Seats: <span id="seatList" style="color:#cc0c39;font-weight:600">-</span></span>
+    </div>
+    <div class="price-row">
+      <span>Ticket Price</span>
+      <span id="ticketPrice">₹0</span>
+    </div>
+    <div class="price-row">
+      <span>Convenience Fee</span>
+      <span id="convFee">₹0</span>
+    </div>
+    <div class="price-row total">
+      <span>Total Amount</span>
+      <span id="totalAmt">₹0</span>
+    </div>
+
+    <div class="coupon-row">
+      <input class="coupon-input" placeholder="Enter coupon code" id="couponInput">
+      <button class="apply-btn" onclick="applyCoupon()">Apply</button>
+    </div>
+  </div>
+
+  <!-- PAYMENT OPTIONS -->
+  <div class="pay-card">
+    <div class="card-title"><i class="fa fa-lock" style="color:#1dc26b;margin-right:8px"></i>Choose Payment Method</div>
+
+    <!-- UPI -->
+    <div class="pay-option">
+      <div class="pay-option-header" onclick="togglePay(this)">
+        <i class="fa fa-mobile-alt"></i>UPI
+        <i class="fa fa-chevron-down" style="margin-left:auto;font-size:12px;color:#888"></i>
+      </div>
+      <div class="pay-option-body open">
+        <input class="pay-input" type="text" placeholder="Enter UPI ID (e.g. name@upi)">
+        <button class="pay-now-btn" onclick="pay()">Pay via UPI</button>
+      </div>
+    </div>
+
+    <!-- CARDS -->
+    <div class="pay-option">
+      <div class="pay-option-header" onclick="togglePay(this)">
+        <i class="fa fa-credit-card"></i>Debit / Credit Card
+        <i class="fa fa-chevron-down" style="margin-left:auto;font-size:12px;color:#888"></i>
+      </div>
+      <div class="pay-option-body">
+        <input class="pay-input" type="text" placeholder="Card Number">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <input class="pay-input" style="margin:0" type="text" placeholder="MM / YY">
+          <input class="pay-input" style="margin:0" type="text" placeholder="CVV">
+        </div>
+        <button class="pay-now-btn" style="margin-top:12px" onclick="pay()">Pay with Card</button>
+      </div>
+    </div>
+
+    <!-- NET BANKING -->
+    <div class="pay-option">
+      <div class="pay-option-header" onclick="togglePay(this)">
+        <i class="fa fa-university"></i>Net Banking
+        <i class="fa fa-chevron-down" style="margin-left:auto;font-size:12px;color:#888"></i>
+      </div>
+      <div class="pay-option-body">
+        <select class="pay-input" style="margin-top:12px">
+          <option>Select your bank</option>
+          <option>SBI</option><option>HDFC</option><option>ICICI</option>
+          <option>Axis</option><option>Kotak</option><option>PNB</option>
+        </select>
+        <button class="pay-now-btn" onclick="pay()">Pay via Net Banking</button>
+      </div>
+    </div>
+
+    <!-- WALLETS -->
+    <div class="pay-option">
+      <div class="pay-option-header" onclick="togglePay(this)">
+        <i class="fa fa-wallet"></i>Wallets
+        <i class="fa fa-chevron-down" style="margin-left:auto;font-size:12px;color:#888"></i>
+      </div>
+      <div class="pay-option-body">
+        <div class="wallet-grid">
+          <button class="wallet-btn" onclick="pay()">Paytm</button>
+          <button class="wallet-btn" onclick="pay()">PhonePe</button>
+          <button class="wallet-btn" onclick="pay()">Amazon Pay</button>
+          <button class="wallet-btn" onclick="pay()">Mobikwik</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="secure-note">
+      <i class="fa fa-shield-alt"></i>
+      100% Secure — SSL Encrypted Payments
+    </div>
+  </div>
+
+</div>
+
+<footer id="footer"></footer>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="components/header.js"></script>
+<script src="components/footer.js"></script>
+<script src="js/payment.js"></script>
+<script>
+const API = 'http://localhost:5000/api';
+const seats = JSON.parse(localStorage.getItem('selectedSeats') || '[]');
+const movieId = localStorage.getItem('movieId');
+const totalPrice = parseInt(localStorage.getItem('totalPrice') || '0');
+const convFee = Math.round(totalPrice * 0.1);
+
+document.getElementById('seatList').innerText = seats.join(', ') || '-';
+document.getElementById('ticketPrice').innerText = `₹${totalPrice}`;
+document.getElementById('convFee').innerText = `₹${convFee}`;
+document.getElementById('totalAmt').innerText = `₹${totalPrice + convFee}`;
+
+const today = new Date();
+document.getElementById('orderDate').innerText =
+  today.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+
+async function loadMovieInfo() {
+  try {
+    const res = await fetch(`${API}/movies`);
+    const movies = await res.json();
+    const movie = movies.find(m => m.id == movieId);
+    if (movie) {
+      document.getElementById('orderTitle').innerText = movie.title;
+      document.getElementById('orderPoster').src = movie.poster;
+    }
+  } catch(e) {}
+}
+
+function togglePay(header) {
+  const body = header.nextElementSibling;
+  const allBodies = document.querySelectorAll('.pay-option-body');
+  allBodies.forEach(b => { if (b !== body) b.classList.remove('open'); });
+  body.classList.toggle('open');
+}
+
+function applyCoupon() {
+  const code = document.getElementById('couponInput').value.trim().toUpperCase();
+  if (code === 'SHOW20') alert('Coupon applied! ₹20 off (simulated).');
+  else alert('Invalid coupon code.');
+}
+
+loadMovieInfo();
+</script>
+</body>
+</html>

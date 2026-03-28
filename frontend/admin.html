@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin - Add Movie</title>
+</head>
+<body>
+
+<h2>Add Movie</h2>
+
+<input id="title" placeholder="Title"><br>
+<input id="genre" placeholder="Genre"><br>
+<input id="language" placeholder="Language"><br>
+<input id="rating" placeholder="Rating"><br>
+<input id="votes" placeholder="Votes"><br>
+<input id="poster" placeholder="Poster URL"><br>
+<input id="banner" placeholder="Banner URL"><br>
+<input id="description" placeholder="Description"><br>
+<input id="category" placeholder="Category"><br>
+
+<button onclick="addMovie()">Add Movie</button>
+
+<script>
+function addMovie() {
+  fetch('http://localhost:5000/api/movies', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      title: document.getElementById('title').value,
+      genre: document.getElementById('genre').value,
+      language: document.getElementById('language').value,
+      rating: document.getElementById('rating').value,
+      votes: document.getElementById('votes').value,
+      poster: document.getElementById('poster').value,
+      banner: document.getElementById('banner').value,
+      description: document.getElementById('description').value,
+      category: document.getElementById('category').value
+    })
+  })
+  .then(res => res.json())
+ .then(data => {
+  alert("Movie Added");
+  location.reload(); // 🔥 THIS WAS MISSING
+});
+}
+</script>
+
+</body>
+</html>

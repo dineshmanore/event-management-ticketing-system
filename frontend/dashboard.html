@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Bookings — ShowTime</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/style.css">
+  <style>
+    .bookings-wrap { max-width: 800px; margin: 0 auto; padding: 30px 20px 60px; }
+    .booking-card { display: flex; gap: 20px; background: white; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .booking-poster { width: 90px; height: 130px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+    .booking-info { flex: 1; }
+    .booking-info h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .booking-info .info-row { font-size: 13px; color: #666; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+    .booking-info .info-row i { color: #cc0c39; width: 14px; }
+    .booking-price { font-size: 18px; font-weight: 700; color: #cc0c39; margin-top: 10px; }
+    .booking-actions { display: flex; gap: 10px; margin-top: 14px; }
+    .ticket-btn { background: #cc0c39; color: white; border: none; padding: 9px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; }
+    .cancel-btn { background: white; color: #888; border: 1.5px solid #ddd; padding: 9px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; }
+    .booking-time { font-size: 11px; color: #aaa; margin-top: 8px; }
+    .seats-badge { display: inline-block; background: #f0f0f0; color: #555; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<header id="header"></header>
+
+<div class="page-header">
+  <h1><i class="fa fa-ticket-alt" style="color:#cc0c39;margin-right:10px"></i>My Bookings</h1>
+  <p id="bookingSubtitle">Loading your bookings...</p>
+</div>
+
+<div class="bookings-wrap">
+  <div id="bookingsList"></div>
+</div>
+
+<footer id="footer"></footer>
+
+<script src="components/header.js"></script>
+<script src="components/footer.js"></script>
+<script>
+const API = 'http://localhost:5000/api';
+
+async function loadBookings() {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    document.getElementById('bookingsList').innerHTML = `
+      <div class="empty-state">
+        <i class="fa fa-user-lock"></i>
+        <h3>Please Sign In</h3>
+        <p>You need to be signed in to view your bookings.</p>
+        <a href="login.html">Sign In</a>
+      </div>`;
+    document.getElementById('bookingSubtitle').innerText = '';
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/bookings/my-bookings`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    const container = document.getElementById('bookingsList');
+
+    if (!data || data.length === 0) {
+      document.getElementById('bookingSubtitle').innerText = 'No bookings yet';
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fa fa-film"></i>
+          <h3>No bookings yet</h3>
+          <p>Looks like you haven't booked any tickets. Let's fix that!</p>
+          <a href="index.html">Browse Movies</a>
+        </div>`;
+      return;
+    }
+
+    document.getElementById('bookingSubtitle').innerText = `${data.length} booking${data.length > 1 ? 's' : ''}`;
+
+    container.innerHTML = data.map(b => `
+      <div class="booking-card">
+        <img class="booking-poster"
+             src="${b.poster || 'https://via.placeholder.com/90x130/cc0c39/white?text=Movie'}"
+             alt="${b.title || 'Movie'}"
+             onerror="this.src='https://via.placeholder.com/90x130/cc0c39/white?text=Movie'">
+        <div class="booking-info">
+          <h3>${b.title || 'Movie #' + b.movie_id}</h3>
+          <div class="info-row"><i class="fa fa-map-marker-alt"></i>PVR Cinemas, Baner Multiplex</div>
+          <div class="info-row"><i class="fa fa-calendar"></i>${formatDate(b.booking_time)}</div>
+          <div class="info-row"><i class="fa fa-clock"></i>7:30 PM · 2D</div>
+          <div class="seats-badge"><i class="fa fa-couch" style="margin-right:5px"></i>${b.seats}</div>
+          <div class="booking-price">₹${b.total_price}</div>
+          <div class="booking-actions">
+            <button class="ticket-btn" onclick="alert('Ticket download coming soon!')">
+              <i class="fa fa-download" style="margin-right:6px"></i>Download Ticket
+            </button>
+            <button class="cancel-btn" onclick="alert('Cancellation coming soon!')">Cancel</button>
+          </div>
+          <div class="booking-time">Booked on ${formatDate(b.booking_time)}</div>
+        </div>
+      </div>`).join('');
+
+  } catch (err) {
+    document.getElementById('bookingsList').innerHTML = `
+      <div class="empty-state">
+        <i class="fa fa-exclamation-circle"></i>
+        <h3>Could not load bookings</h3>
+        <p>Please check your connection and try again.</p>
+      </div>`;
+  }
+}
+
+function formatDate(ts) {
+  if (!ts) return 'Recently';
+  return new Date(ts).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'short', year: 'numeric'
+  });
+}
+
+loadBookings();
+</script>
+</body>
+</html>

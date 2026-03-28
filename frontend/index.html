@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShowTime — Movies, Events, Plays, Sports</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/cards.css">
+</head>
+<body>
+
+<header id="header"></header>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <button class="filter-pill active" onclick="filterBy(this, 'all')">All</button>
+  <button class="filter-pill" onclick="filterBy(this, 'Action')">Action</button>
+  <button class="filter-pill" onclick="filterBy(this, 'Comedy')">Comedy</button>
+  <button class="filter-pill" onclick="filterBy(this, 'Drama')">Drama</button>
+  <button class="filter-pill" onclick="filterBy(this, 'Thriller')">Thriller</button>
+  <button class="filter-pill" onclick="filterBy(this, 'Romance')">Romance</button>
+  <button class="filter-pill" onclick="filterBy(this, 'Horror')">Horror</button>
+  <button class="filter-pill lang" onclick="filterLang(this, 'Hindi')">Hindi</button>
+  <button class="filter-pill lang" onclick="filterLang(this, 'English')">English</button>
+  <button class="filter-pill lang" onclick="filterLang(this, 'Tamil')">Tamil</button>
+  <button class="filter-pill lang" onclick="filterLang(this, 'Telugu')">Telugu</button>
+</div>
+
+<!-- HERO BANNER -->
+<section class="hero" id="heroBanner">
+  <div class="hero-overlay">
+    <div class="hero-content">
+      <div class="hero-meta">
+        <span class="hero-rating" id="heroRating">★ 8.5</span>
+        <span class="hero-tag" id="heroGenre">Action</span>
+        <span class="hero-tag" id="heroLang">Hindi</span>
+      </div>
+      <h1 id="heroTitle">Loading...</h1>
+      <p id="heroDescription"></p>
+      <div class="hero-buttons">
+        <button class="btn-book" onclick="bookHero()">Book Tickets</button>
+        <button class="btn-trailer">Watch Trailer</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NOW SHOWING -->
+<div class="section-wrap">
+  <div class="section-header">
+    <h2 class="section-title">Now Showing</h2>
+    <a href="#" class="see-all">See All &rsaquo;</a>
+  </div>
+  <div class="row-wrapper">
+    <button class="scroll-btn left" onclick="scrollRow('nowShowing', -1)">&#8249;</button>
+    <div id="nowShowing" class="movie-row"></div>
+    <button class="scroll-btn right" onclick="scrollRow('nowShowing', 1)">&#8250;</button>
+  </div>
+</div>
+
+<!-- RECOMMENDED -->
+<div class="section-wrap">
+  <div class="section-header">
+    <h2 class="section-title">Recommended For You</h2>
+    <a href="#" class="see-all">See All &rsaquo;</a>
+  </div>
+  <div class="row-wrapper">
+    <button class="scroll-btn left" onclick="scrollRow('recommended', -1)">&#8249;</button>
+    <div id="recommended" class="movie-row"></div>
+    <button class="scroll-btn right" onclick="scrollRow('recommended', 1)">&#8250;</button>
+  </div>
+</div>
+
+<!-- PREMIERES -->
+<div class="premiere-section">
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">Premieres</h2>
+      <p>Brand new releases — streaming now</p>
+    </div>
+    <a href="#" class="see-all">See All &rsaquo;</a>
+  </div>
+  <div class="row-wrapper">
+    <div id="premieres" class="movie-row"></div>
+  </div>
+</div>
+
+<!-- TRENDING -->
+<div class="section-wrap">
+  <div class="section-header">
+    <h2 class="section-title">Trending Now</h2>
+    <a href="#" class="see-all">See All &rsaquo;</a>
+  </div>
+  <div class="row-wrapper">
+    <button class="scroll-btn left" onclick="scrollRow('trending', -1)">&#8249;</button>
+    <div id="trending" class="movie-row"></div>
+    <button class="scroll-btn right" onclick="scrollRow('trending', 1)">&#8250;</button>
+  </div>
+</div>
+
+<footer id="footer"></footer>
+
+<script src="components/header.js"></script>
+<script src="components/movieCard.js"></script>
+<script src="components/footer.js"></script>
+<script src="js/api.js"></script>
+
+</body>
+</html>
