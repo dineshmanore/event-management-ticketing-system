@@ -28,10 +28,12 @@ async function pay() {
       body: JSON.stringify({ amount: grandTotal })
     });
     const order = await orderRes.json();
+    
+    console.log("ORDER:", order)
 
     // STEP 2: Open Razorpay checkout
     const options = {
-      key: 'YOUR_RAZORPAY_KEY_ID',   // ← replace with your key
+      key: 'rzp_test_SV1Di4AUXyJL8e',   // ← replace with your key
       amount: order.amount,
       currency: 'INR',
       name: 'ShowTime',
@@ -41,7 +43,7 @@ async function pay() {
 
       handler: async function(response) {
         // STEP 3: Verify payment
-        const verifyRes = await fetch(`${API_BASE}/verify-payment`, {
+        const verifyRes = await fetch(`${API_BASE}/payment/verify-payment`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(response)

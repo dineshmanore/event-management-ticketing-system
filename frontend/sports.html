@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sports — ShowTime</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/category-pages.css">
+  <style>
+    .sport-card { background: white; border-radius: 14px; overflow: hidden; border: 1px solid #e0e0e0; cursor: pointer; transition: transform .2s, box-shadow .2s; }
+    .sport-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,.12); }
+    .sport-banner { height: 180px; object-fit: cover; width: 100%; display: block; }
+    .sport-banner-placeholder { height: 180px; display: flex; align-items: center; justify-content: center; font-size: 60px; }
+    .sport-body { padding: 16px; }
+    .sport-league { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #cc0c39; margin-bottom: 6px; }
+    .sport-title { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+    .vs-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 12px; background: #f8f8f8; border-radius: 8px; }
+    .team { text-align: center; flex: 1; }
+    .team-name { font-size: 14px; font-weight: 700; }
+    .team-city { font-size: 11px; color: #888; }
+    .vs-badge { width: 36px; height: 36px; background: #cc0c39; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+    .sports-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+  </style>
+</head>
+<body>
+
+<header id="header"></header>
+
+<div class="cat-hero" style="background:linear-gradient(135deg,#0d1b2a,#1b3a4b)">
+  <div class="cat-hero-overlay"></div>
+  <div class="cat-hero-content">
+    <h1><i class="fa fa-futbol" style="margin-right:12px;color:#cc0c39"></i>Sports</h1>
+    <p>Cricket, Football, Kabaddi, Tennis and more live in your city</p>
+  </div>
+</div>
+
+<div class="city-banner">
+  <div><strong id="cityLabel">Sports in Mumbai</strong><p>Live sports events near you</p></div>
+  <select onchange="filterCity(this.value)" style="padding:8px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:rgba(255,255,255,.1);color:white;font-family:'Poppins',sans-serif;cursor:pointer;font-size:13px">
+    <option value="all">All Cities</option>
+    <option value="Mumbai" selected>Mumbai</option>
+    <option value="Delhi">Delhi</option>
+    <option value="Bangalore">Bangalore</option>
+    <option value="Pune">Pune</option>
+    <option value="Kolkata">Kolkata</option>
+    <option value="Chennai">Chennai</option>
+  </select>
+</div>
+
+<div class="filter-strip">
+  <label>Sport:</label>
+  <button class="filter-chip active" onclick="filterCat(this,'all')">All Sports</button>
+  <button class="filter-chip" onclick="filterCat(this,'cricket')"><i class="fa fa-cricket" style="margin-right:5px"></i>Cricket</button>
+  <button class="filter-chip" onclick="filterCat(this,'football')"><i class="fa fa-futbol" style="margin-right:5px"></i>Football</button>
+  <button class="filter-chip" onclick="filterCat(this,'kabaddi')">Kabaddi</button>
+  <button class="filter-chip" onclick="filterCat(this,'tennis')">Tennis</button>
+  <button class="filter-chip" onclick="filterCat(this,'basketball')">Basketball</button>
+</div>
+
+<div class="search-row">
+  <i class="fa fa-search" style="color:#aaa"></i>
+  <input class="search-input" placeholder="Search sports events..." oninput="searchSports(this.value)">
+  <select class="sort-select" onchange="sortSports(this.value)">
+    <option value="date">Upcoming First</option>
+    <option value="price">Price: Low to High</option>
+  </select>
+</div>
+
+<div class="content-wrap">
+  <div class="results-count" id="resultsCount">Loading sports...</div>
+  <div class="sports-grid" id="sportsGrid"></div>
+</div>
+
+<footer id="footer"></footer>
+
+<script src="components/header.js"></script>
+<script src="components/footer.js"></script>
+<script>
+const API = 'http://localhost:5000/api';
+let allSports = [], activeCat = 'all', activeCity = 'all', sortBy = 'date';
+
+const sportIcons = { cricket:'fa-globe', football:'fa-futbol', kabaddi:'fa-fist-raised', tennis:'fa-circle', basketball:'fa-basketball-ball' };
+const sportBg = { cricket:'#0d2a3a', football:'#0a2e0a', kabaddi:'#2a0d0d', tennis:'#2a2a0d', basketball:'#2a1a0d' };
+
+async function init() {
+  try {
+    const res = await fetch(`${API}/events`);
+    const all = await res.json();
+    allSports = all.filter(e => ['cricket','football','kabaddi','tennis','basketball','sport'].includes(e.category));
+    render();
+  } catch(e) {
+    document.getElementById('sportsGrid').innerHTML = `<div class="empty-state"><i class="fa fa-futbol"></i><h3>Sports events coming soon!</h3><p>Check back for upcoming matches and tournaments.</p></div>`;
+  }
+}
+
+function render() {
+  let list = [...allSports];
+  if (activeCat !== 'all') list = list.filter(e => e.category === activeCat);
+  if (activeCity !== 'all') list = list.filter(e => e.city === activeCity);
+  if (sortBy === 'date')  list.sort((a,b) => new Date(a.date) - new Date(b.date));
+  if (sortBy === 'price') list.sort((a,b) => a.price_from - b.price_from);
+
+  const grid = document.getElementById('sportsGrid');
+  document.getElementById('resultsCount').innerHTML = `<span>${list.length}</span> events found`;
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state"><i class="fa fa-futbol"></i><h3>No events found</h3><p>Try selecting a different sport or city.</p></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(s => sportCard(s)).join('');
+}
+
+function sportCard(e) {
+  const bg = sportBg[e.category] || '#1a1a2e';
+  const icon = sportIcons[e.category] || 'fa-trophy';
+  const d = e.date ? new Date(e.date).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : 'TBA';
+
+  // Try to split title into two teams for VS display
+  const titleParts = e.title.split(' vs ');
+  const vsSection = titleParts.length === 2
+    ? `<div class="vs-row">
+         <div class="team"><div class="team-name">${titleParts[0].split('-').pop().trim()}</div></div>
+         <div class="vs-badge">VS</div>
+         <div class="team"><div class="team-name">${titleParts[1].trim()}</div></div>
+       </div>`
+    : '';
+
+  const img = e.image
+    ? `<img class="sport-banner" src="${e.image}" alt="${e.title}" onerror="this.outerHTML='<div class=sport-banner-placeholder style=background:${bg};color:rgba(255,255,255,.3)><i class=fa ${icon}></i></div>'">`
+    : `<div class="sport-banner-placeholder" style="background:${bg};color:rgba(255,255,255,.3)"><i class="fa ${icon}"></i></div>`;
+
+  return `<div class="sport-card" onclick="alert('Booking for \'${e.title}\' coming soon!')">
+    ${img}
+    <div class="sport-body">
+      <div class="sport-league">${e.category ? e.category.toUpperCase() : 'SPORTS'}</div>
+      <div class="sport-title">${e.title}</div>
+      ${vsSection}
+      <div style="font-size:13px;color:#666;margin-bottom:12px">
+        <i class="fa fa-calendar" style="color:#cc0c39;margin-right:6px"></i>${d}
+        &nbsp;&nbsp;<i class="fa fa-clock" style="color:#cc0c39;margin-right:6px"></i>${e.time || 'TBA'}
+        &nbsp;&nbsp;<i class="fa fa-map-marker-alt" style="color:#cc0c39;margin-right:6px"></i>${e.venue || ''}, ${e.city || ''}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:16px;font-weight:700">₹${e.price_from}${e.price_to && e.price_to !== e.price_from ? ' — ₹'+e.price_to : ''} <span style="font-size:12px;font-weight:400;color:#888">onwards</span></div>
+        <button class="book-btn">Buy Tickets</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function filterCat(btn, cat) { document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); activeCat = cat; render(); }
+function filterCity(city) { activeCity = city; document.getElementById('cityLabel').innerText = city === 'all' ? 'All Sports' : `Sports in ${city}`; render(); }
+function sortSports(val) { sortBy = val; render(); }
+function searchSports(q) {
+  if (!q.trim()) { render(); return; }
+  const f = allSports.filter(e => e.title.toLowerCase().includes(q.toLowerCase()));
+  document.getElementById('resultsCount').innerHTML = `<span>${f.length}</span> results`;
+  document.getElementById('sportsGrid').innerHTML = f.map(s => sportCard(s)).join('');
+}
+
+init();
+</script>
+</body>
+</html>

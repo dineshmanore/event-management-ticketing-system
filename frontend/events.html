@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events — ShowTime</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/category-pages.css">
+</head>
+<body>
+
+<header id="header"></header>
+
+<!-- HERO -->
+<div class="cat-hero" style="background-image:url('https://image.tmdb.org/t/p/original/nv3K0SMv2gLzHBGEqckwRIZiRnS.jpg')">
+  <div class="cat-hero-overlay"></div>
+  <div class="cat-hero-content">
+    <h1><i class="fa fa-calendar-alt" style="margin-right:12px;color:#cc0c39"></i>Events</h1>
+    <p>Concerts, Festivals, Comedy Shows & more happening near you</p>
+  </div>
+</div>
+
+<!-- CITY BANNER -->
+<div class="city-banner">
+  <div><strong id="cityLabel">Events in Mumbai</strong><p>Showing upcoming events in your city</p></div>
+  <select id="cityFilter" onchange="filterCity(this.value)" style="padding:8px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:rgba(255,255,255,.1);color:white;font-family:'Poppins',sans-serif;cursor:pointer;font-size:13px">
+    <option value="all">All Cities</option>
+    <option value="Mumbai" selected>Mumbai</option>
+    <option value="Delhi">Delhi</option>
+    <option value="Bangalore">Bangalore</option>
+    <option value="Hyderabad">Hyderabad</option>
+    <option value="Goa">Goa</option>
+    <option value="Pune">Pune</option>
+  </select>
+</div>
+
+<!-- FILTERS -->
+<div class="filter-strip">
+  <label>Category:</label>
+  <button class="filter-chip active" onclick="filterCat(this,'all')">All Events</button>
+  <button class="filter-chip" onclick="filterCat(this,'concert')">Concerts</button>
+  <button class="filter-chip" onclick="filterCat(this,'festival')">Festivals</button>
+  <button class="filter-chip" onclick="filterCat(this,'comedy')">Comedy Shows</button>
+  <button class="filter-chip" onclick="filterCat(this,'workshop')">Workshops</button>
+  <button class="filter-chip" onclick="filterCat(this,'exhibition')">Exhibitions</button>
+</div>
+
+<!-- SEARCH -->
+<div class="search-row">
+  <i class="fa fa-search" style="color:#aaa"></i>
+  <input class="search-input" placeholder="Search events..." oninput="searchEvents(this.value)">
+  <select class="sort-select" onchange="sortEvents(this.value)">
+    <option value="date">Date: Soonest</option>
+    <option value="price">Price: Low to High</option>
+    <option value="title">A to Z</option>
+  </select>
+</div>
+
+<div class="content-wrap">
+  <div class="results-count" id="resultsCount">Loading events...</div>
+  <div class="events-grid" id="eventsGrid"></div>
+</div>
+
+<footer id="footer"></footer>
+
+<script src="components/header.js"></script>
+<script src="components/footer.js"></script>
+<script>
+const API = 'http://localhost:5000/api';
+let allEvents = [], activeCat = 'all', activeCity = 'Mumbai', sortBy = 'date';
+
+const catIcons = { concert:'fa-music', festival:'fa-star', comedy:'fa-laugh', workshop:'fa-hammer', exhibition:'fa-images', event:'fa-calendar' };
+const catColors = { concert:'#8b1a2e', festival:'#1a3a5c', comedy:'#3a5c1a', workshop:'#5c3a1a', exhibition:'#1a4a4a', event:'#4a1a5c' };
+
+async function init() {
+  try {
+    const res = await fetch(`${API}/events`);
+    allEvents = await res.json();
+    render();
+  } catch(e) {
+    document.getElementById('eventsGrid').innerHTML = `<div class="empty-state"><i class="fa fa-calendar-alt"></i><h3>Events coming soon!</h3><p>Check back later for events in your city.</p></div>`;
+  }
+  document.getElementById('cityLabel').innerText = `Events in ${activeCity}`;
+}
+
+function render() {
+  let list = [...allEvents].filter(e => e.category !== 'play' && e.category !== 'cricket' && e.category !== 'kabaddi' && e.category !== 'football' && e.category !== 'adventure' && e.category !== 'sport');
+  if (activeCat !== 'all') list = list.filter(e => e.category === activeCat);
+  if (activeCity !== 'all') list = list.filter(e => e.city === activeCity);
+  if (sortBy === 'date')  list.sort((a,b) => new Date(a.date) - new Date(b.date));
+  if (sortBy === 'price') list.sort((a,b) => a.price_from - b.price_from);
+  if (sortBy === 'title') list.sort((a,b) => a.title.localeCompare(b.title));
+
+  const grid = document.getElementById('eventsGrid');
+  document.getElementById('resultsCount').innerHTML = `<span>${list.length}</span> events found`;
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state"><i class="fa fa-calendar-alt"></i><h3>No events found</h3><p>Try selecting a different city or category.</p></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(e => eventCard(e)).join('');
+}
+
+function eventCard(e) {
+  const bg = catColors[e.category] || '#333';
+  const icon = catIcons[e.category] || 'fa-calendar';
+  const d = e.date ? new Date(e.date).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : 'Date TBA';
+  const imgHtml = e.image
+    ? `<img class="event-thumb" src="${e.image}" alt="${e.title}" onerror="this.outerHTML='<div class=event-thumb-placeholder style=background:${bg}><i class=fa style=font-size:48px> </i></div>'">`
+    : `<div class="event-thumb-placeholder" style="background:${bg}"><i class="fa ${icon}"></i></div>`;
+  return `
+  <div class="event-card" onclick="alert('Booking for ${e.title} — coming soon!')">
+    ${imgHtml}
+    <div class="event-body">
+      <span class="event-cat-badge">${e.category || 'Event'}</span>
+      <div class="event-title">${e.title}</div>
+      <div class="event-meta">
+        <span><i class="fa fa-calendar"></i>${d}</span>
+        <span><i class="fa fa-clock"></i>${e.time || 'TBA'}</span>
+        <span><i class="fa fa-map-marker-alt"></i>${e.venue}, ${e.city}</span>
+        ${e.age_limit && e.age_limit !== 'All Ages' ? `<span><i class="fa fa-user"></i>${e.age_limit}</span>` : ''}
+      </div>
+      <div class="event-footer">
+        <div class="event-price">
+          ₹${e.price_from}${e.price_to && e.price_to !== e.price_from ? ' — ₹'+e.price_to : ''}
+          <span>onwards</span>
+        </div>
+        <button class="book-btn">Book Now</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function filterCat(btn, cat) {
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  activeCat = cat;
+  render();
+}
+
+function filterCity(city) {
+  activeCity = city;
+  document.getElementById('cityLabel').innerText = city === 'all' ? 'All Events' : `Events in ${city}`;
+  render();
+}
+
+function sortEvents(val) { sortBy = val; render(); }
+
+function searchEvents(q) {
+  if (!q.trim()) { render(); return; }
+  const filtered = allEvents.filter(e => e.title.toLowerCase().includes(q.toLowerCase()) || (e.venue && e.venue.toLowerCase().includes(q.toLowerCase())));
+  document.getElementById('resultsCount').innerHTML = `<span>${filtered.length}</span> results for "${q}"`;
+  document.getElementById('eventsGrid').innerHTML = filtered.map(e => eventCard(e)).join('') || `<div class="empty-state"><i class="fa fa-search"></i><h3>No results</h3></div>`;
+}
+
+init();
+</script>
+</body>
+</html>

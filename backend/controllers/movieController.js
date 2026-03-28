@@ -28,7 +28,7 @@ exports.getMovieById = (req, res) => {
 
       res.json({
         ...movieResult[0],
-        cast: castResult
+        cast: castResult || []
       });
 
     });

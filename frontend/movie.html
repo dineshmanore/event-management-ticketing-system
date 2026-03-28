@@ -161,7 +161,10 @@ const API = 'http://localhost:5000/api';
 
 const params = new URLSearchParams(window.location.search);
 const movieid = params.get('id');
-
+if (!movieid) {
+  window.location.href = "index.html";
+}
+console.log("MOVIE ID:", movieid)
 function formatVotes(votes) {
   if (votes >= 1000000) return Math.round(votes / 1000000) + 'M+';
   if (votes >= 1000) return Math.round(votes / 1000) + 'K+';
@@ -170,8 +173,10 @@ function formatVotes(votes) {
 
 async function loadMovie() {
   try {
-    const res = await fetch(`${API}/movies/${movieid}`);
-    const movie = await res.json();
+    const res = await fetch(`${API}/movies/${movieid}`)
+const movie = await res.json()
+
+    console.log("MOVIE:", movie);
 
     if (!movie || !movie.id) {
       document.body.innerHTML = "<h1>Movie not found</h1>";
@@ -184,7 +189,7 @@ async function loadMovie() {
     // CAST RENDER
    const castContainer = document.getElementById('castGrid');
 
-    castContainer.innerHTML = movie.cast.map(actor => `
+    castContainer.innerHTML = (movie.cast || []).map(actor => `
      <div class="cast-card">
      <img class="cast-avatar" src="${actor.image}" />
       <div class="cast-name">${actor.name}</div>
@@ -193,10 +198,10 @@ async function loadMovie() {
     `).join('');
 
     // ✅ RATING
-    document.getElementById('movieRating').innerText = movie.rating;
+    document.getElementById('movieRating').innerText = movie.rating || 0;
 
     // ✅ VOTES
-    document.getElementById('movieVotes').innerText = formatVotes (movie.votes);
+    document.getElementById('movieVotes').innerText = formatVotes (movie.votes || 0);
 
     // ✅ DESCRIPTION
     document.getElementById('movieDesc').innerText = movie.description;

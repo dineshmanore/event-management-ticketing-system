@@ -1,50 +1,695 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Admin - Add Movie</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — ShowTime</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--red:#cc0c39;--dark:#1a1a2e;--sidebar:#16213e;--text:#2d2d2d;--muted:#888;--bg:#f0f2f5;--white:#fff;--border:#e0e0e0}
+    body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+    /* SIDEBAR */
+    .sidebar{width:240px;background:var(--sidebar);color:white;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+    .sidebar-brand{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:12px}
+    .brand-box{background:var(--red);padding:7px 10px;border-radius:6px;font-size:13px;font-weight:800}
+    .brand-name{font-size:18px;font-weight:700}
+    .brand-sub{font-size:11px;opacity:.5;margin-top:1px}
+    .sidebar-nav{padding:16px 0;flex:1}
+    .nav-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;opacity:.4;padding:12px 20px 6px}
+    .nav-item{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;font-size:14px;font-weight:500;opacity:.7;transition:all .15s;border-left:3px solid transparent}
+    .nav-item:hover{background:rgba(255,255,255,.06);opacity:1}
+    .nav-item.active{background:rgba(204,12,57,.15);opacity:1;border-left-color:var(--red);color:white}
+    .nav-item i{width:18px;text-align:center}
+    .nav-count{margin-left:auto;background:var(--red);color:white;font-size:11px;padding:1px 7px;border-radius:10px}
+    .sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:13px;opacity:.5}
+
+    /* MAIN */
+    .main{flex:1;display:flex;flex-direction:column;min-width:0}
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:16px 30px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+    .topbar-title{font-size:20px;font-weight:700}
+    .topbar-right{display:flex;align-items:center;gap:16px}
+    .admin-avatar{width:36px;height:36px;background:var(--red);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+    .page{display:none;padding:24px 30px;animation:fadeIn .2s ease}
+    .page.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+    /* STAT CARDS */
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+    .stat-card{background:var(--white);border-radius:12px;padding:20px 24px;border:1px solid var(--border)}
+    .stat-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+    .stat-label{font-size:12px;color:var(--muted);margin-bottom:4px}
+    .stat-num{font-size:28px;font-weight:700}
+    .stat-change{font-size:12px;margin-top:4px;color:#1dc26b}
+
+    /* TABLE */
+    .table-card{background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:24px}
+    .table-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}
+    .table-title{font-size:16px;font-weight:700}
+    .btn-primary{background:var(--red);color:white;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;display:flex;align-items:center;gap:6px;transition:background .2s}
+    .btn-primary:hover{background:#a50930}
+    .btn-secondary{background:var(--white);color:var(--text);border:1.5px solid var(--border);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Poppins',sans-serif;transition:all .15s}
+    .btn-secondary:hover{border-color:var(--red);color:var(--red)}
+    .tbl{width:100%;border-collapse:collapse}
+    .tbl th{background:#fafafa;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:12px 16px;text-align:left;border-bottom:1px solid var(--border)}
+    .tbl td{padding:14px 16px;font-size:14px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+    .tbl tr:last-child td{border-bottom:none}
+    .tbl tr:hover td{background:#fafafa}
+    .tbl img.thumb{width:42px;height:56px;object-fit:cover;border-radius:6px}
+    .badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+    .badge.active{background:#e6f7ee;color:#1b7a3e}
+    .badge.inactive{background:#fde8ed;color:#8b1a2e}
+    .badge.pending{background:#fff3e0;color:#8b4e00}
+    .badge.paid{background:#e6f7ee;color:#1b7a3e}
+    .action-btns{display:flex;gap:8px}
+    .btn-edit{background:#fff5e0;color:#8b4e00;border:1px solid #ffe0a0;padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:500}
+    .btn-delete{background:#fde8ed;color:#8b1a2e;border:1px solid #f7b8c8;padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:500}
+    .btn-view{background:#e6eef8;color:#0d3a7a;border:1px solid #b5cef0;padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:500}
+    .table-search{display:flex;align-items:center;gap:10px}
+    .table-search input{padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Poppins',sans-serif;outline:none;width:220px}
+    .table-search input:focus{border-color:var(--red)}
+    .pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--border)}
+    .pg-info{font-size:13px;color:var(--muted)}
+    .pg-btns{display:flex;gap:6px}
+    .pg-btn{padding:6px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;cursor:pointer;background:white;font-family:'Poppins',sans-serif}
+    .pg-btn.active{background:var(--red);color:white;border-color:var(--red)}
+
+    /* MODAL */
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center}
+    .modal-bg.open{display:flex}
+    .modal{background:white;border-radius:16px;width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.2)}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:22px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:white;z-index:1}
+    .modal-title{font-size:18px;font-weight:700}
+    .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:0 4px}
+    .modal-body{padding:24px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;font-size:13px;font-weight:600;color:#555;margin-bottom:7px}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;transition:border-color .2s;color:var(--text)}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--red)}
+    .form-group textarea{resize:vertical;min-height:80px}
+    .modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:white}
+    .img-preview{width:80px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--border);margin-top:8px}
+
+    /* CHARTS */
+    .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+    .chart-card{background:white;border-radius:12px;border:1px solid var(--border);padding:20px}
+    .chart-card h3{font-size:15px;font-weight:700;margin-bottom:16px}
+    .bar-chart{display:flex;flex-direction:column;gap:10px}
+    .bar-row{display:flex;align-items:center;gap:12px}
+    .bar-label{font-size:12px;width:80px;flex-shrink:0;color:var(--muted)}
+    .bar-track{flex:1;height:10px;background:#f0f0f0;border-radius:5px;overflow:hidden}
+    .bar-fill{height:100%;background:var(--red);border-radius:5px}
+    .bar-val{font-size:12px;font-weight:600;width:40px;text-align:right;flex-shrink:0}
+    .activity-list{display:flex;flex-direction:column;gap:12px}
+    .act-item{display:flex;align-items:center;gap:12px;padding:10px;background:#fafafa;border-radius:8px}
+    .act-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .act-item .info{flex:1;font-size:13px}
+    .act-item .time{font-size:12px;color:var(--muted)}
+    .empty-row td{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+  </style>
 </head>
 <body>
 
-<h2>Add Movie</h2>
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-box">ST</div>
+    <div>
+      <div class="brand-name">ShowTime</div>
+      <div class="brand-sub">Admin Panel</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" onclick="goto('dashboard')"><i class="fa fa-th-large"></i>Dashboard</div>
+    <div class="nav-section">Content</div>
+    <div class="nav-item" onclick="goto('movies')"><i class="fa fa-film"></i>Movies<span class="nav-count" id="movieCount">0</span></div>
+    <div class="nav-item" onclick="goto('events')"><i class="fa fa-calendar-alt"></i>Events<span class="nav-count" id="eventCount">0</span></div>
+    <div class="nav-section">Transactions</div>
+    <div class="nav-item" onclick="goto('bookings')"><i class="fa fa-ticket-alt"></i>Bookings<span class="nav-count" id="bookingCount">0</span></div>
+    <div class="nav-item" onclick="goto('users')"><i class="fa fa-users"></i>Users<span class="nav-count" id="userCount">0</span></div>
+    <div class="nav-section">Settings</div>
+    <div class="nav-item" onclick="goto('settings')"><i class="fa fa-cog"></i>Settings</div>
+    <div class="nav-item" onclick="goto('reports')"><i class="fa fa-chart-bar"></i>Reports</div>
+  </nav>
+  <div class="sidebar-footer">ShowTime Admin v2.0</div>
+</aside>
 
-<input id="title" placeholder="Title"><br>
-<input id="genre" placeholder="Genre"><br>
-<input id="language" placeholder="Language"><br>
-<input id="rating" placeholder="Rating"><br>
-<input id="votes" placeholder="Votes"><br>
-<input id="poster" placeholder="Poster URL"><br>
-<input id="banner" placeholder="Banner URL"><br>
-<input id="description" placeholder="Description"><br>
-<input id="category" placeholder="Category"><br>
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="pageTitle">Dashboard</div>
+    <div class="topbar-right">
+      <span style="font-size:13px;color:var(--muted)">Welcome, Admin</span>
+      <div class="admin-avatar">A</div>
+      <a href="index.html" style="font-size:13px;color:#cc0c39;text-decoration:none;font-weight:600">← View Site</a>
+    </div>
+  </div>
 
-<button onclick="addMovie()">Add Movie</button>
+  <!-- DASHBOARD PAGE -->
+  <div class="page active" id="page-dashboard">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff0f3;color:#cc0c39"><i class="fa fa-film"></i></div>
+        <div class="stat-label">Total Movies</div>
+        <div class="stat-num" id="statMovies">—</div>
+        <div class="stat-change"><i class="fa fa-arrow-up" style="font-size:10px"></i> Active listings</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e6f7ee;color:#1b7a3e"><i class="fa fa-ticket-alt"></i></div>
+        <div class="stat-label">Total Bookings</div>
+        <div class="stat-num" id="statBookings">—</div>
+        <div class="stat-change"><i class="fa fa-arrow-up" style="font-size:10px"></i> All time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#e6eef8;color:#0d3a7a"><i class="fa fa-users"></i></div>
+        <div class="stat-label">Registered Users</div>
+        <div class="stat-num" id="statUsers">—</div>
+        <div class="stat-change"><i class="fa fa-arrow-up" style="font-size:10px"></i> Total accounts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fff8e6;color:#8b5e00"><i class="fa fa-rupee-sign"></i></div>
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-num" id="statRevenue">—</div>
+        <div class="stat-change"><i class="fa fa-arrow-up" style="font-size:10px"></i> From bookings</div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Bookings by Movie</h3>
+        <div class="bar-chart" id="bookingsChart"><div style="color:#aaa;font-size:13px;padding:20px 0;text-align:center">No booking data yet</div></div>
+      </div>
+      <div class="chart-card">
+        <h3>Recent Activity</h3>
+        <div class="activity-list" id="activityList">
+          <div style="color:#aaa;font-size:13px">No recent activity</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">Recent Bookings</div><button class="btn-secondary" onclick="goto('bookings')">View All</button></div>
+      <table class="tbl"><thead><tr><th>ID</th><th>User</th><th>Movie</th><th>Seats</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody id="recentBookings"><tr class="empty-row"><td colspan="6"><i class="fa fa-inbox" style="font-size:28px;display:block;margin-bottom:8px;color:#ddd"></i>No bookings yet</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MOVIES PAGE -->
+  <div class="page" id="page-movies">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Movies <span id="movieTotalBadge" style="font-size:13px;font-weight:400;color:#888;margin-left:6px"></span></div>
+        <div style="display:flex;gap:10px">
+          <div class="table-search"><i class="fa fa-search" style="color:#aaa"></i><input type="text" placeholder="Search movies..." oninput="searchTable('moviesTable',this.value)"></div>
+          <button class="btn-primary" onclick="openMovieModal()"><i class="fa fa-plus"></i>Add Movie</button>
+        </div>
+      </div>
+      <table class="tbl"><thead><tr><th>Poster</th><th>Title</th><th>Genre</th><th>Language</th><th>Rating</th><th>Votes</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="moviesTable"><tr class="empty-row"><td colspan="8">Loading...</td></tr></tbody>
+      </table>
+      <div class="pagination"><div class="pg-info" id="moviePgInfo"></div></div>
+    </div>
+  </div>
+
+  <!-- EVENTS PAGE -->
+  <div class="page" id="page-events">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Events</div>
+        <div style="display:flex;gap:10px">
+          <div class="table-search"><i class="fa fa-search" style="color:#aaa"></i><input type="text" placeholder="Search events..." oninput="searchTable('eventsTable',this.value)"></div>
+          <button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Event</button>
+        </div>
+      </div>
+      <table class="tbl"><thead><tr><th>Image</th><th>Title</th><th>Category</th><th>City</th><th>Date</th><th>Price From</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="eventsTable"><tr class="empty-row"><td colspan="8">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BOOKINGS PAGE -->
+  <div class="page" id="page-bookings">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">All Bookings</div>
+        <div class="table-search"><i class="fa fa-search" style="color:#aaa"></i><input type="text" placeholder="Search bookings..." oninput="searchTable('bookingsTable',this.value)"></div>
+      </div>
+      <table class="tbl"><thead><tr><th>ID</th><th>User</th><th>Movie</th><th>Seats</th><th>Total</th><th>Date</th><th>Status</th></tr></thead>
+      <tbody id="bookingsTable"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- USERS PAGE -->
+  <div class="page" id="page-users">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Registered Users</div>
+        <div class="table-search"><i class="fa fa-search" style="color:#aaa"></i><input type="text" placeholder="Search users..." oninput="searchTable('usersTable',this.value)"></div>
+      </div>
+      <table class="tbl"><thead><tr><th>Avatar</th><th>Name</th><th>Email</th><th>Joined</th><th>Bookings</th><th>Actions</th></tr></thead>
+      <tbody id="usersTable"><tr class="empty-row"><td colspan="6">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div class="page" id="page-settings">
+    <div style="max-width:600px">
+      <div class="table-card" style="overflow:visible">
+        <div class="table-header"><div class="table-title">Site Settings</div></div>
+        <div style="padding:24px;display:flex;flex-direction:column;gap:16px">
+          <div class="form-group"><label>Site Name</label><input type="text" value="ShowTime"></div>
+          <div class="form-group"><label>Support Email</label><input type="email" value="support@showtime.com"></div>
+          <div class="form-group"><label>Default City</label>
+            <select><option>Mumbai</option><option>Delhi NCR</option><option>Bangalore</option><option>Pune</option></select>
+          </div>
+          <div class="form-group"><label>Ticket Base Price (₹)</label><input type="number" value="200"></div>
+          <div class="form-group"><label>Convenience Fee (%)</label><input type="number" value="10"></div>
+          <div class="form-group"><label>Razorpay Key ID</label><input type="text" placeholder="rzp_test_xxxxxxxxxxxx"></div>
+          <button class="btn-primary" style="width:fit-content" onclick="alert('Settings saved!')"><i class="fa fa-save"></i>Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORTS PAGE -->
+  <div class="page" id="page-reports">
+    <div class="chart-grid">
+      <div class="chart-card"><h3>Revenue by Month</h3><div class="bar-chart" id="revenueChart"></div></div>
+      <div class="chart-card"><h3>Bookings by Genre</h3><div class="bar-chart" id="genreChart"></div></div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><div class="table-title">Top Movies by Bookings</div></div>
+      <table class="tbl"><thead><tr><th>Rank</th><th>Movie</th><th>Bookings</th><th>Revenue</th></tr></thead>
+      <tbody id="topMoviesTable"><tr class="empty-row"><td colspan="4">No data</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MOVIE MODAL -->
+<div class="modal-bg" id="movieModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="movieModalTitle">Add Movie</div>
+      <button class="modal-close" onclick="closeModal('movieModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editMovieId">
+      <div class="form-row">
+        <div class="form-group" style="grid-column:1/-1"><label>Movie Title *</label><input type="text" id="mTitle" placeholder="e.g. KGF Chapter 2"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Genre</label><input type="text" id="mGenre" placeholder="Action, Drama"></div>
+        <div class="form-group"><label>Language</label><input type="text" id="mLang" placeholder="Hindi"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Rating (0–10)</label><input type="number" id="mRating" min="0" max="10" step="0.1" placeholder="8.5"></div>
+        <div class="form-group"><label>Votes</label><input type="number" id="mVotes" placeholder="150000"></div>
+      </div>
+      <div class="form-group"><label>Category</label>
+        <select id="mCategory"><option value="Movies">Movies</option><option value="Premiere">Premiere</option><option value="Stream">Stream</option></select>
+      </div>
+      <div class="form-group"><label>Poster URL</label><input type="url" id="mPoster" placeholder="https://image.tmdb.org/..." oninput="previewImg(this,'mPosterPreview')">
+        <img id="mPosterPreview" class="img-preview" style="display:none">
+      </div>
+      <div class="form-group"><label>Banner URL</label><input type="url" id="mBanner" placeholder="https://image.tmdb.org/..." oninput="previewImg(this,'mBannerPreview')">
+        <img id="mBannerPreview" class="img-preview" style="display:none">
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="mDesc" placeholder="Brief description of the movie..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('movieModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveMovie()"><i class="fa fa-save"></i>Save Movie</button>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="modal-bg" id="eventModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="eventModalTitle">Add Event</div>
+      <button class="modal-close" onclick="closeModal('eventModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editEventId">
+      <div class="form-group"><label>Event Title *</label><input type="text" id="eTitle" placeholder="e.g. Coldplay World Tour"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Category</label>
+          <select id="eCat"><option value="concert">Concert</option><option value="festival">Festival</option><option value="comedy">Comedy</option><option value="play">Play</option><option value="cricket">Cricket</option><option value="football">Football</option><option value="adventure">Adventure</option><option value="workshop">Workshop</option></select>
+        </div>
+        <div class="form-group"><label>City</label>
+          <select id="eCity"><option>Mumbai</option><option>Delhi</option><option>Bangalore</option><option>Pune</option><option>Hyderabad</option><option>Chennai</option><option>Kolkata</option><option>Goa</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label>Venue</label><input type="text" id="eVenue" placeholder="e.g. DY Patil Stadium"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Date</label><input type="date" id="eDate"></div>
+        <div class="form-group"><label>Time</label><input type="time" id="eTime"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Price From (₹)</label><input type="number" id="ePriceFrom" placeholder="500"></div>
+        <div class="form-group"><label>Price To (₹)</label><input type="number" id="ePriceTo" placeholder="5000"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Language</label><input type="text" id="eLang" placeholder="Hindi, English"></div>
+        <div class="form-group"><label>Age Limit</label><input type="text" id="eAge" placeholder="All Ages" value="All Ages"></div>
+      </div>
+      <div class="form-group"><label>Image URL</label><input type="url" id="eImage" placeholder="https://image.tmdb.org/..." oninput="previewImg(this,'eImgPreview')">
+        <img id="eImgPreview" class="img-preview" style="display:none">
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="eDesc" placeholder="Event description..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('eventModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveEvent()"><i class="fa fa-save"></i>Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-bg" id="confirmModal">
+  <div class="modal" style="width:400px">
+    <div class="modal-header"><div class="modal-title">Confirm Delete</div><button class="modal-close" onclick="closeModal('confirmModal')">×</button></div>
+    <div class="modal-body"><p style="font-size:15px;color:#555" id="confirmMsg">Are you sure you want to delete this item? This cannot be undone.</p></div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeModal('confirmModal')">Cancel</button><button class="btn-primary" style="background:#e53e3e" id="confirmYes" onclick="doDelete()"><i class="fa fa-trash"></i>Delete</button></div>
+  </div>
+</div>
 
 <script>
-function addMovie() {
-  fetch('http://localhost:5000/api/movies', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      title: document.getElementById('title').value,
-      genre: document.getElementById('genre').value,
-      language: document.getElementById('language').value,
-      rating: document.getElementById('rating').value,
-      votes: document.getElementById('votes').value,
-      poster: document.getElementById('poster').value,
-      banner: document.getElementById('banner').value,
-      description: document.getElementById('description').value,
-      category: document.getElementById('category').value
-    })
-  })
-  .then(res => res.json())
- .then(data => {
-  alert("Movie Added");
-  location.reload(); // 🔥 THIS WAS MISSING
-});
-}
-</script>
+const API = 'http://localhost:5000/api';
+const ADMIN_API = `${API}/admin`;
 
+let moviesData=[], eventsData=[], bookingsData=[], usersData=[];
+let deleteTarget = null;
+
+// ── NAVIGATION ──────────────────────────────────────────────────────────
+function goto(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  event.currentTarget.classList.add('active');
+  document.getElementById('pageTitle').innerText = page.charAt(0).toUpperCase() + page.slice(1);
+  if (page==='movies')   renderMovies();
+  if (page==='events')   renderEvents();
+  if (page==='bookings') renderBookings();
+  if (page==='users')    renderUsers();
+  if (page==='reports')  renderReports();
+}
+
+// ── LOAD ALL DATA ────────────────────────────────────────────────────────
+async function loadAll() {
+  try {
+    const [mRes, eRes, bRes] = await Promise.all([
+      fetch(`${API}/movies`),
+      fetch(`${API}/events`).catch(()=>({json:()=>[]})),
+      fetch(`${API}/admin/bookings`, {headers:{Authorization:'Bearer '+localStorage.getItem('token')}}).catch(()=>({json:()=>[]}))
+    ]);
+    moviesData   = await mRes.json().catch(()=>[]);
+    eventsData   = typeof eRes.json === 'function' ? await eRes.json().catch(()=>[]) : [];
+    bookingsData = typeof bRes.json === 'function' ? await bRes.json().catch(()=>[]) : [];
+
+    updateCounts();
+    renderDashboard();
+  } catch(e) { console.error(e); }
+}
+
+function updateCounts() {
+  document.getElementById('movieCount').innerText   = moviesData.length;
+  document.getElementById('eventCount').innerText   = eventsData.length;
+  document.getElementById('bookingCount').innerText = bookingsData.length;
+  document.getElementById('statMovies').innerText   = moviesData.length;
+  document.getElementById('statBookings').innerText = bookingsData.length;
+  document.getElementById('statRevenue').innerText  = '₹' + bookingsData.reduce((s,b)=>s+(parseFloat(b.total_price)||0),0).toLocaleString('en-IN');
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────
+function renderDashboard() {
+  // Recent bookings table
+  const tbody = document.getElementById('recentBookings');
+  const recent = bookingsData.slice(0,5);
+  if (!recent.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="6"><i class="fa fa-inbox" style="font-size:28px;display:block;margin-bottom:8px;color:#ddd"></i>No bookings yet</td></tr>'; }
+  else tbody.innerHTML = recent.map(b=>`
+    <tr>
+      <td style="font-weight:600">#${b.id}</td>
+      <td>${b.name||'User #'+b.user_id}</td>
+      <td>${b.title||'Movie #'+b.movie_id}</td>
+      <td>${b.seats}</td>
+      <td style="font-weight:600;color:#cc0c39">₹${b.total_price}</td>
+      <td><span class="badge paid">Confirmed</span></td>
+    </tr>`).join('');
+
+  // Bookings by movie chart
+  const byMovie = {};
+  bookingsData.forEach(b => { const t=b.title||'Unknown'; byMovie[t]=(byMovie[t]||0)+1; });
+  const sorted = Object.entries(byMovie).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxVal = sorted[0]?.[1] || 1;
+  document.getElementById('bookingsChart').innerHTML = sorted.length
+    ? sorted.map(([t,v])=>`<div class="bar-row"><div class="bar-label" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t}">${t}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxVal*100)}%"></div></div><div class="bar-val">${v}</div></div>`).join('')
+    : '<div style="color:#aaa;font-size:13px;padding:20px 0;text-align:center">No booking data yet</div>';
+
+  // Activity feed
+  const acts = [...bookingsData].slice(-5).reverse().map(b=>({text:`New booking for <b>${b.title||'a movie'}</b>`,time:new Date(b.booking_time||Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),color:'#1dc26b'}));
+  document.getElementById('activityList').innerHTML = acts.length
+    ? acts.map(a=>`<div class="act-item"><div class="act-dot" style="background:${a.color}"></div><div class="info">${a.text}</div><div class="time">${a.time}</div></div>`).join('')
+    : '<div style="color:#aaa;font-size:13px">No recent activity</div>';
+
+  // Users stat (approximate from bookings user_ids)
+  const uniqueUsers = new Set(bookingsData.map(b=>b.user_id)).size;
+  document.getElementById('statUsers').innerText = uniqueUsers || '—';
+  document.getElementById('userCount').innerText  = uniqueUsers || 0;
+}
+
+// ── MOVIES TABLE ─────────────────────────────────────────────────────────
+function renderMovies(data) {
+  const list = data || moviesData;
+  const tbody = document.getElementById('moviesTable');
+  document.getElementById('movieTotalBadge').innerText = `(${list.length} total)`;
+  if (!list.length) { tbody.innerHTML='<tr class="empty-row"><td colspan="8"><i class="fa fa-film" style="font-size:28px;display:block;margin-bottom:8px;color:#ddd"></i>No movies. Add one!</td></tr>'; return; }
+  tbody.innerHTML = list.map(m=>`
+    <tr data-search="${m.title} ${m.genre} ${m.language}">
+      <td><img class="thumb" src="${m.poster}" onerror="this.style.display='none'" alt=""></td>
+      <td style="font-weight:600;max-width:200px">${m.title}</td>
+      <td>${m.genre||'—'}</td>
+      <td>${m.language||'—'}</td>
+      <td><span style="color:#f84464;font-weight:600">★ ${m.rating}</span></td>
+      <td>${(m.votes||0)>=1000?((m.votes/1000).toFixed(1)+'K'):m.votes||0}</td>
+      <td><span class="badge active">Active</span></td>
+      <td><div class="action-btns">
+        <button class="btn-edit" onclick="editMovie(${m.id})"><i class="fa fa-edit"></i> Edit</button>
+        <button class="btn-delete" onclick="confirmDelete('movie',${m.id},'${m.title.replace(/'/g,'\\'')}')"><i class="fa fa-trash"></i> Delete</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+// ── EVENTS TABLE ─────────────────────────────────────────────────────────
+function renderEvents(data) {
+  const list = data || eventsData;
+  const tbody = document.getElementById('eventsTable');
+  if (!list.length) { tbody.innerHTML='<tr class="empty-row"><td colspan="8"><i class="fa fa-calendar-alt" style="font-size:28px;display:block;margin-bottom:8px;color:#ddd"></i>No events. Add one!</td></tr>'; return; }
+  tbody.innerHTML = list.map(e=>`
+    <tr data-search="${e.title} ${e.category} ${e.city}">
+      <td>${e.image?`<img class="thumb" src="${e.image}" onerror="this.style.display='none'" alt="">`:''}</td>
+      <td style="font-weight:600;max-width:180px">${e.title}</td>
+      <td><span class="badge active">${e.category||'event'}</span></td>
+      <td>${e.city||'—'}</td>
+      <td>${e.date?new Date(e.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'TBA'}</td>
+      <td>₹${e.price_from||0}</td>
+      <td><span class="badge ${e.status==='inactive'?'inactive':'active'}">${e.status||'active'}</span></td>
+      <td><div class="action-btns">
+        <button class="btn-edit" onclick="editEvent(${e.id})"><i class="fa fa-edit"></i> Edit</button>
+        <button class="btn-delete" onclick="confirmDelete('event',${e.id},'${e.title.replace(/'/g,'\\'')}')"><i class="fa fa-trash"></i> Delete</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+// ── BOOKINGS TABLE ────────────────────────────────────────────────────────
+function renderBookings(data) {
+  const list = data || bookingsData;
+  const tbody = document.getElementById('bookingsTable');
+  if (!list.length) { tbody.innerHTML='<tr class="empty-row"><td colspan="7"><i class="fa fa-ticket-alt" style="font-size:28px;display:block;margin-bottom:8px;color:#ddd"></i>No bookings yet</td></tr>'; return; }
+  tbody.innerHTML = list.map(b=>`
+    <tr data-search="${b.name||''} ${b.title||''} ${b.seats}">
+      <td style="font-weight:600">#${b.id}</td>
+      <td>${b.name||'User #'+b.user_id}</td>
+      <td>${b.title||'Movie #'+b.movie_id}</td>
+      <td style="font-size:12px">${b.seats}</td>
+      <td style="font-weight:600;color:#cc0c39">₹${b.total_price}</td>
+      <td style="font-size:12px;color:#888">${b.booking_time?new Date(b.booking_time).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}</td>
+      <td><span class="badge paid">Confirmed</span></td>
+    </tr>`).join('');
+}
+
+// ── USERS TABLE ───────────────────────────────────────────────────────────
+function renderUsers(data) {
+  const list = data || usersData;
+  const tbody = document.getElementById('usersTable');
+  if (!list.length) { tbody.innerHTML='<tr class="empty-row"><td colspan="6"><i class="fa fa-users" style="font-size:28px;display:block;margin-bottom:8px;color:#ddd"></i>No users yet</td></tr>'; return; }
+  tbody.innerHTML = list.map(u=>`
+    <tr data-search="${u.name} ${u.email}">
+      <td><div style="width:36px;height:36px;background:#cc0c39;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px">${(u.name||'U').charAt(0).toUpperCase()}</div></td>
+      <td style="font-weight:600">${u.name||'—'}</td>
+      <td style="color:#888">${u.email}</td>
+      <td style="font-size:12px;color:#888">${u.created_at?new Date(u.created_at).toLocaleDateString('en-IN'):'—'}</td>
+      <td>${bookingsData.filter(b=>b.user_id===u.id).length}</td>
+      <td><button class="btn-view" onclick="alert('User details for ${(u.name||'').replace(/'/g,'\\'')}')"><i class="fa fa-eye"></i> View</button></td>
+    </tr>`).join('');
+}
+
+// ── REPORTS ───────────────────────────────────────────────────────────────
+function renderReports() {
+  const byGenre = {};
+  bookingsData.forEach(b => {
+    moviesData.filter(m=>m.id===b.movie_id).forEach(m=>{
+      const g=(m.genre||'Unknown').split(',')[0].trim();
+      byGenre[g]=(byGenre[g]||0)+1;
+    });
+  });
+  const genreSorted=Object.entries(byGenre).sort((a,b)=>b[1]-a[1]);
+  const gMax=genreSorted[0]?.[1]||1;
+  document.getElementById('genreChart').innerHTML=genreSorted.length
+    ?genreSorted.map(([g,v])=>`<div class="bar-row"><div class="bar-label">${g}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/gMax*100)}%"></div></div><div class="bar-val">${v}</div></div>`).join('')
+    :'<div style="color:#aaa;font-size:13px;text-align:center;padding:20px">No data</div>';
+
+  const topMovies=moviesData.map(m=>({...m,bookings:bookingsData.filter(b=>b.movie_id===m.id).length,revenue:bookingsData.filter(b=>b.movie_id===m.id).reduce((s,b)=>s+(parseFloat(b.total_price)||0),0)})).sort((a,b)=>b.bookings-a.bookings).slice(0,5);
+  document.getElementById('topMoviesTable').innerHTML=topMovies.length
+    ?topMovies.map((m,i)=>`<tr><td style="font-weight:700;color:#cc0c39">#${i+1}</td><td style="font-weight:600">${m.title}</td><td>${m.bookings}</td><td style="font-weight:700;color:#1dc26b">₹${m.revenue.toLocaleString('en-IN')}</td></tr>`).join('')
+    :'<tr class="empty-row"><td colspan="4">No data</td></tr>';
+}
+
+// ── MOVIE CRUD ────────────────────────────────────────────────────────────
+function openMovieModal(movie) {
+  document.getElementById('editMovieId').value = movie?.id || '';
+  document.getElementById('movieModalTitle').innerText = movie ? 'Edit Movie' : 'Add Movie';
+  document.getElementById('mTitle').value   = movie?.title || '';
+  document.getElementById('mGenre').value   = movie?.genre || '';
+  document.getElementById('mLang').value    = movie?.language || '';
+  document.getElementById('mRating').value  = movie?.rating || '';
+  document.getElementById('mVotes').value   = movie?.votes || '';
+  document.getElementById('mCategory').value= movie?.category || 'Movies';
+  document.getElementById('mPoster').value  = movie?.poster || '';
+  document.getElementById('mBanner').value  = movie?.banner || '';
+  document.getElementById('mDesc').value    = movie?.description || '';
+  const prev = document.getElementById('mPosterPreview');
+  if (movie?.poster) { prev.src = movie.poster; prev.style.display='block'; } else prev.style.display='none';
+  document.getElementById('movieModal').classList.add('open');
+}
+
+function editMovie(id) { openMovieModal(moviesData.find(m=>m.id===id)); }
+
+async function saveMovie() {
+  const id     = document.getElementById('editMovieId').value;
+  const title  = document.getElementById('mTitle').value.trim();
+  if (!title) { alert('Title is required.'); return; }
+  const payload = { title, genre:document.getElementById('mGenre').value, language:document.getElementById('mLang').value, rating:parseFloat(document.getElementById('mRating').value)||0, votes:parseInt(document.getElementById('mVotes').value)||0, category:document.getElementById('mCategory').value, poster:document.getElementById('mPoster').value, banner:document.getElementById('mBanner').value, description:document.getElementById('mDesc').value };
+  try {
+    const token = localStorage.getItem('token');
+    const url   = id ? `${ADMIN_API}/movies/${id}` : `${API}/movies/add`;
+    const method= id ? 'PUT' : 'POST';
+    const res   = await fetch(url,{method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(payload)});
+    if (!res.ok) throw new Error(await res.text());
+    closeModal('movieModal');
+    await refreshMovies();
+    alert(id ? 'Movie updated!' : 'Movie added!');
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function refreshMovies() {
+  const res = await fetch(`${API}/movies`);
+  moviesData = await res.json();
+  renderMovies(); renderDashboard(); updateCounts();
+}
+
+// ── EVENT CRUD ────────────────────────────────────────────────────────────
+function openEventModal(ev) {
+  document.getElementById('editEventId').value = ev?.id || '';
+  document.getElementById('eventModalTitle').innerText = ev ? 'Edit Event' : 'Add Event';
+  document.getElementById('eTitle').value    = ev?.title || '';
+  document.getElementById('eCat').value      = ev?.category || 'concert';
+  document.getElementById('eCity').value     = ev?.city || 'Mumbai';
+  document.getElementById('eVenue').value    = ev?.venue || '';
+  document.getElementById('eDate').value     = ev?.date?.split('T')[0] || '';
+  document.getElementById('eTime').value     = ev?.time ? ev.time.replace(' ','').replace(/(\d+):(\d+)\s*(AM|PM)/i,(m,h,min,ap)=>`${ap==='PM'&&h!='12'?String(parseInt(h)+12).padStart(2,'0'):h.padStart(2,'0')}:${min}`):'';
+  document.getElementById('ePriceFrom').value= ev?.price_from || '';
+  document.getElementById('ePriceTo').value  = ev?.price_to || '';
+  document.getElementById('eLang').value     = ev?.language || '';
+  document.getElementById('eAge').value      = ev?.age_limit || 'All Ages';
+  document.getElementById('eImage').value    = ev?.image || '';
+  document.getElementById('eDesc').value     = ev?.description || '';
+  const prev = document.getElementById('eImgPreview');
+  if (ev?.image) { prev.src=ev.image; prev.style.display='block'; } else prev.style.display='none';
+  document.getElementById('eventModal').classList.add('open');
+}
+
+function editEvent(id) { openEventModal(eventsData.find(e=>e.id===id)); }
+
+async function saveEvent() {
+  const id    = document.getElementById('editEventId').value;
+  const title = document.getElementById('eTitle').value.trim();
+  if (!title) { alert('Title is required.'); return; }
+  const timeVal = document.getElementById('eTime').value;
+  const formattedTime = timeVal ? (()=>{ const [h,m]=timeVal.split(':'); const hr=parseInt(h); return `${hr>12?hr-12:hr||12}:${m} ${hr>=12?'PM':'AM'}`; })() : '';
+  const payload = { title, category:document.getElementById('eCat').value, city:document.getElementById('eCity').value, venue:document.getElementById('eVenue').value, date:document.getElementById('eDate').value, time:formattedTime, price_from:parseInt(document.getElementById('ePriceFrom').value)||0, price_to:parseInt(document.getElementById('ePriceTo').value)||0, language:document.getElementById('eLang').value, age_limit:document.getElementById('eAge').value, image:document.getElementById('eImage').value, description:document.getElementById('eDesc').value };
+  try {
+    const token = localStorage.getItem('token');
+    const url   = id ? `${ADMIN_API}/events/${id}` : `${ADMIN_API}/events`;
+    const method= id ? 'PUT' : 'POST';
+    const res   = await fetch(url,{method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(payload)});
+    if (!res.ok) throw new Error(await res.text());
+    closeModal('eventModal');
+    await refreshEvents();
+    alert(id ? 'Event updated!' : 'Event added!');
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+async function refreshEvents() {
+  try { const res=await fetch(`${API}/events`); eventsData=await res.json(); renderEvents(); updateCounts(); } catch(e){}
+}
+
+// ── DELETE ────────────────────────────────────────────────────────────────
+function confirmDelete(type, id, name) {
+  deleteTarget = { type, id };
+  document.getElementById('confirmMsg').innerHTML = `Are you sure you want to delete <b>"${name}"</b>? This cannot be undone.`;
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+async function doDelete() {
+  if (!deleteTarget) return;
+  try {
+    const token = localStorage.getItem('token');
+    const url   = deleteTarget.type==='movie' ? `${ADMIN_API}/movies/${deleteTarget.id}` : `${ADMIN_API}/events/${deleteTarget.id}`;
+    const res   = await fetch(url,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});
+    if (!res.ok) throw new Error(await res.text());
+    closeModal('confirmModal');
+    deleteTarget.type==='movie' ? await refreshMovies() : await refreshEvents();
+  } catch(e) { alert('Error: '+e.message); }
+}
+
+// ── SEARCH TABLE ──────────────────────────────────────────────────────────
+function searchTable(tbodyId, q) {
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(row => {
+    const text = row.dataset.search||row.innerText;
+    row.style.display = !q || text.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+// ── MODAL HELPERS ─────────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function previewImg(input, previewId) {
+  const prev = document.getElementById(previewId);
+  if (input.value) { prev.src=input.value; prev.style.display='block'; } else prev.style.display='none';
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+loadAll();
+</script>
 </body>
 </html>

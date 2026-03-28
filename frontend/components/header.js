@@ -1,20 +1,20 @@
-// header.js — runs immediately, injects header HTML
+// header.js — updated with real category page links
 (function () {
   const token    = localStorage.getItem('token');
   const userName = localStorage.getItem('userName') || '';
   const city     = localStorage.getItem('city') || 'Mumbai';
 
-  // figure out which nav link is active from URL param
-  const cat = new URLSearchParams(window.location.search).get('cat') || 'movies';
+  // Detect active nav from current page filename
+  const page = window.location.pathname.split('/').pop().replace('.html','') || 'index';
 
-  function navLink(label, href, catKey) {
-    const active = cat === catKey ? 'class="active"' : '';
-    return `<a href="${href}" ${active}>${label}</a>`;
+  function navLink(label, href, pageName) {
+    const isActive = page === pageName || (page === 'index' && pageName === 'movies');
+    return `<a href="${href}" ${isActive ? 'class="active"' : ''}>${label}</a>`;
   }
 
   const authHTML = token
     ? `<div class="user-info">
-         <div class="user-avatar">${userName.charAt(0).toUpperCase() || 'U'}</div>
+         <div class="user-avatar">${(userName.charAt(0) || 'U').toUpperCase()}</div>
          <span style="font-size:14px;font-weight:500">${userName.split(' ')[0]}</span>
          <span class="logout-link" onclick="logout()">Logout</span>
        </div>`
@@ -49,27 +49,17 @@
     </div>
 
     <nav class="nav-menu">
-      ${navLink('Movies',     'index.html?cat=movies',     'movies')}
-      ${navLink('Stream',     'index.html?cat=stream',     'stream')}
-      ${navLink('Events',     'index.html?cat=events',     'events')}
-      ${navLink('Plays',      'index.html?cat=plays',      'plays')}
-      ${navLink('Sports',     'index.html?cat=sports',     'sports')}
-      ${navLink('Activities', 'index.html?cat=activities', 'activities')}
-      ${token ? '<a href="dashboard.html">My Bookings</a>' : ''}
+      ${navLink('Movies',     'index.html',     'movies')}
+      ${navLink('Stream',     'stream.html',     'stream')}
+      ${navLink('Events',     'events.html',     'events')}
+      ${navLink('Plays',      'plays.html',      'plays')}
+      ${navLink('Sports',     'sports.html',     'sports')}
+      ${navLink('Activities', 'activities.html', 'activities')}
+      ${token ? '<a href="dashboard.html" ' + (page==='dashboard'?'class="active"':'') + '>My Bookings</a>' : ''}
     </nav>
   </header>`;
 })();
 
-function changeCity(city) {
-  localStorage.setItem('city', city);
-}
-
-function handleSearch(query) {
-  if (typeof searchMovies === 'function') searchMovies(query);
-}
-
-function logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('userName');
-  window.location.href = 'index.html';
-}
+function changeCity(city) { localStorage.setItem('city', city); }
+function handleSearch(query) { if (typeof searchMovies === 'function') searchMovies(query); }
+function logout() { localStorage.removeItem('token'); localStorage.removeItem('userName'); window.location.href = 'index.html'; }

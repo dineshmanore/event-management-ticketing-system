@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activities — ShowTime</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/category-pages.css">
+  <style>
+    .act-card { background: white; border-radius: 14px; overflow: hidden; border: 1px solid #e0e0e0; cursor: pointer; transition: transform .2s, box-shadow .2s; }
+    .act-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,.12); }
+    .act-img { width: 100%; height: 200px; object-fit: cover; display: block; }
+    .act-img-ph { width: 100%; height: 200px; display: flex; align-items: center; justify-content: center; font-size: 56px; }
+    .act-body { padding: 16px; }
+    .act-badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+    .act-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .act-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .act-detail { font-size: 13px; color: #666; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .act-detail i { color: #cc0c39; width: 12px; font-size: 12px; }
+    .activities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+    .diff-badge { display: inline-flex; gap: 3px; }
+    .diff-dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; }
+    .diff-dot.on { background: #cc0c39; }
+  </style>
+</head>
+<body>
+
+<header id="header"></header>
+
+<div class="cat-hero" style="background:linear-gradient(135deg,#0a2e1a,#1a4a2e)">
+  <div class="cat-hero-overlay"></div>
+  <div class="cat-hero-content">
+    <h1><i class="fa fa-running" style="margin-right:12px;color:#cc0c39"></i>Activities</h1>
+    <p>Adventure, Workshops, Classes, Tours and unique experiences near you</p>
+  </div>
+</div>
+
+<div class="filter-strip">
+  <label>Category:</label>
+  <button class="filter-chip active" onclick="filterCat(this,'all')">All</button>
+  <button class="filter-chip" onclick="filterCat(this,'adventure')"><i class="fa fa-mountain" style="margin-right:5px"></i>Adventure</button>
+  <button class="filter-chip" onclick="filterCat(this,'workshop')"><i class="fa fa-hammer" style="margin-right:5px"></i>Workshops</button>
+  <button class="filter-chip" onclick="filterCat(this,'fitness')"><i class="fa fa-dumbbell" style="margin-right:5px"></i>Fitness</button>
+  <button class="filter-chip" onclick="filterCat(this,'food')"><i class="fa fa-utensils" style="margin-right:5px"></i>Food Tours</button>
+  <button class="filter-chip" onclick="filterCat(this,'art')"><i class="fa fa-palette" style="margin-right:5px"></i>Art & Craft</button>
+</div>
+
+<div class="search-row">
+  <i class="fa fa-search" style="color:#aaa"></i>
+  <input class="search-input" placeholder="Search activities..." oninput="searchAct(this.value)">
+  <select class="sort-select" onchange="sortAct(this.value)">
+    <option value="date">Upcoming First</option>
+    <option value="price_low">Price: Low to High</option>
+    <option value="price_high">Price: High to Low</option>
+  </select>
+</div>
+
+<div class="content-wrap">
+  <div class="results-count" id="resultsCount">Loading activities...</div>
+  <div class="activities-grid" id="activitiesGrid"></div>
+</div>
+
+<footer id="footer"></footer>
+
+<script src="components/header.js"></script>
+<script src="components/footer.js"></script>
+<script>
+const API = 'http://localhost:5000/api';
+let allActs = [], activeCat = 'all', sortBy = 'date';
+
+const catMeta = {
+  adventure: { color: '#0a2e1a', bg: '#e6f4ee', text: '#0a5c2e', icon: 'fa-mountain' },
+  workshop:  { color: '#2e1a0a', bg: '#fdf0e6', text: '#5c2e0a', icon: 'fa-hammer' },
+  fitness:   { color: '#0a1a2e', bg: '#e6eef4', text: '#0a2e5c', icon: 'fa-dumbbell' },
+  food:      { color: '#2e2a0a', bg: '#fdf8e6', text: '#5c4e0a', icon: 'fa-utensils' },
+  art:       { color: '#2e0a2e', bg: '#f4e6f4', text: '#5c0a5c', icon: 'fa-palette' },
+  default:   { color: '#1a1a2e', bg: '#e6e6f4', text: '#1a1a5c', icon: 'fa-star' }
+};
+
+async function init() {
+  try {
+    const res = await fetch(`${API}/events`);
+    const all = await res.json();
+    allActs = all.filter(e => ['adventure','workshop','fitness','food','art','activity'].includes(e.category));
+    render();
+  } catch(e) {
+    document.getElementById('activitiesGrid').innerHTML = `<div class="empty-state"><i class="fa fa-running"></i><h3>Activities coming soon!</h3><p>We're adding exciting experiences near you.</p></div>`;
+  }
+}
+
+function render() {
+  let list = [...allActs];
+  if (activeCat !== 'all') list = list.filter(e => e.category === activeCat);
+  if (sortBy === 'date')       list.sort((a,b) => new Date(a.date) - new Date(b.date));
+  if (sortBy === 'price_low')  list.sort((a,b) => a.price_from - b.price_from);
+  if (sortBy === 'price_high') list.sort((a,b) => b.price_from - a.price_from);
+
+  const grid = document.getElementById('activitiesGrid');
+  document.getElementById('resultsCount').innerHTML = `<span>${list.length}</span> activities found`;
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state"><i class="fa fa-running"></i><h3>No activities found</h3><p>Try selecting a different category.</p></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(a => actCard(a)).join('');
+}
+
+function actCard(e) {
+  const meta = catMeta[e.category] || catMeta.default;
+  const d = e.date ? new Date(e.date).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : 'Ongoing';
+  const img = e.image
+    ? `<img class="act-img" src="${e.image}" alt="${e.title}" onerror="this.outerHTML='<div class=act-img-ph style=background:${meta.color};color:rgba(255,255,255,.3)><i class=fa ${meta.icon}></i></div>'">`
+    : `<div class="act-img-ph" style="background:${meta.color};color:rgba(255,255,255,.3)"><i class="fa ${meta.icon}"></i></div>`;
+
+  return `<div class="act-card" onclick="alert('Booking for \'${e.title}\' coming soon!')">
+    ${img}
+    <div class="act-body">
+      <span class="act-badge" style="background:${meta.bg};color:${meta.text}">${e.category || 'Activity'}</span>
+      <div class="act-title">${e.title}</div>
+      <div class="act-desc">${e.description || 'An amazing experience awaits.'}</div>
+      <div class="act-detail"><i class="fa fa-calendar"></i>${d}</div>
+      <div class="act-detail"><i class="fa fa-clock"></i>${e.time || 'Flexible timings'}</div>
+      <div class="act-detail"><i class="fa fa-map-marker-alt"></i>${e.venue || ''}, ${e.city || ''}</div>
+      ${e.age_limit ? `<div class="act-detail"><i class="fa fa-user"></i>Age: ${e.age_limit}</div>` : ''}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid #f5f5f5">
+        <div>
+          <div style="font-size:17px;font-weight:700">₹${e.price_from}${e.price_to && e.price_to !== e.price_from ? '–₹'+e.price_to : ''}</div>
+          <div style="font-size:11px;color:#888">per person</div>
+        </div>
+        <button class="book-btn">Book Now</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function filterCat(btn, cat) { document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); activeCat = cat; render(); }
+function sortAct(val) { sortBy = val; render(); }
+function searchAct(q) {
+  if (!q.trim()) { render(); return; }
+  const f = allActs.filter(e => e.title.toLowerCase().includes(q.toLowerCase()) || (e.city && e.city.toLowerCase().includes(q.toLowerCase())));
+  document.getElementById('resultsCount').innerHTML = `<span>${f.length}</span> results`;
+  document.getElementById('activitiesGrid').innerHTML = f.map(a => actCard(a)).join('');
+}
+
+init();
+</script>
+</body>
+</html>
