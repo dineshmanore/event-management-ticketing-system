@@ -1,4 +1,3 @@
-const API = 'http://localhost:5000/api';
 
 // Redirect if already logged in
 window.addEventListener('DOMContentLoaded', () => {
@@ -37,6 +36,7 @@ async function signup() {
     });
 
     const data = await res.json();
+    console.log("FULL RESPONSE:", data);
 
     if (data.message === 'User created') {
       alert('Account created! Please sign in.');
@@ -50,13 +50,17 @@ async function signup() {
     showError('Server error. Please try again.');
   }
 }
-
 async function login() {
+  console.log("LOGIN CLICKED");
+
   hideError();
+
   const email = document.getElementById('email')?.value.trim();
   const password = document.getElementById('password')?.value;
 
-  if (!email || !password) return showError('Please enter your email and password.');
+  if (!email || !password) {
+    return showError('Please enter your email and password.');
+  }
 
   try {
     const res = await fetch(`${API}/auth/login`, {
@@ -65,22 +69,32 @@ async function login() {
       body: JSON.stringify({ email, password })
     });
 
-    const data = await res.json();
+    console.log("STATUS:", res.status);
 
-    if (data.token) {
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userName', data.name || email.split('@')[0]);
-      window.location.href = 'index.html';
-    } else {
-      showError(data.message || 'Invalid email or password.');
-    }
+    const data = await res.json();
+    console.log("DATA:", data);
+
+    if (data.token && data.user) {
+  localStorage.setItem('token', data.token);
+  localStorage.setItem('user', JSON.stringify(data.user));
+
+  console.log("REAL USER:", data.user);
+
+  window.location.href = 'index.html';
+} else {
+  console.error("INVALID RESPONSE:", data);
+  showError("Login failed: invalid server response");
+}
+
   } catch (err) {
+    console.error("ERROR:", err);
     showError('Server error. Please try again.');
   }
 }
 
 function logout() {
   localStorage.removeItem('token');
-  localStorage.removeItem('userName');
+  localStorage.removeItem('user');   // 👈 FIX THIS
   window.location.href = 'index.html';
 }
+

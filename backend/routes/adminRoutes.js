@@ -2,26 +2,29 @@ const router = require('express').Router()
 const c      = require('../controllers/adminController')
 const auth   = require('../middleware/authMiddleware')
 
-// All admin routes require a valid JWT token
-// In production you'd add a separate admin-role check middleware
+// Actors (no auth — needed before login in some flows, but safe read-only)
+router.get('/actors', c.getActors)
 
-router.get('/stats',            auth, c.getStats)
+// Stats
+router.get('/stats', auth, c.getStats)
 
-// Movies
-router.put('/movies/:id',       auth, c.updateMovie)
-router.delete('/movies/:id',    auth, c.deleteMovie)
+// Movies — BUG FIX: POST /movies was missing entirely.
+// saveMovie() in admin.js POSTed here but got 404 every time.
+router.post('/movies',       auth, c.addMovie)
+router.put('/movies/:id',    auth, c.updateMovie)
+router.delete('/movies/:id', auth, c.deleteMovie)
 
 // Events
-router.get('/events',           auth, (req, res) => {
+router.get('/events', auth, (req, res) => {
   const db = require('../models/db')
   db.query('SELECT * FROM events ORDER BY date ASC', (err, result) => {
     if (err) return res.status(500).json({ message: 'DB error' })
     res.json(result)
   })
 })
-router.post('/events',          auth, c.addEvent)
-router.put('/events/:id',       auth, c.updateEvent)
-router.delete('/events/:id',    auth, c.deleteEvent)
+router.post('/events',       auth, c.addEvent)
+router.put('/events/:id',    auth, c.updateEvent)
+router.delete('/events/:id', auth, c.deleteEvent)
 
 // Bookings
 router.get('/bookings',         auth, c.getAllBookings)

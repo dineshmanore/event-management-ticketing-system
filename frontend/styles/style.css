@@ -223,7 +223,7 @@ body {
   height: 400px;
   background-size: cover;
   background-repeat: no-repeat;
-  background-position: center top;
+  background-position: 75% center;
   background-color: #000;
   display: flex;
   align-items: flex-end;
@@ -232,6 +232,12 @@ body {
   border-radius: 16px;
   overflow: hidden;
   transition: background-image 0.6s ease;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    background-position: 80% center;
+  }
 }
 
 .hero-overlay {

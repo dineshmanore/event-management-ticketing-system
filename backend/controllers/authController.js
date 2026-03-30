@@ -25,26 +25,35 @@ exports.signup = (req, res) => {
 }
 
 exports.login = (req, res) => {
-  const { email, password } = req.body
+  const { email, password } = req.body;
 
   if (!email || !password)
-    return res.status(400).json({ message: 'Email and password required' })
+    return res.status(400).json({ message: 'Email and password required' });
 
   db.query('SELECT * FROM users WHERE email = ?', [email], (err, result) => {
-    if (err) return res.status(500).json({ message: 'Database error' })
-    if (result.length === 0) return res.status(404).json({ message: 'User not found' })
+    if (err) return res.status(500).json({ message: 'Database error' });
+    if (result.length === 0) return res.status(404).json({ message: 'User not found' });
 
-    const user = result[0]
-    const valid = bcrypt.compareSync(password, user.password)
+    const user = result[0];
 
-    if (!valid) return res.status(401).json({ message: 'Incorrect password' })
+    const valid = bcrypt.compareSync(password, user.password);
+    if (!valid) return res.status(401).json({ message: 'Incorrect password' });
 
+    // 🔥 INCLUDE ROLE IN TOKEN
     const token = jwt.sign(
-      { id: user.id },
+      { id: user.id, role: user.role },
       process.env.JWT_SECRET || 'showtime_secret',
       { expiresIn: '7d' }
-    )
+    );
 
-    res.json({ token, name: user.name })
-  })
-}
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role   // 🔥 MUST
+      }
+    });
+  });
+};
