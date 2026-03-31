@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Event — ShowTime Premium</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { background: #0b0c10; font-family: 'Inter', sans-serif; color: #fff; margin:0; padding:0; min-height: 100vh; display: flex; flex-direction: column; }
+    
+    .eb-backdrop { position: fixed; inset: 0; z-index: -1; background-size: cover; background-position: center; mix-blend-mode: luminosity; opacity: 0.15; filter: blur(30px) saturate(2); }
+    .eb-backdrop::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, #0b0c10 80%); }
+
+    .eb-page-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px 20px; }
+    
+    .eb-card { 
+      background: rgba(255, 255, 255, 0.03); 
+      backdrop-filter: blur(20px); 
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.08); 
+      border-radius: 24px; 
+      width: 100%; 
+      max-width: 640px; 
+      overflow: hidden; 
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1); 
+      animation: swoopIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    @keyframes swoopIn {
+      from { transform: translateY(40px) scale(0.95); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .eb-hero { 
+      height: 280px; 
+      background: #111; 
+      position: relative; 
+      background-size: cover; 
+      background-position: center; 
+    }
+    
+    .eb-hero-overlay { 
+      position: absolute; 
+      inset: 0; 
+      background: linear-gradient(180deg, rgba(11,12,16,0) 0%, rgba(11,12,16,0.95) 100%); 
+    }
+    
+    .eb-header { position: absolute; bottom: 24px; left: 32px; right: 32px; z-index: 2; }
+    .eb-header h2 { font-size: 32px; font-weight: 800; margin: 0 0 8px 0; letter-spacing: -0.5px; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
+    .eb-header p { font-size: 15px; display: flex; gap: 16px; color: #a1a1aa; font-weight: 500; margin: 0; }
+    .eb-header p span { display: flex; align-items: center; gap: 6px; }
+    .eb-header p span i { color: #f43f5e; }
+    
+    .eb-body { padding: 40px 32px; }
+    
+    .t-row { 
+      display: flex; justify-content: space-between; align-items: center; 
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); 
+      padding: 24px; border-radius: 16px; margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .t-info h4 { font-size: 18px; font-weight: 700; margin: 0 0 6px 0; color: #fff; }
+    .t-info p { font-size: 14px; color: #a1a1aa; margin: 0; }
+    
+    .t-counter { display: flex; align-items: center; background: rgba(0,0,0,0.4); padding: 6px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.07); }
+    .btn-qty { 
+      width: 40px; height: 40px; border-radius: 50%; border: none; 
+      background: rgba(244, 63, 94, 0.1); color: #f43f5e; font-size: 20px; font-weight: 400; 
+      cursor: pointer; display: flex; align-items: center; justify-content: center; 
+      transition: all 0.2s;
+    }
+    .btn-qty:hover { background: #f43f5e; color: #fff; transform: scale(1.05); box-shadow: 0 0 15px rgba(244, 63, 94, 0.4); }
+    .btn-qty:active { transform: scale(0.95); }
+    .qty-display { font-size: 18px; font-weight: 700; width: 44px; text-align: center; color: #fff; }
+    
+    .t-summary { 
+      position: relative; padding: 0; margin-bottom: 32px; 
+    }
+    .s-row { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 14px; color: #a1a1aa; font-weight: 500; }
+    .s-row span:last-child { color: #e4e4e7; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .s-row.total { 
+      font-weight: 800; color: #fff; font-size: 22px; margin-top: 20px; padding-top: 20px; 
+      border-top: 1px dashed rgba(255,255,255,0.15); 
+    }
+    .s-row.total span:last-child { color: #f43f5e; }
+    
+    .pay-btn { 
+      width: 100%; padding: 18px; 
+      background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); 
+      color: white; border: none; border-radius: 14px; 
+      font-size: 17px; font-weight: 700; cursor: pointer; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 25px rgba(244, 63, 94, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    .pay-btn:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 15px 35px rgba(244, 63, 94, 0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+      background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+    }
+    .pay-btn:active { transform: translateY(1px); }
+
+    .err-state {text-align:center; padding: 60px 40px;}
+    .err-icon { font-size: 64px; color: rgba(255,255,255,0.1); margin-bottom: 24px; }
+  </style>
+</head>
+<body>
+
+<div class="eb-backdrop" id="ebBackdrop"></div>
+<header id="header"></header>
+
+<div class="eb-page-wrap">
+  <div class="eb-card">
+    <div class="eb-hero" id="ebHero">
+      <div class="eb-hero-overlay"></div>
+      <div class="eb-header">
+        <h2 id="ebTitle">Preparing your experience...</h2>
+        <p><span id="ebVenue"><i class="fa fa-map-marker-alt"></i> Venue</span> <span id="ebDate"><i class="fa fa-calendar-alt"></i> Date</span></p>
+      </div>
+    </div>
+    
+    <div class="eb-body" id="ebBody">
+      <div class="t-row">
+        <div class="t-info">
+          <h4>General Admission</h4>
+          <p id="ebPriceText">Loading pricing...</p>
+        </div>
+        <div class="t-counter">
+          <button class="btn-qty" onclick="changeQty(-1)"><i class="fa fa-minus" style="font-size:14px"></i></button>
+          <div class="qty-display" id="qtyDisplay">1</div>
+          <button class="btn-qty" onclick="changeQty(1)"><i class="fa fa-plus" style="font-size:14px"></i></button>
+        </div>
+      </div>
+      
+      <div class="t-summary">
+        <div class="s-row">
+          <span>Tickets (<span id="sumQty">1</span>)</span>
+          <span id="sumBase">₹0</span>
+        </div>
+        <div class="s-row">
+          <span>Convenience Fee</span>
+          <span id="sumFee">₹0</span>
+        </div>
+        <div class="s-row total">
+          <span>Total Amount</span>
+          <span id="sumTotal">₹0</span>
+        </div>
+      </div>
+      
+      <button class="pay-btn" onclick="proceedToPay()">Secure Checkout <i class="fa fa-arrow-right" style="margin-left:8px"></i></button>
+    </div>
+  </div>
+</div>
+
+<footer id="footer"></footer>
+
+<script src="components/header.js"></script>
+<script src="components/footer.js"></script>
+<script>
+const API = 'http://localhost:5000/api';
+const params = new URLSearchParams(window.location.search);
+const eventId = params.get('id') || localStorage.getItem('selectedEventId');
+
+let basePrice = 0;
+let qty = 1;
+let eventData = null;
+
+if (!eventId) {
+    document.getElementById('ebHero').style.display = 'none';
+    document.getElementById('ebBody').innerHTML = `
+      <div class="err-state">
+        <div class="err-icon"><i class="fa fa-ticket-alt"></i></div>
+        <h3 style="font-size:24px; font-weight:800; margin:0 0 12px 0;">No Event Selected</h3>
+        <p style="color:#a1a1aa; margin:0 0 32px 0; font-size:15px; line-height:1.6;">We couldn't locate the event you were trying to book. It might have ended or the link is invalid.</p>
+        <button class="pay-btn" onclick="window.location.href='events.html'">Explore Events <i class="fa fa-compass" style="margin-left:8px"></i></button>
+      </div>
+    `;
+}
+
+async function loadEvent() {
+  if(!eventId) return;
+  try {
+    const res = await fetch(`${API}/events/${eventId}`);
+    eventData = await res.json();
+    if (eventData) {
+      document.title = `Book ${eventData.title} — ShowTime Premium`;
+      document.getElementById('ebTitle').innerText = eventData.title;
+      document.getElementById('ebVenue').innerHTML = `<i class="fa fa-map-marker-alt"></i> ${eventData.venue}, ${eventData.city}`;
+      const d = eventData.date ? new Date(eventData.date).toLocaleDateString('en-US', {weekday: 'long', month: 'short', day: 'numeric', year: 'numeric'}) : 'Date TBA';
+      document.getElementById('ebDate').innerHTML = `<i class="fa fa-calendar-alt"></i> ${d}`;
+      
+      const imgUrl = eventData.banner || eventData.image || 'https://images.unsplash.com/photo-1540039155732-6761b54f228a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80';
+      document.getElementById('ebHero').style.backgroundImage = `url(${imgUrl})`;
+      document.getElementById('ebBackdrop').style.backgroundImage = `url(${imgUrl})`;
+      
+      basePrice = eventData.price_from || 500;
+      document.getElementById('ebPriceText').innerHTML = `₹${basePrice.toLocaleString('en-IN')} <span style="opacity:0.6;font-size:13px;font-weight:400">/ ticket</span>`;
+      updateSummary();
+    }
+  } catch(e) { console.error('Error fetching event', e); }
+}
+
+function changeQty(delta) {
+  qty += delta;
+  if (qty < 1) qty = 1;
+  if (qty > 10) { qty = 10; alert('Maximum 10 tickets per booking.'); }
+  document.getElementById('qtyDisplay').innerText = qty;
+  
+  // Subtle animation on change
+  const disp = document.getElementById('qtyDisplay');
+  disp.style.transform = 'scale(1.2)';
+  setTimeout(() => disp.style.transform = 'scale(1)', 150);
+  
+  updateSummary();
+}
+
+function updateSummary() {
+  const base = basePrice * qty;
+  const fee = Math.round(base * 0.1);
+  const total = base; 
+  
+  document.getElementById('sumQty').innerText = qty;
+  document.getElementById('sumBase').innerText = `₹${base.toLocaleString('en-IN')}`;
+  document.getElementById('sumFee').innerText = `₹${fee.toLocaleString('en-IN')}`;
+  document.getElementById('sumTotal').innerText = `₹${(base + fee).toLocaleString('en-IN')}`;
+}
+
+function proceedToPay() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Please sign in to secure your tickets.');
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  const totalPrice = basePrice * qty;
+  localStorage.setItem('eventId', eventId);
+  localStorage.setItem('bookingType', 'event');
+  localStorage.setItem('ticketCount', qty);
+  localStorage.setItem('totalPrice', totalPrice);
+  localStorage.setItem('selectedSeats', JSON.stringify([])); 
+  if (eventData && eventData.date) {
+    localStorage.setItem('bookingDate', eventData.date.split('T')[0]);
+  } else {
+    localStorage.setItem('bookingDate', new Date().toISOString().split('T')[0]);
+  }
+  
+  // Visual feedback before redirect
+  const btn = document.querySelector('.pay-btn');
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Securing Tickets...';
+  btn.style.opacity = '0.8';
+  btn.style.pointerEvents = 'none';
+  
+  setTimeout(() => {
+     window.location.href = `payment.html?eventId=${eventId}`;
+  }, 600);
+}
+
+if(eventId) loadEvent();
+</script>
+</body>
+</html>

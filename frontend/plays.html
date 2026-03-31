@@ -35,9 +35,10 @@
 </div>
 
 <div class="city-banner">
-  <div><strong id="cityLabel">Plays in Mumbai</strong><p>Live theatre experiences in your city</p></div>
+  <div><strong id="cityLabel">All Plays</strong><p>Live theatre experiences across all cities</p></div>
   <select onchange="filterCity(this.value)" style="padding:8px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:rgba(255,255,255,.1);color:white;font-family:'Poppins',sans-serif;cursor:pointer;font-size:13px">
-    <option value="Mumbai" selected>Mumbai</option>
+    <option value="all" selected>All Cities</option>
+    <option value="Mumbai">Mumbai</option>
     <option value="Delhi">Delhi</option>
     <option value="Bangalore">Bangalore</option>
     <option value="Pune">Pune</option>
@@ -75,7 +76,7 @@
 <script src="components/footer.js"></script>
 <script>
 const API = 'http://localhost:5000/api';
-let allPlays = [], activeCat = 'all', activeCity = 'Mumbai', sortBy = 'date';
+let allPlays = [], activeCat = 'all', activeCity = 'all', sortBy = 'date';
 
 const bgColors = { play:'#1a0a2e', comedy:'#2e1a00', musical:'#001a2e', children:'#002e1a', event:'#1a0a2e' };
 
@@ -115,7 +116,7 @@ function playCard(e) {
     ? `<img class="play-poster" src="${e.image}" alt="${e.title}" onerror="this.outerHTML='<div class=play-poster-placeholder style=background:${bg};color:rgba(255,255,255,.4)><i class=fa fa-theater-masks></i></div>'">`
     : `<div class="play-poster-placeholder" style="background:${bg};color:rgba(255,255,255,.4)"><i class="fa fa-theater-masks"></i></div>`;
 
-  return `<div class="play-card" onclick="alert('Booking for \'${e.title}\' coming soon!')">
+  return `<div class="play-card" onclick="localStorage.setItem('selectedEventId', '${e.id}'); window.location.href='event-booking.html?id=${e.id}'">
     ${img}
     <div class="play-body">
       <div class="play-title">${e.title}</div>

@@ -183,28 +183,14 @@ async function confirmSeats() {
     }
   } catch (e) { /* proceed anyway */ }
 
-  try {
-    const res = await fetch(`${API}/bookings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
-      },
-      body: JSON.stringify({ movieId, seats: seatIds, totalPrice, date: selectedDate })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      alert(data.message || 'Booking failed. Please try again.');
-      return;
-    }
-    localStorage.setItem('selectedSeats', JSON.stringify(seatIds));
-    localStorage.setItem('totalPrice',    totalPrice);
-    localStorage.setItem('bookingDate',   selectedDate);
-    window.location.href = 'payment.html';
-  } catch (e) {
-    console.error(e);
-    alert('Server error. Please try again.');
-  }
+  // Bypass premature DB insertion to prevent locking.
+  // Save selections to local storage and forward to payment process.
+  localStorage.setItem('selectedSeats', JSON.stringify(seatIds));
+  localStorage.setItem('totalPrice',    totalPrice);
+  localStorage.setItem('bookingDate',   selectedDate || new Date().toISOString().split('T')[0]);
+  localStorage.setItem('bookingType',   'movie'); // Distinguish between movies and events
+  
+  window.location.href = `payment.html?id=${movieId}`;
 }
 
 loadMovieTitle();

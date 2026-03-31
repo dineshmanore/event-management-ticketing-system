@@ -39,8 +39,8 @@
 <div class="city-banner">
   <div><strong id="cityLabel">Sports in Mumbai</strong><p>Live sports events near you</p></div>
   <select onchange="filterCity(this.value)" style="padding:8px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:rgba(255,255,255,.1);color:white;font-family:'Poppins',sans-serif;cursor:pointer;font-size:13px">
-    <option value="all">All Cities</option>
-    <option value="Mumbai" selected>Mumbai</option>
+    <option value="all" selected>All Cities</option>
+    <option value="Mumbai">Mumbai</option>
     <option value="Delhi">Delhi</option>
     <option value="Bangalore">Bangalore</option>
     <option value="Pune">Pune</option>
@@ -131,7 +131,7 @@ function sportCard(e) {
     ? `<img class="sport-banner" src="${e.image}" alt="${e.title}" onerror="this.outerHTML='<div class=sport-banner-placeholder style=background:${bg};color:rgba(255,255,255,.3)><i class=fa ${icon}></i></div>'">`
     : `<div class="sport-banner-placeholder" style="background:${bg};color:rgba(255,255,255,.3)"><i class="fa ${icon}"></i></div>`;
 
-  return `<div class="sport-card" onclick="alert('Booking for \'${e.title}\' coming soon!')">
+  return `<div class="sport-card" onclick="localStorage.setItem('selectedEventId', '${e.id}'); window.location.href='event-booking.html?id=${e.id}'">
     ${img}
     <div class="sport-body">
       <div class="sport-league">${e.category ? e.category.toUpperCase() : 'SPORTS'}</div>

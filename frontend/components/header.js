@@ -63,9 +63,10 @@
           <span class="logo-text">ShowTime</span>
         </a>
 
-        <div class="search-box">
+        <div class="search-box" style="position:relative">
           <i class="fa fa-search"></i>
-          <input type="text" placeholder="Search for Movies, Events..." oninput="handleSearch(this.value)">
+          <input type="text" placeholder="Search for Movies, Events..." oninput="handleSearch(this.value)" autocomplete="off">
+          <div id="searchResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.15);max-height:380px;overflow-y:auto;z-index:9999;margin-top:12px;width:350px;"></div>
         </div>
 
         <div class="right-section">
@@ -132,6 +133,46 @@ function logout() {
   window.location.href = 'index.html';
 }
 
-function handleSearch(query) {
-  if (typeof searchMovies === 'function') searchMovies(query);
+let searchTimeout;
+async function handleSearch(query) {
+  const container = document.getElementById('searchResults');
+  if (!query.trim()) {
+    container.style.display = 'none';
+    return;
+  }
+  
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/movies/search?q=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error('Search failed');
+      const results = await res.json();
+      
+      if (results.length === 0) {
+        container.innerHTML = '<div style="padding:16px;color:#888;font-size:14px;text-align:center">No movies found</div>';
+      } else {
+        container.innerHTML = results.map(m => `
+          <a href="movie.html?id=${m.id}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;text-decoration:none;color:var(--text);border-bottom:1px solid #eee;transition:background .2s">
+            <img src="${m.poster || 'https://via.placeholder.com/40x60'}" style="width:40px;height:60px;object-fit:cover;border-radius:6px">
+            <div>
+              <div style="font-weight:600;font-size:14px;margin-bottom:4px;color:#111">${m.title}</div>
+              <div style="font-size:12px;color:#777">${m.genre || ''} • ★ ${m.rating || 0}</div>
+            </div>
+          </a>
+        `).join('');
+      }
+      container.style.display = 'block';
+    } catch(e) {
+      console.error(e);
+      container.style.display = 'none';
+    }
+  }, 300);
 }
+
+// Close search if clicked outside
+window.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-box')) {
+    const r = document.getElementById('searchResults');
+    if (r) r.style.display = 'none';
+  }
+});

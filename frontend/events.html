@@ -24,10 +24,10 @@
 
 <!-- CITY BANNER -->
 <div class="city-banner">
-  <div><strong id="cityLabel">Events in Mumbai</strong><p>Showing upcoming events in your city</p></div>
+  <div><strong id="cityLabel">All Events</strong><p>Showing upcoming events in all cities</p></div>
   <select id="cityFilter" onchange="filterCity(this.value)" style="padding:8px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:rgba(255,255,255,.1);color:white;font-family:'Poppins',sans-serif;cursor:pointer;font-size:13px">
-    <option value="all">All Cities</option>
-    <option value="Mumbai" selected>Mumbai</option>
+    <option value="all" selected>All Cities</option>
+    <option value="Mumbai">Mumbai</option>
     <option value="Delhi">Delhi</option>
     <option value="Bangalore">Bangalore</option>
     <option value="Hyderabad">Hyderabad</option>
@@ -69,7 +69,7 @@
 <script src="components/footer.js"></script>
 <script>
 const API = 'http://localhost:5000/api';
-let allEvents = [], activeCat = 'all', activeCity = 'Mumbai', sortBy = 'date';
+let allEvents = [], activeCat = 'all', activeCity = 'all', sortBy = 'date';
 
 const catIcons = { concert:'fa-music', festival:'fa-star', comedy:'fa-laugh', workshop:'fa-hammer', exhibition:'fa-images', event:'fa-calendar' };
 const catColors = { concert:'#8b1a2e', festival:'#1a3a5c', comedy:'#3a5c1a', workshop:'#5c3a1a', exhibition:'#1a4a4a', event:'#4a1a5c' };
@@ -111,7 +111,7 @@ function eventCard(e) {
     ? `<img class="event-thumb" src="${e.image}" alt="${e.title}" onerror="this.outerHTML='<div class=event-thumb-placeholder style=background:${bg}><i class=fa style=font-size:48px> </i></div>'">`
     : `<div class="event-thumb-placeholder" style="background:${bg}"><i class="fa ${icon}"></i></div>`;
   return `
-  <div class="event-card" onclick="alert('Booking for ${e.title} — coming soon!')">
+  <div class="event-card" onclick="localStorage.setItem('selectedEventId', '${e.id}'); window.location.href='event-booking.html?id=${e.id}'">
     ${imgHtml}
     <div class="event-body">
       <span class="event-cat-badge">${e.category || 'Event'}</span>

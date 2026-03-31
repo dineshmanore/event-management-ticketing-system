@@ -43,24 +43,24 @@ exports.updateMovie = (req, res) => {
     (err) => {
       if (err) return res.status(500).json({ message: 'DB error', error: err.message })
 
-      // Update cast: delete old, insert new
-      if (!cast || !Array.isArray(cast) || cast.length === 0) {
-        return res.json({ message: 'Movie updated' })
-      }
-
+      // Update cast: always delete old cast first
       db.query('DELETE FROM movie_cast WHERE movie_id = ?', [id], (delErr) => {
-        if (delErr) return res.json({ message: 'Movie updated (cast unchanged)' })
+        if (delErr) return res.status(500).json({ message: 'DB error', error: delErr.message });
 
-        const castValues = cast.map(c => [id, c.actor_id, c.role || 'Unknown'])
+        if (!cast || !Array.isArray(cast) || cast.length === 0) {
+          return res.json({ message: 'Movie updated (no cast)' });
+        }
+
+        const castValues = cast.map(c => [id, c.actor_id, c.role || 'Unknown']);
         db.query(
           'INSERT INTO movie_cast (movie_id, actor_id, role) VALUES ?',
           [castValues],
           (castErr) => {
-            if (castErr) console.error('Cast update error:', castErr.message)
-            res.json({ message: 'Movie updated' })
+            if (castErr) console.error('Cast update error:', castErr.message);
+            res.json({ message: 'Movie updated' });
           }
-        )
-      })
+        );
+      });
     }
   )
 }

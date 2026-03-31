@@ -82,10 +82,10 @@ function renderCategoryPage(cat) {
 function renderAll(movies) {
   if (!movies.length) return;
 
-  const nowShowing  = movies.slice(0, 8);
+  const nowShowing  = [...movies].sort((a,b) => new Date(b.release_date || 0) - new Date(a.release_date || 0)).slice(0, 8);
   const recommended = [...movies].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 10);
-  const premieres   = movies.slice(3, 9);
   const trending    = [...movies].sort((a, b) => (b.votes || 0) - (a.votes || 0)).slice(0, 8);
+  const premieres   = [...movies].filter(m => m.category === 'Premiere').slice(0, 8);
 
   renderRow(nowShowing,  'nowShowing');
   renderRow(recommended, 'recommended');
@@ -200,68 +200,6 @@ function searchMovies(query) {
   renderAll(filtered);
 }
 
-// FIX #5: "See All" now opens a full-page overlay grid instead of doing nothing
-// Called from index.html See All buttons
-function showSeeAll(event, section) {
-  event.preventDefault();
-
-  const sectionTitles = {
-    nowShowing:  'Now Showing',
-    recommended: 'Recommended For You',
-    premieres:   'Premieres',
-    trending:    'Trending Now'
-  };
-
-  let movies;
-  switch (section) {
-    case 'recommended':
-      movies = [...allMovies].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      break;
-    case 'trending':
-      movies = [...allMovies].sort((a, b) => (b.votes || 0) - (a.votes || 0));
-      break;
-    case 'premieres':
-      movies = allMovies.slice(3);
-      break;
-    default:
-      movies = [...allMovies];
-  }
-
-  const existing = document.getElementById('seeAllOverlay');
-  if (existing) existing.remove();
-
-  const overlay = document.createElement('div');
-  overlay.id = 'seeAllOverlay';
-  overlay.style.cssText = `
-    position:fixed;inset:0;background:#f8f8f8;z-index:9999;overflow-y:auto;animation:fadeIn .2s;
-  `;
-  overlay.innerHTML = `
-    <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>
-    <div style="position:sticky;top:0;background:white;padding:18px 40px;border-bottom:1px solid #eee;
-                display:flex;align-items:center;justify-content:space-between;z-index:1;box-shadow:0 2px 8px rgba(0,0,0,.06)">
-      <div>
-        <h2 style="font-size:22px;font-weight:700;margin:0 0 2px">${sectionTitles[section] || 'All Movies'}</h2>
-        <p style="font-size:13px;color:#888;margin:0">${movies.length} movies</p>
-      </div>
-      <button onclick="closeSeeAll()"
-              style="background:#cc0c39;color:white;border:none;padding:10px 22px;border-radius:8px;
-                     font-size:14px;font-weight:600;cursor:pointer;">✕ Close</button>
-    </div>
-    <div style="padding:30px 40px;">
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:24px;">
-        ${movies.map(m => createMovieCard(m)).join('')}
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  document.body.style.overflow = 'hidden';
-}
-
-function closeSeeAll() {
-  const o = document.getElementById('seeAllOverlay');
-  if (o) o.remove();
-  document.body.style.overflow = '';
-}
 
 function showError(msg) {
   const hero = document.getElementById('heroBanner');

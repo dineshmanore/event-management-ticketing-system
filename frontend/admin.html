@@ -128,6 +128,7 @@
     <div class="nav-section">Content</div>
     <div class="nav-item" onclick="goto('movies')"><i class="fa fa-film"></i>Movies<span class="nav-count" id="movieCount">0</span></div>
     <div class="nav-item" onclick="goto('events')"><i class="fa fa-calendar-alt"></i>Events<span class="nav-count" id="eventCount">0</span></div>
+    <div class="nav-item" onclick="goto('streams')"><i class="fa fa-play-circle"></i>Streams<span class="nav-count" id="streamCount">0</span></div>
     <div class="nav-section">Transactions</div>
     <div class="nav-item" onclick="goto('bookings')"><i class="fa fa-ticket-alt"></i>Bookings<span class="nav-count" id="bookingCount">0</span></div>
     <div class="nav-item" onclick="goto('users')"><i class="fa fa-users"></i>Users<span class="nav-count" id="userCount">0</span></div>
@@ -232,6 +233,22 @@
     </div>
   </div>
 
+  <!-- STREAMS PAGE -->
+  <div class="page" id="page-streams">
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Streams</div>
+        <div style="display:flex;gap:10px">
+          <div class="table-search"><i class="fa fa-search" style="color:#aaa"></i><input type="text" placeholder="Search streams..." oninput="searchTable('streamsTable',this.value)"></div>
+          <button class="btn-primary" onclick="openStreamModal()"><i class="fa fa-plus"></i>Add Stream</button>
+        </div>
+      </div>
+      <table class="tbl"><thead><tr><th>Poster</th><th>Title</th><th>Language</th><th>Release Date</th><th>Rent (₹)</th><th>Buy (₹)</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="streamsTable"><tr class="empty-row"><td colspan="8">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- BOOKINGS PAGE -->
   <div class="page" id="page-bookings">
     <div class="table-card">
@@ -313,8 +330,9 @@
         <div class="form-group"><label>Rating (0–10)</label><input type="number" id="mRating" min="0" max="10" step="0.1" placeholder="8.5"></div>
         <div class="form-group"><label>Votes</label><input type="number" id="mVotes" placeholder="150000"></div>
       </div>
-      <div class="form-group"><label>Category</label>
-        <select id="mCategory"><option value="Movies">Movies</option><option value="Premiere">Premiere</option><option value="Stream">Stream</option></select>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+        <input type="checkbox" id="mPremiere" style="width:18px;height:18px;margin:0;">
+        <label for="mPremiere" style="margin:0;font-size:14px;color:var(--text);font-weight:600;cursor:pointer;">Add to Premieres</label>
       </div>
       <div class="form-group"><label>Poster URL</label><input type="url" id="mPoster" placeholder="https://image.tmdb.org/..." oninput="previewImg(this,'mPosterPreview')">
         <img id="mPosterPreview" class="img-preview" style="display:none">
@@ -377,6 +395,47 @@
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('eventModal')">Cancel</button>
       <button class="btn-primary" onclick="saveEvent()"><i class="fa fa-save"></i>Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- STREAM MODAL -->
+<div class="modal-bg" id="streamModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="streamModalTitle">Add Stream</div>
+      <button class="modal-close" onclick="closeModal('streamModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editStreamId">
+      <div class="form-row">
+        <div class="form-group" style="grid-column:1/-1"><label>Stream Title *</label><input type="text" id="sTitle" placeholder="e.g. Inception"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Genres</label><input type="text" id="sGenres" placeholder="Sci-Fi, Action"></div>
+        <div class="form-group"><label>Language</label><input type="text" id="sLang" placeholder="English"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Rating (0-10)</label><input type="number" id="sRating" placeholder="8.8" step="0.1" max="10"></div>
+        <div class="form-group"><label>Duration (mins)</label><input type="number" id="sDuration" placeholder="148"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Rent Price (₹)</label><input type="number" id="sRent" placeholder="99"></div>
+        <div class="form-group"><label>Buy Price (₹)</label><input type="number" id="sBuy" placeholder="499"></div>
+      </div>
+      <div class="form-group"><label>Release Date</label><input type="date" id="sDate"></div>
+      <div class="form-group"><label>Trailer URL</label><input type="url" id="sTrailer" placeholder="https://youtube.com/..."></div>
+      <div class="form-group"><label>Poster URL</label><input type="url" id="sPoster" placeholder="https://..." oninput="previewImg(this,'sPosterPreview')">
+        <img id="sPosterPreview" class="img-preview" style="display:none">
+      </div>
+      <div class="form-group"><label>Banner URL</label><input type="url" id="sBanner" placeholder="https://..." oninput="previewImg(this,'sBannerPreview')">
+        <img id="sBannerPreview" class="img-preview" style="display:none">
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="sDesc" placeholder="Brief description of the stream..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('streamModal')">Cancel</button>
+      <button class="btn-primary" onclick="saveStream()"><i class="fa fa-save"></i>Save Stream</button>
     </div>
   </div>
 </div>

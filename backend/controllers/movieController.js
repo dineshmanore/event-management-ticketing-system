@@ -7,6 +7,20 @@ exports.getMovies = (req, res) => {
   })
 }
 
+exports.searchMovies = (req, res) => {
+  const { q } = req.query;
+  if (!q) return res.json([]);
+  const searchPattern = `%${q}%`;
+  db.query(
+    'SELECT * FROM movies WHERE title LIKE ? OR genre LIKE ? OR language LIKE ? LIMIT 10', 
+    [searchPattern, searchPattern, searchPattern], 
+    (err, result) => {
+      if (err) return res.status(500).json({ message: 'Database error' });
+      res.json(result);
+    }
+  );
+}
+
 exports.getMovieById = (req, res) => {
   const { id } = req.params;
 

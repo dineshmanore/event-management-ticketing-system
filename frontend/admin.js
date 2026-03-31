@@ -2,7 +2,7 @@
 const API       = 'http://localhost:5000/api';
 const ADMIN_API = `${API}/admin`;
 
-let moviesData = [], eventsData = [], bookingsData = [], usersData = [];
+let moviesData = [], eventsData = [], bookingsData = [], usersData = [], streamsData = [];
 let deleteTarget = null;
 
 // ── NAVIGATION ──────────────────────────────────────────────────────────
@@ -24,6 +24,7 @@ function goto(page) {
   if (page === 'bookings') renderBookings();
   if (page === 'movies')   renderMovies();
   if (page === 'events')   renderEvents();
+  if (page === 'streams')  renderStreams();
   if (page === 'users')    renderUsers();
   if (page === 'reports')  renderReports();
 }
@@ -34,17 +35,19 @@ async function loadAll() {
     const token = localStorage.getItem('token');
     const authH = { Authorization: 'Bearer ' + token };
 
-    const [mRes, eRes, bRes, uRes] = await Promise.all([
+    const [mRes, eRes, bRes, uRes, sRes] = await Promise.all([
       fetch(`${API}/movies`),
       fetch(`${API}/events`).catch(() => ({ json: () => [] })),
       fetch(`${ADMIN_API}/bookings`, { headers: authH }).catch(() => ({ json: () => [] })),
-      fetch(`${ADMIN_API}/users`,    { headers: authH }).catch(() => ({ json: () => [] }))
+      fetch(`${ADMIN_API}/users`,    { headers: authH }).catch(() => ({ json: () => [] })),
+      fetch(`${API}/stream`).catch(() => ({ json: () => [] }))
     ]);
 
     moviesData   = await mRes.json().catch(() => []);
     eventsData   = typeof eRes.json === 'function' ? await eRes.json().catch(() => []) : [];
     bookingsData = typeof bRes.json === 'function' ? await bRes.json().catch(() => []) : [];
     usersData    = typeof uRes.json === 'function' ? await uRes.json().catch(() => []) : [];
+    streamsData  = typeof sRes.json === 'function' ? await sRes.json().catch(() => []) : [];
 
     updateCounts();
     renderDashboard();
@@ -60,6 +63,7 @@ async function loadAll() {
 function updateCounts() {
   document.getElementById('movieCount').innerText   = moviesData.length;
   document.getElementById('eventCount').innerText   = eventsData.length;
+  document.getElementById('streamCount').innerText  = streamsData.length;
   document.getElementById('bookingCount').innerText = bookingsData.length;
   document.getElementById('userCount').innerText    = usersData.length;
   document.getElementById('statMovies').innerText   = moviesData.length;
@@ -164,6 +168,31 @@ function renderEvents(data) {
       <td><div class="action-btns">
         <button class="btn-edit"   onclick="editEvent(${e.id})"><i class="fa fa-edit"></i> Edit</button>
         <button class="btn-delete" onclick="confirmDelete('event',${e.id},'${(e.title || '').replace(/'/g, "\\'")}')">
+          <i class="fa fa-trash"></i> Delete
+        </button>
+      </div></td>
+    </tr>`).join('');
+}
+
+// ── STREAMS TABLE ─────────────────────────────────────────────────────────
+function renderStreams(data) {
+  const list  = data || streamsData;
+  const tbody = document.getElementById('streamsTable');
+  if (!list.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8"><i class="fa fa-play-circle" style="font-size:28px;display:block;margin-bottom:8px;color:#ddd"></i>No streams. Add one!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(s => `
+    <tr data-search="${s.title} ${s.language} ${s.genres}">
+      <td><img class="thumb" src="${s.poster_image}" onerror="this.style.display='none'" alt=""></td>
+      <td style="font-weight:600;max-width:180px">${s.title}</td>
+      <td>${s.language || '—'}</td>
+      <td>${s.release_date ? new Date(s.release_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBA'}</td>
+      <td>₹${s.price_rent || 0}</td>
+      <td>₹${s.price_buy || 0}</td>
+      <td><span class="badge ${s.status === 'inactive' ? 'inactive' : 'active'}">${s.status || 'active'}</span></td>
+      <td><div class="action-btns">
+        <button class="btn-delete" onclick="confirmDelete('stream',${s.id},'${(s.title || '').replace(/'/g, "\\'")}')">
           <i class="fa fa-trash"></i> Delete
         </button>
       </div></td>
@@ -349,7 +378,7 @@ function openMovieModal(movie) {
   document.getElementById('mLang').value              = movie?.language || '';
   document.getElementById('mRating').value            = movie?.rating || '';
   document.getElementById('mVotes').value             = movie?.votes || '';
-  document.getElementById('mCategory').value          = movie?.category || 'Movies';
+  document.getElementById('mPremiere').checked        = (movie?.category === 'Premiere');
   document.getElementById('mPoster').value            = movie?.poster || '';
   document.getElementById('mBanner').value            = movie?.banner || '';
   document.getElementById('mDesc').value              = movie?.description || '';
@@ -409,7 +438,7 @@ async function saveMovie() {
     language:    document.getElementById('mLang').value,
     rating:      parseFloat(document.getElementById('mRating').value) || 0,
     votes:       parseInt(document.getElementById('mVotes').value) || 0,
-    category:    document.getElementById('mCategory').value,
+    category:    document.getElementById('mPremiere').checked ? 'Premiere' : 'Movies',
     poster:      document.getElementById('mPoster').value,
     banner:      document.getElementById('mBanner').value,
     description: document.getElementById('mDesc').value,
@@ -529,6 +558,110 @@ async function refreshEvents() {
   } catch (e) {}
 }
 
+// ── STREAMS TABLE ─────────────────────────────────────────────────────────
+function renderStreams(data) {
+  const list  = data || streamsData;
+  const tbody = document.getElementById('streamsTable');
+  if (!list.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8"><i class="fa fa-play-circle" style="font-size:28px;display:block;margin-bottom:8px;color:#ddd"></i>No streams. Add one!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(s => `
+    <tr data-search="${s.title} ${s.language} ${s.genres}">
+      <td><img class="thumb" src="${s.poster_image}" onerror="this.style.display='none'" alt=""></td>
+      <td style="font-weight:600;max-width:200px">${s.title}</td>
+      <td>${s.language || '—'}</td>
+      <td>${s.release_date ? new Date(s.release_date).toLocaleDateString('en-IN') : '—'}</td>
+      <td>₹${s.price_rent || 0}</td>
+      <td>₹${s.price_buy || 0}</td>
+      <td><span class="badge ${s.status === 'inactive' ? 'inactive' : 'active'}">${s.status || 'active'}</span></td>
+      <td><div class="action-btns">
+        <button class="btn-edit"   onclick="editStream(${s.id})"><i class="fa fa-edit"></i></button>
+        <button class="btn-delete" onclick="confirmDelete('stream',${s.id},'${(s.title || '').replace(/'/g, "\\'")}')">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function editStream(id) {
+  openStreamModal(streamsData.find(s => s.id === id));
+}
+
+// ── STREAM CRUD ────────────────────────────────────────────────────────────
+function openStreamModal(st) {
+  document.getElementById('editStreamId').value         = st?.id || '';
+  document.getElementById('streamModalTitle').innerText = st ? 'Edit Stream' : 'Add Stream';
+  document.getElementById('sTitle').value               = st?.title || '';
+  document.getElementById('sGenres').value              = st?.genres || '';
+  document.getElementById('sLang').value                = st?.language || '';
+  document.getElementById('sRating').value              = st?.rating || '';
+  document.getElementById('sDuration').value            = st?.duration || '';
+  document.getElementById('sRent').value                = st?.price_rent || '';
+  document.getElementById('sBuy').value                 = st?.price_buy || '';
+  document.getElementById('sDate').value                = st?.release_date?.split('T')[0] || '';
+  document.getElementById('sTrailer').value             = st?.trailer_url || '';
+  document.getElementById('sPoster').value              = st?.poster_image || '';
+  document.getElementById('sBanner').value              = st?.banner_image || '';
+  document.getElementById('sDesc').value                = st?.description || '';
+
+  const prevP = document.getElementById('sPosterPreview');
+  if (st?.poster_image) { prevP.src = st.poster_image; prevP.style.display = 'block'; }
+  else prevP.style.display = 'none';
+
+  const prevB = document.getElementById('sBannerPreview');
+  if (st?.banner_image) { prevB.src = st.banner_image; prevB.style.display = 'block'; }
+  else prevB.style.display = 'none';
+
+  document.getElementById('streamModal').classList.add('open');
+}
+
+async function saveStream() {
+  const id    = document.getElementById('editStreamId').value;
+  const title = document.getElementById('sTitle').value.trim();
+  if (!title) { alert('Stream title is required.'); return; }
+
+  const payload = {
+    title,
+    genres:       document.getElementById('sGenres').value,
+    language:     document.getElementById('sLang').value,
+    rating:       parseFloat(document.getElementById('sRating').value) || 0,
+    duration:     parseInt(document.getElementById('sDuration').value) || 0,
+    price_rent:   parseFloat(document.getElementById('sRent').value) || 0,
+    price_buy:    parseFloat(document.getElementById('sBuy').value) || 0,
+    release_date: document.getElementById('sDate').value || null,
+    trailer_url:  document.getElementById('sTrailer').value,
+    poster_image: document.getElementById('sPoster').value,
+    banner_image: document.getElementById('sBanner').value,
+    description:  document.getElementById('sDesc').value
+  };
+
+  try {
+    const url    = id ? `${API}/stream/${id}` : `${API}/stream/add`;
+    const method = id ? 'PUT' : 'POST';
+    const res    = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(await res.text());
+    closeModal('streamModal');
+    await refreshStreams();
+    alert(id ? 'Stream updated!' : 'Stream added!');
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+async function refreshStreams() {
+  try {
+    const res   = await fetch(`${API}/stream`);
+    streamsData = await res.json();
+    renderStreams();
+    updateCounts();
+  } catch (e) {}
+}
+
 // ── DELETE ────────────────────────────────────────────────────────────────
 function confirmDelete(type, id, name) {
   deleteTarget = { type, id };
@@ -543,11 +676,15 @@ async function doDelete() {
     const token = localStorage.getItem('token');
     const url   = deleteTarget.type === 'movie'
       ? `${ADMIN_API}/movies/${deleteTarget.id}`
+      : deleteTarget.type === 'stream'
+      ? `${API}/stream/${deleteTarget.id}`
       : `${ADMIN_API}/events/${deleteTarget.id}`;
     const res   = await fetch(url, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
     if (!res.ok) throw new Error(await res.text());
     closeModal('confirmModal');
-    deleteTarget.type === 'movie' ? await refreshMovies() : await refreshEvents();
+    if (deleteTarget.type === 'movie') await refreshMovies();
+    else if (deleteTarget.type === 'stream') await refreshStreams();
+    else await refreshEvents();
     deleteTarget = null;
   } catch (e) {
     alert('Error: ' + e.message);

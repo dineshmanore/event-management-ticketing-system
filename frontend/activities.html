@@ -114,7 +114,7 @@ function actCard(e) {
     ? `<img class="act-img" src="${e.image}" alt="${e.title}" onerror="this.outerHTML='<div class=act-img-ph style=background:${meta.color};color:rgba(255,255,255,.3)><i class=fa ${meta.icon}></i></div>'">`
     : `<div class="act-img-ph" style="background:${meta.color};color:rgba(255,255,255,.3)"><i class="fa ${meta.icon}"></i></div>`;
 
-  return `<div class="act-card" onclick="alert('Booking for \'${e.title}\' coming soon!')">
+  return `<div class="act-card" onclick="localStorage.setItem('selectedEventId', '${e.id}'); window.location.href='event-booking.html?id=${e.id}'">
     ${img}
     <div class="act-body">
       <span class="act-badge" style="background:${meta.bg};color:${meta.text}">${e.category || 'Activity'}</span>

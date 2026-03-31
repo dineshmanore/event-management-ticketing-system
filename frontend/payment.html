@@ -167,30 +167,46 @@
 <script>
 const API = 'http://localhost:5000/api';
 const seats = JSON.parse(localStorage.getItem('selectedSeats') || '[]');
-const params = new URLSearchParams(window.location.search)
-const movieId = params.get('id')
+const params = new URLSearchParams(window.location.search);
+const movieId = params.get('id') || localStorage.getItem('movieId');
+const eventId = params.get('eventId') || localStorage.getItem('eventId');
+const bookingType = localStorage.getItem('bookingType') || (eventId ? 'event' : 'movie');
+
 const totalPrice = parseInt(localStorage.getItem('totalPrice') || '0');
 const convFee = Math.round(totalPrice * 0.1);
+const grandTotal = totalPrice + convFee;
 
-document.getElementById('seatList').innerText = seats.join(', ') || '-';
+document.getElementById('seatList').innerText = seats.length ? seats.join(', ') : (localStorage.getItem('ticketCount') ? `${localStorage.getItem('ticketCount')} Ticket(s)` : '-');
 document.getElementById('ticketPrice').innerText = `₹${totalPrice}`;
 document.getElementById('convFee').innerText = `₹${convFee}`;
-document.getElementById('totalAmt').innerText = `₹${totalPrice + convFee}`;
+document.getElementById('totalAmt').innerText = `₹${grandTotal}`;
 
-const today = new Date();
-document.getElementById('orderDate').innerText =
-  today.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+const savedDate = localStorage.getItem('bookingDate');
+const displayDate = savedDate ? new Date(savedDate) : new Date();
+document.getElementById('orderDate').innerText = displayDate.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
-async function loadMovieInfo() {
+async function loadInfo() {
   try {
-    const res = await fetch(`${API}/movies`);
-    const movies = await res.json();
-    const movie = movie.find(m => m.id == movieId);
-    if (movie) {
-      document.getElementById('orderTitle').innerText = movie.title;
-      document.getElementById('orderPoster').src = movie.poster;
+    if (bookingType === 'movie') {
+      const res = await fetch(`${API}/movies`);
+      const movies = await res.json();
+      const m = movies.find(x => x.id == movieId);
+      if (m) {
+        document.getElementById('orderTitle').innerText = m.title;
+        document.getElementById('orderPoster').src = m.poster || 'https://via.placeholder.com/80x110/cc0c39/ffffff?text=Movie';
+      }
+    } else {
+      const res = await fetch(`${API}/events/${eventId}`);
+      const ev = await res.json();
+      if (ev) {
+        document.getElementById('orderTitle').innerText = ev.title;
+        document.getElementById('orderPoster').src = ev.image || ev.banner || 'https://via.placeholder.com/80x110/cc0c39/ffffff?text=Event';
+        const locHtml = ev.venue ? `<i class="fa fa-map-marker-alt" style="margin-right:5px;color:#cc0c39"></i>${ev.venue}, ${ev.city}` : `<i class="fa fa-map-marker-alt" style="margin-right:5px;color:#cc0c39"></i>${ev.city}`;
+        document.querySelector('.order-info p:nth-of-type(1)').innerHTML = locHtml;
+        if(ev.time) document.querySelector('.order-info p:nth-of-type(3)').innerHTML = `<i class="fa fa-clock" style="margin-right:5px;color:#cc0c39"></i>${ev.time}`;
+      }
     }
-  } catch(e) {}
+  } catch(e) { console.error('Error loading checkout info:', e); }
 }
 
 function togglePay(header) {
@@ -206,7 +222,7 @@ function applyCoupon() {
   else alert('Invalid coupon code.');
 }
 
-loadMovieInfo();
+loadInfo();
 </script>
 </body>
 </html>

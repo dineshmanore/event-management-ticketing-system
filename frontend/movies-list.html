@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movies — ShowTime</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/category-pages.css">
+  <link rel="stylesheet" href="styles/cards.css">
+</head>
+<body>
+
+<header id="header"></header>
+
+<div class="cat-hero" style="background:linear-gradient(135deg,#1a0a2e,#0a2e1a)">
+  <div class="cat-hero-overlay"></div>
+  <div class="cat-hero-content">
+    <h1 id="pageTitle">Movies</h1>
+    <p id="pageDesc">Explore our complete collection</p>
+  </div>
+</div>
+
+<div class="content-wrap" style="padding: 40px 0;">
+  <div id="moviesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:24px;padding:0 40px">
+    <!-- populates via JS -->
+  </div>
+</div>
+
+<footer id="footer"></footer>
+
+<script src="components/header.js"></script>
+<script src="components/movieCard.js"></script>
+<script src="components/footer.js"></script>
+<script>
+  async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get('type') || 'all';
+    
+    let title = 'All Movies';
+    let desc = 'Explore our complete collection';
+    
+    try {
+      const res = await fetch('http://localhost:5000/api/movies');
+      let movies = await res.json();
+      
+      switch(type) {
+        case 'now-showing':
+          title = 'Now Showing';
+          desc = 'All movies sorted by latest release date';
+          movies = movies.sort((a,b) => new Date(b.release_date || 0) - new Date(a.release_date || 0));
+          break;
+        case 'recommended':
+          title = 'Recommended For You';
+          desc = 'All movies sorted by highest ratings';
+          movies = movies.sort((a,b) => (b.rating || 0) - (a.rating || 0));
+          break;
+        case 'trending':
+          title = 'Trending Now';
+          desc = 'All movies sorted by votes and popularity';
+          movies = movies.sort((a,b) => (b.votes || 0) - (a.votes || 0));
+          break;
+        case 'premieres':
+          title = 'Premieres';
+          desc = 'Brand new releases — streaming now';
+          movies = movies.filter(m => m.category === 'Premiere');
+          break;
+      }
+      
+      document.getElementById('pageTitle').innerText = title;
+      document.getElementById('pageDesc').innerText = desc;
+      document.title = `${title} — ShowTime`;
+      
+      if(movies.length === 0) {
+        document.getElementById('moviesGrid').innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:40px;color:#888;">No movies found.</p>';
+      } else {
+        document.getElementById('moviesGrid').innerHTML = movies.map(m => createMovieCard(m)).join('');
+      }
+    } catch(e) {
+      console.error(e);
+      document.getElementById('moviesGrid').innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:40px;color:#888;">Failed to load movies.</p>';
+    }
+  }
+  
+  init();
+</script>
+</body>
+</html>

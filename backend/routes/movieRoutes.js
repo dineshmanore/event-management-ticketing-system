@@ -2,6 +2,7 @@ const router = require('express').Router()
 const c = require('../controllers/movieController')
 
 router.get('/', c.getMovies)
+router.get('/search', c.searchMovies)
 router.get('/:id', c.getMovieById)
 router.post('/add', c.addMovie)
 

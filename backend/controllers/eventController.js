@@ -1,10 +1,19 @@
 const db = require('../models/db')
 
 exports.getEvents = (req, res) => {
-  db.query('SELECT * FROM events WHERE status = "active" ORDER BY date ASC', (err, result) => {
-    if (err) return res.status(500).json({ message: 'DB error' })
-    res.json(result)
-  })
+  const category = req.query.category;
+  let q = 'SELECT * FROM events WHERE status = "active"';
+  let params = [];
+  if (category) {
+    q += ' AND category = ?';
+    params.push(category);
+  }
+  q += ' ORDER BY date ASC';
+
+  db.query(q, params, (err, result) => {
+    if (err) return res.status(500).json({ message: 'DB error' });
+    res.json(result);
+  });
 }
 
 exports.getEventById = (req, res) => {
