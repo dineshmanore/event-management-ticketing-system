@@ -192,3 +192,14 @@
 }
 
 .pay-btn:hover { background: #a50930; }
+
+@media (max-width: 768px) {
+  .seats-header { padding: 16px; flex-wrap: wrap; }
+  .date-time-strip { padding: 14px 16px; }
+  .seats-body { padding: 20px 16px 120px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* Ensure seat grid aligns left on mobile so it can be horizontally scrolled */
+  .seat-grid { align-items: flex-start; min-width: max-content; }
+  .screen-wrap { min-width: max-content; padding: 0 40px; }
+  .sticky-bar { padding: 16px; }
+  .seat { width: 30px; height: 26px; font-size: 9px; } /* Slightly smaller to fit more in view */
+}
