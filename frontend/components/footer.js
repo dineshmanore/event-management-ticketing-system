@@ -2,11 +2,17 @@ document.getElementById('footer').innerHTML = `
 <footer class="footer">
   <div class="footer-container">
     <div class="footer-col">
-      <div class="footer-logo">
+      <div class="footer-logo" style="display:flex;align-items:center;gap:10px;margin-bottom:15px">
         <div class="logo-box" style="background:#cc0c39;color:white;padding:7px 11px;border-radius:6px;font-size:13px;font-weight:700">ST</div>
         <span style="color:white;font-size:18px;font-weight:700">ShowTime</span>
       </div>
-      <p>Your one-stop destination for booking movies, events, plays, sports, and activities across India.</p>
+      <p style="color:#a0a0a0;font-size:14px;line-height:1.6;margin-bottom:20px">Your one-stop destination for booking movies, events, plays, sports, and activities across India.</p>
+      
+      <div class="social-icons" style="display:flex;gap:15px">
+        <a href="#" style="color:#d0d0d0;font-size:18px;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='#d0d0d0'"><i class="fab fa-twitter"></i></a>
+        <a href="#" style="color:#d0d0d0;font-size:18px;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='#d0d0d0'"><i class="fab fa-pinterest-p"></i></a>
+        <a href="#" style="color:#d0d0d0;font-size:18px;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='#d0d0d0'"><i class="fab fa-instagram"></i></a>
+      </div>
     </div>
 
     <div class="footer-col">
