@@ -1,58 +1,110 @@
-const db = require('../models/db')
+const Event = require('../models/Event.mongo')
+const { buildIdQuery, addLegacyId } = require('../utils/id')
 
 exports.getEvents = (req, res) => {
   const category = req.query.category;
-  let q = 'SELECT * FROM events WHERE status = "active"';
-  let params = [];
-  if (category) {
-    q += ' AND category = ?';
-    params.push(category);
-  }
-  q += ' ORDER BY date ASC';
+  const filter = { status: 'active' };
+  if (category) filter.category = category;
 
-  db.query(q, params, (err, result) => {
-    if (err) return res.status(500).json({ message: 'DB error' });
-    res.json(result);
-  });
+  Event.find(filter)
+    .sort({ date: 1 })
+    .lean()
+    .then((docs) => {
+      const mapped = docs.map((d) => {
+        const out = addLegacyId(d);
+        out.price_from = d.priceFrom ?? 0;
+        out.price_to = d.priceTo ?? 0;
+        out.age_limit = d.ageLimit ?? 'All Ages';
+        return out;
+      });
+      res.json(mapped);
+    })
+    .catch(() => res.status(500).json({ message: 'DB error' }));
 }
 
 exports.getEventById = (req, res) => {
-  db.query('SELECT * FROM events WHERE id = ?', [req.params.id], (err, result) => {
-    if (err) return res.status(500).json({ message: 'DB error' })
-    if (!result.length) return res.status(404).json({ message: 'Not found' })
-    res.json(result[0])
-  })
+  const q = buildIdQuery(req.params.id);
+  if (!q) return res.status(404).json({ message: 'Not found' });
+
+  Event.findOne(q)
+    .lean()
+    .then((d) => {
+      if (!d) return res.status(404).json({ message: 'Not found' });
+      const out = addLegacyId(d);
+      out.price_from = d.priceFrom ?? 0;
+      out.price_to = d.priceTo ?? 0;
+      out.age_limit = d.ageLimit ?? 'All Ages';
+      res.json(out);
+    })
+    .catch(() => res.status(500).json({ message: 'DB error' }));
 }
 
 exports.addEvent = (req, res) => {
   const { title, category, venue, city, date, time, price_from, price_to, image, banner, description, language, age_limit } = req.body
   if (!title) return res.status(400).json({ message: 'Title required' })
-  db.query(
-    'INSERT INTO events (title,category,venue,city,date,time,price_from,price_to,image,banner,description,language,age_limit) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
-    [title, category, venue, city, date, time, price_from||0, price_to||0, image, banner, description, language, age_limit||'All Ages'],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: 'DB error', error: err.message })
-      res.json({ message: 'Event added', id: result.insertId })
-    }
-  )
+  Event.create({
+    title,
+    category: category || 'event',
+    venue,
+    city,
+    date,
+    time,
+    priceFrom: Number(price_from || 0),
+    priceTo: Number(price_to || 0),
+    image,
+    banner,
+    description,
+    language,
+    ageLimit: age_limit || 'All Ages',
+    status: 'active'
+  })
+    .then((doc) => res.json({ message: 'Event added', id: doc.mysqlId ?? String(doc._id) }))
+    .catch((err) => res.status(500).json({ message: 'DB error', error: err.message }))
 }
 
 exports.updateEvent = (req, res) => {
   const { id } = req.params
   const { title, category, venue, city, date, time, price_from, price_to, image, banner, description, language, age_limit, status } = req.body
-  db.query(
-    'UPDATE events SET title=?,category=?,venue=?,city=?,date=?,time=?,price_from=?,price_to=?,image=?,banner=?,description=?,language=?,age_limit=?,status=? WHERE id=?',
-    [title, category, venue, city, date, time, price_from||0, price_to||0, image, banner, description, language, age_limit, status||'active', id],
-    (err) => {
-      if (err) return res.status(500).json({ message: 'DB error', error: err.message })
-      res.json({ message: 'Event updated' })
-    }
+  const q = buildIdQuery(id);
+  if (!q) return res.status(404).json({ message: 'Not found' });
+
+  Event.findOneAndUpdate(
+    q,
+    {
+      $set: {
+        title,
+        category,
+        venue,
+        city,
+        date,
+        time,
+        priceFrom: Number(price_from || 0),
+        priceTo: Number(price_to || 0),
+        image,
+        banner,
+        description,
+        language,
+        ageLimit: age_limit,
+        status: status || 'active'
+      }
+    },
+    { new: true }
   )
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Not found' });
+      res.json({ message: 'Event updated' });
+    })
+    .catch((err) => res.status(500).json({ message: 'DB error', error: err.message }));
 }
 
 exports.deleteEvent = (req, res) => {
-  db.query('DELETE FROM events WHERE id = ?', [req.params.id], (err) => {
-    if (err) return res.status(500).json({ message: 'DB error' })
-    res.json({ message: 'Event deleted' })
-  })
+  const q = buildIdQuery(req.params.id);
+  if (!q) return res.status(404).json({ message: 'Not found' });
+
+  Event.findOneAndDelete(q)
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Not found' });
+      res.json({ message: 'Event deleted' });
+    })
+    .catch((err) => res.status(500).json({ message: 'DB error', error: err.message }));
 }

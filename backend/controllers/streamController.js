@@ -1,59 +1,112 @@
-const db = require('../models/db');
+const Stream = require('../models/Stream.mongo');
+const { buildIdQuery, addLegacyId } = require('../utils/id')
 
 exports.getStreams = (req, res) => {
-  db.query('SELECT * FROM streams WHERE status = "active" ORDER BY release_date DESC', (err, result) => {
-    if (err) return res.status(500).json({ message: 'Database error', error: err.message });
-    res.json(result);
-  });
+  Stream.find({ status: 'active' })
+    .sort({ releaseDate: -1 })
+    .lean()
+    .then((rows) => {
+      const mapped = (rows || []).map((s) => {
+        const out = addLegacyId(s);
+        out.banner_image = s.bannerImage || '';
+        out.poster_image = s.posterImage || '';
+        out.release_date = s.releaseDate || null;
+        out.price_rent = s.priceRent || 0;
+        out.price_buy = s.priceBuy || 0;
+        out.trailer_url = s.trailerUrl || '';
+        return out;
+      });
+      res.json(mapped);
+    })
+    .catch((err) => res.status(500).json({ message: 'Database error', error: err.message }));
 };
 
 exports.getStreamById = (req, res) => {
   const { id } = req.params;
-  db.query('SELECT * FROM streams WHERE id = ?', [id], (err, result) => {
-    if (err) return res.status(500).json({ message: 'Database error', error: err.message });
-    if (result.length === 0) return res.status(404).json({ message: 'Stream not found' });
-    res.json(result[0]);
-  });
+  const q = buildIdQuery(id);
+  if (!q) return res.status(404).json({ message: 'Stream not found' });
+
+  Stream.findOne(q)
+    .lean()
+    .then((s) => {
+      if (!s) return res.status(404).json({ message: 'Stream not found' });
+      const out = addLegacyId(s);
+      out.banner_image = s.bannerImage || '';
+      out.poster_image = s.posterImage || '';
+      out.release_date = s.releaseDate || null;
+      out.price_rent = s.priceRent || 0;
+      out.price_buy = s.priceBuy || 0;
+      out.trailer_url = s.trailerUrl || '';
+      res.json(out);
+    })
+    .catch((err) => res.status(500).json({ message: 'Database error', error: err.message }));
 };
 
 exports.addStream = (req, res) => {
   const { title, description, banner_image, poster_image, release_date, duration, genres, language, rating, price_rent, price_buy, trailer_url } = req.body;
   
   if (!title) return res.status(400).json({ message: 'Title is required' });
-
-  const query = `
-    INSERT INTO streams (title, description, banner_image, poster_image, release_date, duration, genres, language, rating, price_rent, price_buy, trailer_url) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
-  const values = [title, description, banner_image, poster_image, release_date, duration, genres, language, rating || 0.0, price_rent || 0.0, price_buy || 0.0, trailer_url];
-
-  db.query(query, values, (err, result) => {
-    if (err) return res.status(500).json({ message: 'Database error', error: err.message });
-    res.json({ message: 'Stream added successfully', id: result.insertId });
-  });
+  Stream.create({
+    title,
+    description,
+    bannerImage: banner_image,
+    posterImage: poster_image,
+    releaseDate: release_date,
+    duration: duration ? Number(duration) : null,
+    genres,
+    language,
+    rating: Number(rating || 0),
+    priceRent: Number(price_rent || 0),
+    priceBuy: Number(price_buy || 0),
+    trailerUrl: trailer_url,
+    status: 'active'
+  })
+    .then((doc) => res.json({ message: 'Stream added successfully', id: doc.mysqlId ?? String(doc._id) }))
+    .catch((err) => res.status(500).json({ message: 'Database error', error: err.message }));
 };
 
 exports.updateStream = (req, res) => {
   const { id } = req.params;
   const { title, description, banner_image, poster_image, release_date, duration, genres, language, rating, price_rent, price_buy, trailer_url } = req.body;
   if (!title) return res.status(400).json({ message: 'Title is required' });
+  const q = buildIdQuery(id);
+  if (!q) return res.status(404).json({ message: 'Stream not found' });
 
-  const query = `
-    UPDATE streams 
-    SET title=?, description=?, banner_image=?, poster_image=?, release_date=?, duration=?, genres=?, language=?, rating=?, price_rent=?, price_buy=?, trailer_url=?
-    WHERE id=?
-  `;
-  const values = [title, description, banner_image, poster_image, release_date, duration, genres, language, rating || 0.0, price_rent || 0.0, price_buy || 0.0, trailer_url, id];
-
-  db.query(query, values, (err) => {
-    if (err) return res.status(500).json({ message: 'Database error', error: err.message });
-    res.json({ message: 'Stream updated successfully' });
-  });
+  Stream.findOneAndUpdate(
+    q,
+    {
+      $set: {
+        title,
+        description,
+        bannerImage: banner_image,
+        posterImage: poster_image,
+        releaseDate: release_date,
+        duration: duration ? Number(duration) : null,
+        genres,
+        language,
+        rating: Number(rating || 0),
+        priceRent: Number(price_rent || 0),
+        priceBuy: Number(price_buy || 0),
+        trailerUrl: trailer_url
+      }
+    },
+    { new: true }
+  )
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Stream not found' });
+      res.json({ message: 'Stream updated successfully' });
+    })
+    .catch((err) => res.status(500).json({ message: 'Database error', error: err.message }));
 };
 
 exports.deleteStream = (req, res) => {
-  db.query('DELETE FROM streams WHERE id = ?', [req.params.id], (err) => {
-    if (err) return res.status(500).json({ message: 'DB error' });
-    res.json({ message: 'Stream deleted' });
-  });
+  const q = buildIdQuery(req.params.id);
+  if (!q) return res.status(404).json({ message: 'Stream not found' });
+
+  Stream.findOneAndDelete(q)
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Stream not found' });
+      res.json({ message: 'Stream deleted' });
+    })
+    .catch((err) => res.status(500).json({ message: 'DB error', error: err.message }));
 };

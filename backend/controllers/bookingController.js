@@ -1,4 +1,7 @@
-const db = require('../models/db')
+const Booking = require('../models/Booking.mongo')
+const Movie = require('../models/Movie.mongo')
+const Event = require('../models/Event.mongo')
+const { buildIdQuery, addLegacyId } = require('../utils/id')
 
 // ── GET BOOKED SEATS FOR A MOVIE ─────────────────────────────────────────
 // Called by seats.js: GET /api/bookings/seats/:movieId?date=YYYY-MM-DD
@@ -6,38 +9,37 @@ const db = require('../models/db')
 exports.getBookedSeats = (req, res) => {
   const { movieId } = req.params;
   const { date } = req.query;
+  const movieQuery = buildIdQuery(movieId);
+  if (!movieQuery) return res.json([]);
 
-  let query = 'SELECT seats FROM bookings WHERE movie_id = ?';
-  let params = [movieId];
-  if (date) {
-    query += ' AND show_date = ?';
-    params.push(date);
-  }
-
-  db.query(query, params, (err, results) => {
-      if (err) return res.status(500).json([])
-
-      // Flatten all seat strings into one array of seat IDs
-      const booked = []
-      results.forEach(row => {
+  Movie.findOne(movieQuery)
+    .then((movie) => {
+      if (!movie) return res.json([]);
+      const filter = { movie: movie._id };
+      if (date) filter.showDate = date;
+      return Booking.find(filter).select('seats').lean();
+    })
+    .then((rows) => {
+      if (!rows) return;
+      const booked = [];
+      rows.forEach((row) => {
         if (row.seats) {
-          row.seats.split(',').forEach(s => {
-            const trimmed = s.trim()
-            if (trimmed) booked.push(trimmed)
-          })
+          row.seats.split(',').forEach((s) => {
+            const t = String(s).trim();
+            if (t) booked.push(t);
+          });
         }
-      })
-
-      res.json(booked)   // e.g. ['A1','C3','F5']
-    }
-  )
+      });
+      res.json(booked);
+    })
+    .catch(() => res.status(500).json([]));
 }
 
 // ── BOOK SEATS ────────────────────────────────────────────────────────────
 // Called by seats.js: POST /api/bookings
 // Requires auth token → user_id comes from req.user.id (set by middleware)
 exports.bookSeats = (req, res) => {
-  const user_id = req.user.id                 // from JWT middleware — real user
+  const user_id = req.user.id                 // from JWT middleware — mongo _id
   const { movieId, seats, totalPrice, date } = req.body
 
   if (!movieId || !seats || seats.length === 0) {
@@ -45,82 +47,82 @@ exports.bookSeats = (req, res) => {
   }
 
   const seatString = Array.isArray(seats) ? seats.join(',') : seats
+  const showDate = date || new Date().toISOString().split('T')[0];
+  const requested = Array.isArray(seats) ? seats : String(seats).split(',');
+  const isEventBooking = requested.some((s) => String(s).toLowerCase().includes('general'));
 
-  // Check for seat conflicts (race condition guard)
-  let query = 'SELECT seats FROM bookings WHERE movie_id = ?';
-  let params = [movieId];
-  if (date) {
-    query += ' AND show_date = ?';
-    params.push(date);
-  }
+  const idQuery = buildIdQuery(String(movieId));
+  const itemPromise = isEventBooking ? Event.findOne(idQuery) : Movie.findOne(idQuery);
 
-  db.query(query, params, (err, results) => {
-      if (err) return res.status(500).json({ message: 'Database error' })
+  itemPromise
+    .then((item) => {
+      if (!item) return res.status(404).json({ message: 'Item not found' });
 
-      const alreadyBooked = []
-      results.forEach(row => {
-        if (row.seats) row.seats.split(',').forEach(s => alreadyBooked.push(s.trim()))
-      })
+      const filter = isEventBooking ? { event: item._id } : { movie: item._id };
+      filter.showDate = showDate;
 
-      const requested = Array.isArray(seats) ? seats : seats.split(',')
-      const conflict  = requested.some(s => alreadyBooked.includes(s.trim()))
+      return Booking.find(filter).select('seats').lean().then((rows) => ({ item, rows }));
+    })
+    .then((payload) => {
+      if (!payload) return;
+      const { item, rows } = payload;
+      const alreadyBooked = [];
+      (rows || []).forEach((r) => {
+        if (r.seats) r.seats.split(',').forEach((s) => alreadyBooked.push(String(s).trim()));
+      });
 
+      const conflict = requested.some((s) => alreadyBooked.includes(String(s).trim()));
       if (conflict) {
-        return res.status(409).json({ message: 'One or more seats are already booked. Please reselect.' })
+        return res.status(409).json({ message: 'One or more seats are already booked. Please reselect.' });
       }
 
-      const showDate = date || new Date().toISOString().split('T')[0];
-
-      // All clear — insert booking
-      db.query(
-        'INSERT INTO bookings (user_id, movie_id, seats, total_price, show_date) VALUES (?, ?, ?, ?, ?)',
-        [user_id, movieId, seatString, totalPrice || 0, showDate],
-        (err2, result) => {
-          if (err2) return res.status(500).json({ message: 'Booking failed', error: err2.message })
-          res.json({ success: true, bookingId: result.insertId })
-        }
-      )
-    }
-  )
+      return Booking.create({
+        user: user_id,
+        movie: isEventBooking ? null : item._id,
+        event: isEventBooking ? item._id : null,
+        seats: seatString,
+        totalPrice: Number(totalPrice || 0),
+        showDate,
+        bookingTimeLegacy: new Date()
+      }).then((b) => res.json({ success: true, bookingId: b.mysqlId ?? String(b._id) }));
+    })
+    .catch((e) => res.status(500).json({ message: 'Booking failed', error: e.message }));
 }
 
 // ── GET USER'S OWN BOOKINGS ───────────────────────────────────────────────
 // Called by dashboard.html: GET /api/bookings/my-bookings
 // Requires auth token
 exports.getUserBookings = (req, res) => {
-  const user_id = req.user.id   // real user from JWT
+  const user_id = req.user.id;
 
-  db.query(
-    `SELECT
-      b.*,
-      CASE
-        WHEN LOWER(COALESCE(b.seats, '')) LIKE 'general%' THEN 1
-        ELSE 0
-      END AS is_event,
-      CASE
-        WHEN LOWER(COALESCE(b.seats, '')) LIKE 'general%' THEN e.title
-        ELSE m.title
-      END AS title,
-      CASE
-        WHEN LOWER(COALESCE(b.seats, '')) LIKE 'general%' THEN COALESCE(e.image, e.banner)
-        ELSE m.poster
-      END AS poster,
-      m.genre,
-      m.language,
-      e.venue AS event_venue,
-      e.city  AS event_city,
-      e.time  AS event_time
-     FROM bookings b
-     LEFT JOIN movies m ON b.movie_id = m.id
-     LEFT JOIN events e ON b.movie_id = e.id
-     WHERE b.user_id = ?
-     ORDER BY b.booking_time DESC`,
-    [user_id],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: 'Database error' })
-      res.json(result)
-    }
-  )
+  Booking.find({ user: user_id })
+    .sort({ createdAt: -1 })
+    .populate('movie')
+    .populate('event')
+    .lean()
+    .then((rows) => {
+      const out = (rows || []).map((b) => {
+        const isEvent = !!b.event;
+        const item = isEvent ? b.event : b.movie;
+        const mapped = {
+          ...addLegacyId(b),
+          user_id: b.user,
+          movie_id: isEvent ? (item?.mysqlId ?? item?._id) : (item?.mysqlId ?? item?._id),
+          is_event: isEvent ? 1 : 0,
+          title: item?.title || (isEvent ? 'Event' : 'Movie'),
+          poster: isEvent ? (item?.image || item?.banner || '') : (item?.poster || ''),
+          total_price: b.totalPrice ?? 0,
+          show_date: b.showDate || null,
+          seats: b.seats || '',
+          event_venue: isEvent ? (item?.venue || '') : null,
+          event_city: isEvent ? (item?.city || '') : null,
+          event_time: isEvent ? (item?.time || '') : null
+        };
+        return mapped;
+      });
+      res.json(out);
+    })
+    .catch(() => res.status(500).json({ message: 'Database error' }));
 }
 
 // ── CANCEL OWN BOOKING ──────────────────────────────────────────────────
@@ -129,16 +131,13 @@ exports.getUserBookings = (req, res) => {
 exports.cancelBooking = (req, res) => {
   const user_id = req.user.id;
   const { id } = req.params;
+  const q = buildIdQuery(id);
+  if (!q) return res.status(404).json({ message: 'Booking not found or not authorized' });
 
-  db.query(
-    'DELETE FROM bookings WHERE id = ? AND user_id = ?',
-    [id, user_id],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: 'Database error' });
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: 'Booking not found or not authorized' });
-      }
+  Booking.findOneAndDelete({ ...q, user: user_id })
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Booking not found or not authorized' });
       res.json({ message: 'Booking successfully canceled.' });
-    }
-  );
+    })
+    .catch(() => res.status(500).json({ message: 'Database error' }));
 }

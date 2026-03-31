@@ -3,6 +3,7 @@ console.log("🚀 THIS IS BACKEND SERVER");
 require('dotenv').config()
 const express = require('express')
 const cors    = require('cors')
+const { connectMongo } = require('./models/mongo')
 
 const authRoutes    = require('./routes/authRoutes')
 const movieRoutes   = require('./routes/movieRoutes')
@@ -30,7 +31,15 @@ app.use('/api/admin', (req, res, next) => {
 }, adminRoutes);
 
 const PORT = process.env.PORT || 5000
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`))
+connectMongo()
+  .then(() => {
+    console.log('MongoDB connected successfully')
+    app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`))
+  })
+  .catch((err) => {
+    console.error('MongoDB connection failed:', err.message)
+    process.exit(1)
+  })
 
 app.get('/test', (req, res) => {
   res.send("TEST WORKING");

@@ -1,4 +1,9 @@
-const db = require('../models/db')
+const Movie = require('../models/Movie.mongo')
+const Event = require('../models/Event.mongo')
+const Booking = require('../models/Booking.mongo')
+const User = require('../models/User.mongo')
+const Actor = require('../models/Actor.mongo')
+const { buildIdQuery, addLegacyId } = require('../utils/id')
 
 // ── MOVIES ─────────────────────────────────────────────────────────────────
 // BUG FIX: addMovie was missing entirely. saveMovie() in admin.js POST'd to
@@ -7,29 +12,36 @@ exports.addMovie = (req, res) => {
   const { title, genre, language, rating, votes, poster, banner, description, category, cast } = req.body
   if (!title) return res.status(400).json({ message: 'Title required' })
 
-  db.query(
-    'INSERT INTO movies (title,genre,language,rating,votes,poster,banner,description,category) VALUES (?,?,?,?,?,?,?,?,?)',
-    [title, genre, language, rating || 0, votes || 0, poster, banner, description, category || 'Movies'],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: 'DB error', error: err.message })
-      const movieId = result.insertId
+  const castArr = Array.isArray(cast) ? cast : [];
 
-      // Save cast if provided
-      if (!cast || !Array.isArray(cast) || cast.length === 0) {
-        return res.json({ message: 'Movie added', id: movieId })
-      }
-
-      const castValues = cast.map(c => [movieId, c.actor_id, c.role || 'Unknown'])
-      db.query(
-        'INSERT INTO movie_cast (movie_id, actor_id, role) VALUES ?',
-        [castValues],
-        (castErr) => {
-          if (castErr) console.error('Cast insert error:', castErr.message)
-          res.json({ message: 'Movie added', id: movieId })
-        }
-      )
-    }
+  Promise.all(
+    castArr.map(async (c) => {
+      const actorDoc = c && c.actor_id ? await Actor.findOne(buildIdQuery(String(c.actor_id))).lean() : null;
+      return {
+        actor: actorDoc ? actorDoc._id : null,
+        role: (c && c.role) || 'Unknown',
+        actorName: actorDoc?.name || c?.name || null,
+        actorImage: actorDoc?.image || c?.image || null,
+        mysqlActorId: c && c.actor_id && /^[0-9]+$/.test(String(c.actor_id)) ? Number(c.actor_id) : undefined
+      };
+    })
   )
+    .then((castDocs) =>
+      Movie.create({
+        title,
+        genre,
+        language,
+        rating: Number(rating || 0),
+        votes: Number(votes || 0),
+        poster,
+        banner,
+        description,
+        category: category || 'Movies',
+        cast: castDocs.filter(Boolean)
+      })
+    )
+    .then((doc) => res.json({ message: 'Movie added', id: doc.mysqlId ?? String(doc._id) }))
+    .catch((err) => res.status(500).json({ message: 'DB error', error: err.message }))
 }
 
 exports.updateMovie = (req, res) => {
@@ -37,150 +49,230 @@ exports.updateMovie = (req, res) => {
   const { title, genre, language, rating, votes, poster, banner, description, category, cast } = req.body
   if (!title) return res.status(400).json({ message: 'Title required' })
 
-  db.query(
-    'UPDATE movies SET title=?,genre=?,language=?,rating=?,votes=?,poster=?,banner=?,description=?,category=? WHERE id=?',
-    [title, genre, language, rating || 0, votes || 0, poster, banner, description, category || 'Movies', id],
-    (err) => {
-      if (err) return res.status(500).json({ message: 'DB error', error: err.message })
+  const q = buildIdQuery(id);
+  if (!q) return res.status(404).json({ message: 'Not found' });
 
-      // Update cast: always delete old cast first
-      db.query('DELETE FROM movie_cast WHERE movie_id = ?', [id], (delErr) => {
-        if (delErr) return res.status(500).json({ message: 'DB error', error: delErr.message });
-
-        if (!cast || !Array.isArray(cast) || cast.length === 0) {
-          return res.json({ message: 'Movie updated (no cast)' });
-        }
-
-        const castValues = cast.map(c => [id, c.actor_id, c.role || 'Unknown']);
-        db.query(
-          'INSERT INTO movie_cast (movie_id, actor_id, role) VALUES ?',
-          [castValues],
-          (castErr) => {
-            if (castErr) console.error('Cast update error:', castErr.message);
-            res.json({ message: 'Movie updated' });
-          }
-        );
-      });
-    }
+  const castArr = Array.isArray(cast) ? cast : [];
+  Promise.all(
+    castArr.map(async (c) => {
+      const actorDoc = c && c.actor_id ? await Actor.findOne(buildIdQuery(String(c.actor_id))).lean() : null;
+      return {
+        actor: actorDoc ? actorDoc._id : null,
+        role: (c && c.role) || 'Unknown',
+        actorName: actorDoc?.name || c?.name || null,
+        actorImage: actorDoc?.image || c?.image || null,
+        mysqlActorId: c && c.actor_id && /^[0-9]+$/.test(String(c.actor_id)) ? Number(c.actor_id) : undefined
+      };
+    })
   )
+    .then((castDocs) =>
+      Movie.findOneAndUpdate(
+        q,
+        {
+          $set: {
+            title,
+            genre,
+            language,
+            rating: Number(rating || 0),
+            votes: Number(votes || 0),
+            poster,
+            banner,
+            description,
+            category: category || 'Movies',
+            cast: castDocs.filter(Boolean)
+          }
+        },
+        { new: true }
+      )
+    )
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Not found' });
+      res.json({ message: 'Movie updated' });
+    })
+    .catch((err) => res.status(500).json({ message: 'DB error', error: err.message }))
 }
 
 exports.deleteMovie = (req, res) => {
   const { id } = req.params
-  db.query('SELECT COUNT(*) AS cnt FROM bookings WHERE movie_id = ?', [id], (err, result) => {
-    if (err) return res.status(500).json({ message: 'DB error' })
-    if (result[0].cnt > 0) {
-      return res.status(400).json({ message: `Cannot delete: ${result[0].cnt} booking(s) exist for this movie.` })
-    }
-    db.query('DELETE FROM movie_cast WHERE movie_id = ?', [id], () => {
-      db.query('DELETE FROM movies WHERE id = ?', [id], (err2) => {
-        if (err2) return res.status(500).json({ message: 'DB error' })
-        res.json({ message: 'Movie deleted' })
-      })
+  const q = buildIdQuery(id);
+  if (!q) return res.status(404).json({ message: 'Not found' });
+
+  Movie.findOne(q)
+    .then((movie) => {
+      if (!movie) return res.status(404).json({ message: 'Not found' });
+      return Booking.countDocuments({ movie: movie._id }).then((cnt) => ({ movie, cnt }));
     })
-  })
+    .then((payload) => {
+      if (!payload) return;
+      if (payload.cnt > 0) return res.status(400).json({ message: `Cannot delete: ${payload.cnt} booking(s) exist for this movie.` });
+      return Movie.deleteOne({ _id: payload.movie._id }).then(() => res.json({ message: 'Movie deleted' }));
+    })
+    .catch(() => res.status(500).json({ message: 'DB error' }))
 }
 
 // ── EVENTS ────────────────────────────────────────────────────────────────
 exports.updateEvent = (req, res) => {
   const { id } = req.params
   const { title, category, venue, city, date, time, price_from, price_to, image, banner, description, language, age_limit, status } = req.body
-  db.query(
-    'UPDATE events SET title=?,category=?,venue=?,city=?,date=?,time=?,price_from=?,price_to=?,image=?,banner=?,description=?,language=?,age_limit=?,status=? WHERE id=?',
-    [title, category, venue, city, date, time, price_from || 0, price_to || 0, image, banner, description, language, age_limit || 'All Ages', status || 'active', id],
-    (err) => {
-      if (err) return res.status(500).json({ message: 'DB error', error: err.message })
-      res.json({ message: 'Event updated' })
-    }
+  const q = buildIdQuery(id);
+  if (!q) return res.status(404).json({ message: 'Not found' });
+
+  Event.findOneAndUpdate(
+    q,
+    {
+      $set: {
+        title,
+        category,
+        venue,
+        city,
+        date,
+        time,
+        priceFrom: Number(price_from || 0),
+        priceTo: Number(price_to || 0),
+        image,
+        banner,
+        description,
+        language,
+        ageLimit: age_limit || 'All Ages',
+        status: status || 'active'
+      }
+    },
+    { new: true }
   )
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Not found' });
+      res.json({ message: 'Event updated' });
+    })
+    .catch((err) => res.status(500).json({ message: 'DB error', error: err.message }))
 }
 
 exports.addEvent = (req, res) => {
   const { title, category, venue, city, date, time, price_from, price_to, image, banner, description, language, age_limit } = req.body
   if (!title) return res.status(400).json({ message: 'Title required' })
-  db.query(
-    'INSERT INTO events (title,category,venue,city,date,time,price_from,price_to,image,banner,description,language,age_limit) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
-    [title, category || 'concert', venue, city || 'Mumbai', date, time, price_from || 0, price_to || 0, image, banner, description, language, age_limit || 'All Ages'],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: 'DB error', error: err.message })
-      res.json({ message: 'Event added', id: result.insertId })
-    }
-  )
+  Event.create({
+    title,
+    category: category || 'concert',
+    venue,
+    city: city || 'Mumbai',
+    date,
+    time,
+    priceFrom: Number(price_from || 0),
+    priceTo: Number(price_to || 0),
+    image,
+    banner,
+    description,
+    language,
+    ageLimit: age_limit || 'All Ages',
+    status: 'active'
+  })
+    .then((doc) => res.json({ message: 'Event added', id: doc.mysqlId ?? String(doc._id) }))
+    .catch((err) => res.status(500).json({ message: 'DB error', error: err.message }))
 }
 
 exports.deleteEvent = (req, res) => {
-  db.query('DELETE FROM events WHERE id = ?', [req.params.id], (err) => {
-    if (err) return res.status(500).json({ message: 'DB error' })
-    res.json({ message: 'Event deleted' })
-  })
+  const q = buildIdQuery(req.params.id);
+  if (!q) return res.status(404).json({ message: 'Not found' });
+
+  Event.findOneAndDelete(q)
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Not found' });
+      res.json({ message: 'Event deleted' });
+    })
+    .catch(() => res.status(500).json({ message: 'DB error' }))
 }
 
 // ── BOOKINGS ───────────────────────────────────────────────────────────────
 exports.getAllBookings = (req, res) => {
-  db.query(
-    `SELECT b.*, u.name, u.email, m.title, m.poster, m.genre
-     FROM bookings b
-     JOIN users u  ON b.user_id  = u.id
-     JOIN movies m ON b.movie_id = m.id
-     ORDER BY b.booking_time DESC`,
-    (err, result) => {
-      if (err) return res.status(500).json({ message: 'DB error' })
-      res.json(result)
-    }
-  )
+  Booking.find({})
+    .sort({ createdAt: -1 })
+    .populate('user')
+    .populate('movie')
+    .populate('event')
+    .lean()
+    .then((rows) => {
+      const out = (rows || []).map((b) => {
+        const isEvent = !!b.event;
+        const item = isEvent ? b.event : b.movie;
+        return {
+          ...addLegacyId(b),
+          user_id: b.user?._id || b.user,
+          name: b.user?.name || '',
+          email: b.user?.email || '',
+          movie_id: isEvent ? (item?.mysqlId ?? item?._id) : (item?.mysqlId ?? item?._id),
+          title: item?.title || '',
+          poster: isEvent ? (item?.image || item?.banner || '') : (item?.poster || ''),
+          genre: isEvent ? (item?.category || '') : (item?.genre || ''),
+          total_price: b.totalPrice ?? 0,
+          seats: b.seats || '',
+          show_date: b.showDate || null
+        };
+      });
+      res.json(out);
+    })
+    .catch(() => res.status(500).json({ message: 'DB error' }))
 }
 
 exports.deleteBooking = (req, res) => {
-  db.query('DELETE FROM bookings WHERE id = ?', [req.params.id], (err) => {
-    if (err) return res.status(500).json({ message: 'DB error' })
-    res.json({ message: 'Booking deleted' })
-  })
+  const q = buildIdQuery(req.params.id);
+  if (!q) return res.status(404).json({ message: 'Not found' });
+
+  Booking.findOneAndDelete(q)
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Not found' });
+      res.json({ message: 'Booking deleted' });
+    })
+    .catch(() => res.status(500).json({ message: 'DB error' }))
 }
 
 // ── USERS ──────────────────────────────────────────────────────────────────
 exports.getAllUsers = (req, res) => {
-  db.query(
-    'SELECT id, name, email, created_at FROM users ORDER BY created_at DESC',
-    (err, result) => {
-      if (err) return res.status(500).json({ message: 'DB error' })
-      res.json(result)
-    }
-  )
+  User.find({})
+    .sort({ createdAt: -1 })
+    .lean()
+    .then((rows) => {
+      const out = (rows || []).map((u) => ({
+        id: String(u._id),
+        name: u.name,
+        email: u.email,
+        created_at: u.createdAt
+      }));
+      res.json(out);
+    })
+    .catch(() => res.status(500).json({ message: 'DB error' }))
 }
 
 exports.deleteUser = (req, res) => {
-  db.query('DELETE FROM users WHERE id = ?', [req.params.id], (err) => {
-    if (err) return res.status(500).json({ message: 'DB error' })
-    res.json({ message: 'User deleted' })
-  })
+  const q = buildIdQuery(req.params.id);
+  if (!q) return res.status(404).json({ message: 'Not found' });
+  User.findOneAndDelete(q)
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Not found' });
+      res.json({ message: 'User deleted' });
+    })
+    .catch(() => res.status(500).json({ message: 'DB error' }))
 }
 
 // ── ACTORS ─────────────────────────────────────────────────────────────────
 exports.getActors = (req, res) => {
-  db.query('SELECT * FROM actors ORDER BY name ASC', (err, result) => {
-    if (err) return res.status(500).json({ message: 'DB error' })
-    res.json(result)
-  })
+  Actor.find({})
+    .sort({ name: 1 })
+    .lean()
+    .then((rows) => res.json((rows || []).map(addLegacyId)))
+    .catch(() => res.status(500).json({ message: 'DB error' }))
 }
 
 // ── DASHBOARD STATS ────────────────────────────────────────────────────────
 exports.getStats = (req, res) => {
-  const queries = [
-    'SELECT COUNT(*) AS movies   FROM movies',
-    'SELECT COUNT(*) AS events   FROM events',
-    'SELECT COUNT(*) AS bookings FROM bookings',
-    'SELECT COUNT(*) AS users    FROM users',
-    'SELECT COALESCE(SUM(total_price),0) AS revenue FROM bookings'
-  ]
-  Promise.all(queries.map(q => new Promise((resolve, reject) =>
-    db.query(q, (err, r) => err ? reject(err) : resolve(r[0]))
-  )))
-  .then(([m, e, b, u, r]) => res.json({
-    movies:   m.movies,
-    events:   e.events,
-    bookings: b.bookings,
-    users:    u.users,
-    revenue:  r.revenue
-  }))
-  .catch(err => res.status(500).json({ message: 'DB error', error: err.message }))
+  Promise.all([
+    Movie.countDocuments(),
+    Event.countDocuments(),
+    Booking.countDocuments(),
+    User.countDocuments(),
+    Booking.aggregate([{ $group: { _id: null, revenue: { $sum: '$totalPrice' } } }])
+  ])
+    .then(([movies, events, bookings, users, revenueAgg]) => {
+      const revenue = revenueAgg && revenueAgg[0] ? revenueAgg[0].revenue : 0;
+      res.json({ movies, events, bookings, users, revenue });
+    })
+    .catch((err) => res.status(500).json({ message: 'DB error', error: err.message }))
 }

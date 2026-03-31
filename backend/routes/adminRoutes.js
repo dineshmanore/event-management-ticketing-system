@@ -16,11 +16,22 @@ router.delete('/movies/:id', auth, c.deleteMovie)
 
 // Events
 router.get('/events', auth, (req, res) => {
-  const db = require('../models/db')
-  db.query('SELECT * FROM events ORDER BY date ASC', (err, result) => {
-    if (err) return res.status(500).json({ message: 'DB error' })
-    res.json(result)
-  })
+  const Event = require('../models/Event.mongo')
+  const { addLegacyId } = require('../utils/id')
+  Event.find({})
+    .sort({ date: 1 })
+    .lean()
+    .then((docs) => {
+      const mapped = (docs || []).map((d) => {
+        const out = addLegacyId(d);
+        out.price_from = d.priceFrom ?? 0;
+        out.price_to = d.priceTo ?? 0;
+        out.age_limit = d.ageLimit ?? 'All Ages';
+        return out;
+      });
+      res.json(mapped);
+    })
+    .catch(() => res.status(500).json({ message: 'DB error' }))
 })
 router.post('/events',       auth, c.addEvent)
 router.put('/events/:id',    auth, c.updateEvent)

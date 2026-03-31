@@ -1,52 +1,49 @@
-const db = require('../models/db')
+const Movie = require('../models/Movie.mongo')
+const Actor = require('../models/Actor.mongo')
+const { buildIdQuery, addLegacyId, isNumericId } = require('../utils/id')
 
 exports.getMovies = (req, res) => {
-  db.query('SELECT * FROM movies', (err, result) => {
-    if (err) return res.status(500).json({ message: 'Database error' })
-    res.json(result)
-  })
+  Movie.find({})
+    .sort({ createdAt: -1 })
+    .lean()
+    .then((docs) => res.json(docs.map(addLegacyId)))
+    .catch(() => res.status(500).json({ message: 'Database error' }))
 }
 
 exports.searchMovies = (req, res) => {
   const { q } = req.query;
   if (!q) return res.json([]);
-  const searchPattern = `%${q}%`;
-  db.query(
-    'SELECT * FROM movies WHERE title LIKE ? OR genre LIKE ? OR language LIKE ? LIMIT 10', 
-    [searchPattern, searchPattern, searchPattern], 
-    (err, result) => {
-      if (err) return res.status(500).json({ message: 'Database error' });
-      res.json(result);
-    }
-  );
+
+  const query = String(q).trim();
+  const rx = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+
+  Movie.find({
+    $or: [{ title: rx }, { genre: rx }, { language: rx }]
+  })
+    .limit(10)
+    .lean()
+    .then((docs) => res.json(docs.map(addLegacyId)))
+    .catch(() => res.status(500).json({ message: 'Database error' }));
 }
 
 exports.getMovieById = (req, res) => {
   const { id } = req.params;
+  const idQuery = buildIdQuery(id);
+  if (!idQuery) return res.status(400).json({ message: 'Movie not found' });
 
-  db.query("SELECT * FROM movies WHERE id=?", [id], (err, movieResult) => {
-    if (err) return res.status(500).json({ message: "Database error" });
+  Movie.findOne(idQuery)
+    .lean()
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Movie not found' });
 
-    if (movieResult.length === 0) {
-      return res.status(404).json({ message: "Movie not found" });
-    }
+      const cast =
+        Array.isArray(doc.cast) && doc.cast.length
+          ? doc.cast.map((c) => ({ name: c.actorName || '', image: c.actorImage || '', role: c.role || 'Unknown' }))
+          : [];
 
-    db.query(`
-      SELECT a.name, a.image, mc.role
-      FROM movie_cast mc
-      JOIN actors a ON mc.actor_id = a.id
-      WHERE mc.movie_id=?
-    `, [id], (err, castResult) => {
-
-      if (err) return res.status(500).json({ message: "Database error" });
-
-      res.json({
-        ...movieResult[0],
-        cast: castResult || []
-      });
-
-    });
-  });
+      return res.json({ ...addLegacyId(doc), cast });
+    })
+    .catch(() => res.status(500).json({ message: 'Database error' }));
 };
 
 exports.addMovie = (req, res) => {
@@ -54,12 +51,17 @@ exports.addMovie = (req, res) => {
 
   if (!title) return res.status(400).json({ message: 'Title is required' })
 
-  db.query(
-    'INSERT INTO movies(title, genre, language, rating, votes, poster, banner, description, category) VALUES(?,?,?,?,?,?,?,?,?)',
-    [title, genre, language, rating, votes, poster, banner, description, category],
-    (err, result) => {
-      if (err) return res.status(500).json({ message: 'Database error' })
-      res.json({ message: 'Movie added successfully', id: result.insertId })
-    }
-  )
+  Movie.create({
+    title,
+    genre,
+    language,
+    rating: Number(rating || 0),
+    votes: Number(votes || 0),
+    poster,
+    banner,
+    description,
+    category
+  })
+    .then((doc) => res.json({ message: 'Movie added successfully', id: doc.mysqlId ?? String(doc._id) }))
+    .catch(() => res.status(500).json({ message: 'Database error' }))
 }
