@@ -341,12 +341,13 @@
         <img id="mBannerPreview" class="img-preview" style="display:none">
       </div>
       <div class="form-group"><label>Trailer URL</label><input type="url" id="mTrailer" placeholder="https://youtube.com/watch?v=..."></div>
-     <div class="form-group">
-  <label>Select Cast</label>
-  <div id="actorChips" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1.5px solid #e0e0e0;border-radius:8px;min-height:48px;cursor:pointer"></div>
-  <p style="font-size:11px;color:#aaa;margin-top:5px">Click an actor to add · click × to remove</p>
-  <div id="rolesContainer" style="margin-top:12px"></div>
-</div>
+      <div class="form-group">
+        <label>Select Cast</label>
+        <input type="text" id="actorSearch" placeholder="Search actors..." oninput="filterActors(this.value)" style="margin-bottom:8px; width:100%; padding:8px 12px; border:1.5px solid #e0e0e0; border-radius:6px; font-family:'Poppins', sans-serif; font-size:13px; outline:none;" autocomplete="off">
+        <div id="actorChips" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1.5px solid #e0e0e0;border-radius:8px;min-height:48px;max-height:160px;overflow-y:auto;cursor:pointer"></div>
+        <p style="font-size:11px;color:#aaa;margin-top:5px">Click an actor to add · click × to remove</p>
+        <div id="rolesContainer" style="margin-top:12px"></div>
+      </div>
 
       <div class="form-group"><label>Description</label><textarea id="mDesc" placeholder="Brief description of the movie..."></textarea></div>
     </div>
