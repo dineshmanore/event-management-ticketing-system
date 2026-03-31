@@ -2,11 +2,13 @@ const API_BASE = 'http://localhost:5000/api';
 
 async function pay() {
   const movieId = localStorage.getItem('movieId');
+  const eventId = localStorage.getItem('eventId');
   const seats = JSON.parse(localStorage.getItem('selectedSeats') || '[]');
   const token = localStorage.getItem('token');
   const totalPrice = parseInt(localStorage.getItem('totalPrice') || '0');
   const convFee = Math.round(totalPrice * 0.1);
   const grandTotal = totalPrice + convFee;
+  const type = localStorage.getItem('bookingType');
 
   if (!token) {
     alert('Please sign in first.');
@@ -14,12 +16,21 @@ async function pay() {
     return;
   }
 
+  if (type === 'movie') {
   if (!movieId || seats.length === 0) {
     alert('Missing booking data. Please start over.');
     window.location.href = 'index.html';
     return;
   }
+}
 
+if (type === 'event') {
+  if (!eventId) {
+    alert('Missing event data.');
+    window.location.href = 'index.html';
+    return;
+  }
+}
   try {
     // STEP 1: Create Razorpay order on backend
     const orderRes = await fetch(`${API_BASE}/create-order`, {
@@ -43,7 +54,7 @@ async function pay() {
 
       handler: async function(response) {
         // STEP 3: Verify payment
-        const verifyRes = await fetch(`${API_BASE}/payment/verify-payment`, {
+        const verifyRes = await fetch(`${API_BASE}/verify-payment`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(response)
@@ -56,19 +67,28 @@ async function pay() {
         }
 
         // STEP 4: Save booking
+        const bookingType = localStorage.getItem('bookingType') || 'movie';
+        const finalId = bookingType === 'event' ? (eventId || movieId) : movieId;
+        
         const bookingRes = await fetch(`${API_BASE}/bookings`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + token
           },
-          body: JSON.stringify({ movieId, seats })
+          body: JSON.stringify({ 
+            movieId: finalId, // Reusing movie_id column for any booking item ID 
+            seats: seats.length ? seats : [`General x${localStorage.getItem('ticketCount') || 1}`],
+            totalPrice: parseInt(localStorage.getItem('totalPrice') || '0'),
+            date: localStorage.getItem('bookingDate') || new Date().toISOString().split('T')[0]
+          })
         });
         const booking = await bookingRes.json();
 
-        if (booking.success) {
+        if (booking.success || booking.id || booking.bookingId) {
           localStorage.removeItem('selectedSeats');
           localStorage.removeItem('totalPrice');
+          localStorage.removeItem('ticketCount');
           alert('Booking Confirmed! Your tickets are ready.');
           window.location.href = 'dashboard.html';
         } else {
