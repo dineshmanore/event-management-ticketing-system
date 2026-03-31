@@ -41,7 +41,7 @@
     let desc = 'Explore our complete collection';
     
     try {
-      const res = await fetch('http://localhost:5000/api/movies');
+      const res = await fetch('https://event-management-ticketing-system.onrender.com/api/movies');
       let movies = await res.json();
       
       switch(type) {

@@ -1,5 +1,5 @@
 // api.js — homepage movie loading, category filtering, search
-const API = 'http://localhost:5000/api';
+const API = 'https://event-management-ticketing-system.onrender.com/api';
 
 let allMovies    = [];
 let bannerIndex  = 0;

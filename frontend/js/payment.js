@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://event-management-ticketing-system.onrender.com/api';
 
 async function pay() {
   const movieId = localStorage.getItem('movieId');

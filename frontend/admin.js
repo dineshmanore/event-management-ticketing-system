@@ -1,5 +1,5 @@
 // admin.js — ShowTime Admin Panel
-const API       = 'http://localhost:5000/api';
+const API       = 'https://event-management-ticketing-system.onrender.com/api';
 const ADMIN_API = `${API}/admin`;
 
 let moviesData = [], eventsData = [], bookingsData = [], usersData = [], streamsData = [];

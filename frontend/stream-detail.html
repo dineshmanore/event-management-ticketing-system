@@ -93,7 +93,7 @@ if (!id) {
 
 async function loadStream() {
   try {
-    const res = await fetch(`http://localhost:5000/api/stream/${id}`);
+    const res = await fetch(`https://event-management-ticketing-system.onrender.com/api/stream/${id}`);
     if (!res.ok) throw new Error('Not found');
     const s = await res.json();
     streamData = s;
