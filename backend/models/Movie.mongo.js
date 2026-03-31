@@ -21,6 +21,7 @@ const MovieSchema = new mongoose.Schema(
     votes: { type: Number, default: 0 },
     poster: { type: String },
     banner: { type: String },
+    trailerUrl: { type: String },
     description: { type: String },
     category: { type: String },
     releaseDate: { type: Date },

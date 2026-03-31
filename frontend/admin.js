@@ -381,6 +381,7 @@ function openMovieModal(movie) {
   document.getElementById('mPremiere').checked        = (movie?.category === 'Premiere');
   document.getElementById('mPoster').value            = movie?.poster || '';
   document.getElementById('mBanner').value            = movie?.banner || '';
+  document.getElementById('mTrailer').value           = movie?.trailer_url || movie?.trailerUrl || '';
   document.getElementById('mDesc').value              = movie?.description || '';
 
   const prev = document.getElementById('mPosterPreview');
@@ -441,6 +442,7 @@ async function saveMovie() {
     category:    document.getElementById('mPremiere').checked ? 'Premiere' : 'Movies',
     poster:      document.getElementById('mPoster').value,
     banner:      document.getElementById('mBanner').value,
+    trailer_url: document.getElementById('mTrailer').value,
     description: document.getElementById('mDesc').value,
     cast:        getCastData()
   };

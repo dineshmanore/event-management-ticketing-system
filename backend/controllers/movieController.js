@@ -6,7 +6,15 @@ exports.getMovies = (req, res) => {
   Movie.find({})
     .sort({ createdAt: -1 })
     .lean()
-    .then((docs) => res.json(docs.map(addLegacyId)))
+    .then((docs) =>
+      res.json(
+        docs.map((d) => {
+          const out = addLegacyId(d);
+          out.trailer_url = d.trailerUrl || '';
+          return out;
+        })
+      )
+    )
     .catch(() => res.status(500).json({ message: 'Database error' }))
 }
 
@@ -41,7 +49,9 @@ exports.getMovieById = (req, res) => {
           ? doc.cast.map((c) => ({ name: c.actorName || '', image: c.actorImage || '', role: c.role || 'Unknown' }))
           : [];
 
-      return res.json({ ...addLegacyId(doc), cast });
+      const out = { ...addLegacyId(doc), cast };
+      out.trailer_url = doc.trailerUrl || '';
+      return res.json(out);
     })
     .catch(() => res.status(500).json({ message: 'Database error' }));
 };

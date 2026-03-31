@@ -9,7 +9,7 @@ const { buildIdQuery, addLegacyId } = require('../utils/id')
 // BUG FIX: addMovie was missing entirely. saveMovie() in admin.js POST'd to
 // /api/admin/movies but no route/handler existed for it.
 exports.addMovie = (req, res) => {
-  const { title, genre, language, rating, votes, poster, banner, description, category, cast } = req.body
+  const { title, genre, language, rating, votes, poster, banner, trailer_url, description, category, cast } = req.body
   if (!title) return res.status(400).json({ message: 'Title required' })
 
   const castArr = Array.isArray(cast) ? cast : [];
@@ -35,6 +35,7 @@ exports.addMovie = (req, res) => {
         votes: Number(votes || 0),
         poster,
         banner,
+        trailerUrl: trailer_url,
         description,
         category: category || 'Movies',
         cast: castDocs.filter(Boolean)
@@ -46,7 +47,7 @@ exports.addMovie = (req, res) => {
 
 exports.updateMovie = (req, res) => {
   const { id } = req.params
-  const { title, genre, language, rating, votes, poster, banner, description, category, cast } = req.body
+  const { title, genre, language, rating, votes, poster, banner, trailer_url, description, category, cast } = req.body
   if (!title) return res.status(400).json({ message: 'Title required' })
 
   const q = buildIdQuery(id);
@@ -77,6 +78,7 @@ exports.updateMovie = (req, res) => {
             votes: Number(votes || 0),
             poster,
             banner,
+            trailerUrl: trailer_url,
             description,
             category: category || 'Movies',
             cast: castDocs.filter(Boolean)
