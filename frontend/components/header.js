@@ -1,15 +1,36 @@
 (function () {
   const token = localStorage.getItem('token');
 
-  let user = {};
-  try {
-    user = JSON.parse(localStorage.getItem('user')) || {};
-  } catch {
-    user = {};
+  function safeParseUser() {
+    try {
+      return JSON.parse(localStorage.getItem('user')) || {};
+    } catch {
+      return {};
+    }
   }
 
-  const userName = user.name || '';
-  const role = user.role || '';
+  async function ensureUserHydrated() {
+    if (!token) return;
+    const user = safeParseUser();
+    if (user?.name) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        window.dispatchEvent(new Event('showtime:user-updated'));
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  let user = safeParseUser();
+  let userName = user.name || '';
+  let role = user.role || '';
   const city = localStorage.getItem('city') || 'Mumbai';
 
   const page = window.location.pathname.split('/').pop().replace('.html','') || 'index';
@@ -41,20 +62,57 @@
           </div>
         </div>
 
-        <a href="dashboard.html">🎟 My Bookings</a>
-        ${role === 'admin' ? '<a href="admin.html">⚙ Admin Panel</a>' : ''}
+        <a href="profile.html"><i class="fa fa-user" style="width:18px;margin-right:8px;color:#cc0c39"></i>My Profile</a>
+        <a href="dashboard.html"><i class="fa fa-ticket-alt" style="width:18px;margin-right:8px;color:#cc0c39"></i>My Bookings</a>
+        ${role === 'admin' ? '<a href="admin.html"><i class="fa fa-gear" style="width:18px;margin-right:8px;color:#cc0c39"></i>Admin Panel</a>' : ''}
 
         <div class="divider"></div>
-        <span onclick="logout()">🚪 Logout</span>
+        <span onclick="logout()"><i class="fa fa-right-from-bracket" style="width:18px;margin-right:8px;color:#888"></i>Logout</span>
       </div>
     </div>
     `
     : `<a href="login.html" class="signin-btn">Sign In</a>`;
 
-  const headerEl = document.getElementById('header');
-  if (!headerEl) return;
+  function renderHeader() {
+    user = safeParseUser();
+    userName = user.name || '';
+    role = user.role || '';
 
-  headerEl.innerHTML = `
+    const headerEl = document.getElementById('header');
+    if (!headerEl) return;
+
+    const authHTML = token
+      ? `
+      <div class="user-menu" onclick="toggleMenu(event)">
+        <div class="user-avatar">
+          ${(userName.charAt(0) || 'U').toUpperCase()}
+        </div>
+        <span class="user-name">${userName.split(' ')[0]}</span>
+
+        <div id="dropdownMenu" class="dropdown hidden">
+
+          <div class="dropdown-header">
+            <div class="avatar-big">
+              ${(userName.charAt(0) || 'U').toUpperCase()}
+            </div>
+            <div>
+              <div class="name">${userName}</div>
+              <div class="role">${role}</div>
+            </div>
+          </div>
+
+          <a href="profile.html"><i class="fa fa-user" style="width:18px;margin-right:8px;color:#cc0c39"></i>My Profile</a>
+          <a href="dashboard.html"><i class="fa fa-ticket-alt" style="width:18px;margin-right:8px;color:#cc0c39"></i>My Bookings</a>
+          ${role === 'admin' ? '<a href="admin.html"><i class="fa fa-gear" style="width:18px;margin-right:8px;color:#cc0c39"></i>Admin Panel</a>' : ''}
+
+          <div class="divider"></div>
+          <span onclick="logout()"><i class="fa fa-right-from-bracket" style="width:18px;margin-right:8px;color:#888"></i>Logout</span>
+        </div>
+      </div>
+      `
+      : `<a href="login.html" class="signin-btn">Sign In</a>`;
+
+    headerEl.innerHTML = `
     <header class="header">
       <div class="top-header">
 
@@ -96,6 +154,11 @@
       </nav>
     </header>
   `;
+  }
+
+  renderHeader();
+  window.addEventListener('showtime:user-updated', renderHeader);
+  ensureUserHydrated();
 })();
 
 function toggleMenu(e) {

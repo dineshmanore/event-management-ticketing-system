@@ -7,6 +7,7 @@ let bannerTimer  = null;
 let activeGenre  = 'all';
 let activeLang   = null;
 let heroMovieId  = null;
+let heroTrailer  = '';
 
 const urlParams  = new URLSearchParams(window.location.search);
 const activeCat  = urlParams.get('cat') || 'movies';
@@ -116,6 +117,7 @@ function setupBanner(movies) {
 
 function showBanner(movie) {
   heroMovieId = movie.id;
+  heroTrailer = (movie && (movie.trailer_url || movie.trailer || movie.trailerUrl)) ? String(movie.trailer_url || movie.trailer || movie.trailerUrl).trim() : '';
   const banner = document.getElementById('heroBanner');
   if (banner) {
     banner.style.backgroundImage = `url(${movie.banner || movie.poster})`;
@@ -212,5 +214,60 @@ function showError(msg) {
       </div>`;
   }
 }
+
+function toEmbedUrl(url) {
+  if (!url) return '';
+  const ytWatch = url.match(/youtube\.com\/watch\?v=([^&]+)/i);
+  const ytShort = url.match(/youtu\.be\/([^?&]+)/i);
+  const ytEmbed = url.match(/youtube\.com\/embed\/([^?&]+)/i);
+  const ytId = (ytWatch && ytWatch[1]) || (ytShort && ytShort[1]) || (ytEmbed && ytEmbed[1]);
+  if (ytId) return `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&playsinline=1`;
+
+  const vimeo = url.match(/vimeo\.com\/(\d+)/i);
+  if (vimeo && vimeo[1]) return `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1`;
+
+  return url;
+}
+
+function isDirectVideoUrl(url) {
+  return /\.(mp4|webm|ogg)(\?.*)?$/i.test(url || '');
+}
+
+function watchHeroTrailer() {
+  const trailer = heroTrailer || '';
+  if (!trailer) {
+    alert('Trailer not available for this movie yet.');
+    return;
+  }
+
+  const modal = document.getElementById('trailerModal');
+  const wrap = document.getElementById('trailerFrameWrap');
+  const titleEl = document.getElementById('trailerTitle');
+  if (!modal || !wrap || !titleEl) {
+    alert('Trailer player is missing on this page.');
+    return;
+  }
+
+  const embedUrl = toEmbedUrl(trailer);
+  titleEl.innerText = `${(document.getElementById('heroTitle')?.innerText || 'Movie')} — Trailer`;
+  if (isDirectVideoUrl(trailer)) {
+    wrap.innerHTML = `<video src="${trailer}" controls autoplay playsinline></video>`;
+  } else {
+    wrap.innerHTML = `<iframe src="${embedUrl}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  }
+  modal.classList.add('open');
+}
+
+function closeTrailer(e) {
+  if (e && e.target && e.target.id !== 'trailerModal') return;
+  const modal = document.getElementById('trailerModal');
+  const wrap = document.getElementById('trailerFrameWrap');
+  if (wrap) wrap.innerHTML = '';
+  if (modal) modal.classList.remove('open');
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeTrailer();
+});
 
 loadMovies();

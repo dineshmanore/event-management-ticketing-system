@@ -13,11 +13,12 @@
     .real-ticket {
       display: flex;
       background: #fff;
-      border-radius: 12px;
+      border-radius: 16px;
       margin-bottom: 24px;
       overflow: hidden;
       filter: drop-shadow(0 10px 30px rgba(0,0,0,0.08));
       position: relative;
+      border: 1px solid rgba(0,0,0,0.06);
     }
     
     .ticket-left {
@@ -28,6 +29,36 @@
       border-right: 2px dashed #ddd;
       position: relative;
     }
+
+    .ticket-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .ticket-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+      background: linear-gradient(135deg, #cc0c39, #a50930);
+      box-shadow: 0 10px 24px rgba(204,12,57,0.2);
+      white-space: nowrap;
+    }
+    .ticket-no {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: #6b7280;
+    }
+    .ticket-no span { color:#111; }
     
     /* The perforated cutouts */
     .ticket-left::before, .ticket-left::after {
@@ -46,26 +77,28 @@
       width: 100px;
       height: 140px;
       object-fit: cover;
-      border-radius: 8px;
+      border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     
-    .ticket-details h3 { font-size: 22px; font-weight: 800; margin-bottom: 6px; color: #111; line-height: 1.2; text-transform: uppercase; }
-    .ticket-meta { font-size: 13px; color: #666; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-weight: 500;}
+    .ticket-details h3 { font-size: 20px; font-weight: 900; margin-bottom: 6px; color: #111; line-height: 1.2; text-transform: uppercase; letter-spacing:0.02em; }
+    .ticket-meta { font-size: 13px; color: #4b5563; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-weight: 600;}
     .ticket-meta i { color: #cc0c39; width: 14px; text-align: center; }
     
     .ticket-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-      background: #f8f9fa;
-      padding: 12px;
-      border-radius: 8px;
+      background: linear-gradient(180deg,#f8fafc,#f3f4f6);
+      padding: 14px;
+      border-radius: 12px;
       margin-bottom: 12px;
+      border: 1px solid rgba(0,0,0,0.04);
     }
     .t-cell { display: flex; flex-direction: column; }
-    .t-label { font-size: 10px; color: #888; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
-    .t-val { font-size: 14px; color: #111; font-weight: 700; }
+    .t-label { font-size: 10px; color: #6b7280; text-transform: uppercase; font-weight: 800; letter-spacing: 0.08em; }
+    .t-val { font-size: 14px; color: #111; font-weight: 800; }
+    .t-val.accent { color:#cc0c39; }
     
     .ticket-right {
       width: 200px;
@@ -82,12 +115,13 @@
       height: 120px;
       background: #fff;
       padding: 6px;
-      border: 1px solid #eee;
-      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
     }
     .qr-box img { width: 100%; height: 100%; display: block; }
     
     .t-id { font-size: 11px; color: #999; margin-top: 10px; font-family: monospace; letter-spacing: 1px; }
+    .qr-caption { font-size: 11px; color:#6b7280; margin-top: 10px; text-align:center; font-weight:600; }
     
     .booking-actions { display: flex; gap: 10px; margin-top: 14px; }
     .cancel-btn { background: white; color: #888; border: 1.5px solid #ddd; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
@@ -150,12 +184,27 @@ async function loadBookings() {
     document.getElementById('bookingSubtitle').innerText = `${data.length} ticket${data.length > 1 ? 's' : ''} found`;
 
     container.innerHTML = data.map(b => {
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SHOWTIME-${b.id}-${b.user_id}`;
       const showDate = b.show_date ? formatDate(b.show_date) : formatDate(b.booking_time);
       const isEvent = Number(b.is_event) === 1;
       const venue = isEvent
         ? (b.event_venue ? `${b.event_venue}${b.event_city ? ', ' + b.event_city : ''}` : 'Event Venue')
         : `PVR Cinemas, ${localStorage.getItem('city') || 'Mumbai'}`;
+
+      const ticketNo = `ST-${String(b.id).padStart(6, '0')}`;
+      const payload = {
+        ticketNo,
+        bookingId: b.id,
+        type: isEvent ? 'event' : 'movie',
+        title: b.title || '',
+        venue,
+        date: b.show_date || b.booking_time || '',
+        time: isEvent ? (b.event_time || 'TBA') : '7:30 PM',
+        seats: b.seats || '',
+        amount: b.total_price || 0,
+        name: (localStorage.getItem('user') ? (JSON.parse(localStorage.getItem('user') || '{}').name || '') : '') || 'Guest'
+      };
+      const qrData = encodeURIComponent(JSON.stringify(payload));
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrData}`;
       
       return `
       <div class="real-ticket">
@@ -166,6 +215,10 @@ async function loadBookings() {
                onerror="this.src='https://via.placeholder.com/100x140/cc0c39/white?text=Ticket'">
           
           <div class="ticket-details">
+            <div class="ticket-top">
+              <div class="ticket-badge"><i class="fa ${isEvent ? 'fa-calendar-alt' : 'fa-film'}"></i>${isEvent ? 'Event Pass' : 'Movie Ticket'}</div>
+              <div class="ticket-no">Ticket <span>${ticketNo}</span></div>
+            </div>
             <h3>${b.title || (isEvent ? 'Event #' + b.movie_id : 'Movie #' + b.movie_id)}</h3>
             <div class="ticket-meta"><i class="fa fa-map-marker-alt"></i> ${venue}</div>
             
@@ -180,7 +233,7 @@ async function loadBookings() {
               </div>
               <div class="t-cell">
                 <span class="t-label">${isEvent ? 'Tickets' : 'Seats'}</span>
-                <span class="t-val" style="color:#cc0c39">${b.seats}</span>
+                <span class="t-val accent">${b.seats}</span>
               </div>
               <div class="t-cell">
                 <span class="t-label">Amount</span>
@@ -198,8 +251,8 @@ async function loadBookings() {
           <div class="qr-box">
             <img src="${qrUrl}" alt="QR Code">
           </div>
-          <div class="t-id">ST-${b.id.toString().padStart(6, '0')}</div>
-          <div style="font-size:10px; color:#aaa; margin-top:10px; text-align:center;">Scan at entry</div>
+          <div class="t-id">${ticketNo}</div>
+          <div class="qr-caption">Scan at entry</div>
         </div>
       </div>
       `;

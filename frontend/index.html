@@ -40,11 +40,22 @@
       <p id="heroDescription"></p>
       <div class="hero-buttons">
         <button class="btn-book" onclick="bookHero()">Book Tickets</button>
-        <button class="btn-trailer">Watch Trailer</button>
+        <button class="btn-trailer" onclick="watchHeroTrailer()">Watch Trailer</button>
       </div>
     </div>
   </div>
 </section>
+
+<!-- TRAILER MODAL -->
+<div id="trailerModal" class="trailer-modal" onclick="closeTrailer(event)">
+  <div class="trailer-box" onclick="event.stopPropagation()">
+    <div class="trailer-head">
+      <span id="trailerTitle">Trailer</span>
+      <button class="trailer-close" onclick="closeTrailer()">&times;</button>
+    </div>
+    <div class="trailer-frame-wrap" id="trailerFrameWrap"></div>
+  </div>
+</div>
 
 <!-- NOW SHOWING -->
 <div class="section-wrap">

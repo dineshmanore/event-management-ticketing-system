@@ -43,11 +43,17 @@ async function loadAll() {
       fetch(`${API}/stream`).catch(() => ({ json: () => [] }))
     ]);
 
-    moviesData   = await mRes.json().catch(() => []);
-    eventsData   = typeof eRes.json === 'function' ? await eRes.json().catch(() => []) : [];
-    bookingsData = typeof bRes.json === 'function' ? await bRes.json().catch(() => []) : [];
-    usersData    = typeof uRes.json === 'function' ? await uRes.json().catch(() => []) : [];
-    streamsData  = typeof sRes.json === 'function' ? await sRes.json().catch(() => []) : [];
+    const mData = await mRes.json().catch(() => []);
+    const eData = typeof eRes.json === 'function' ? await eRes.json().catch(() => []) : [];
+    const bData = typeof bRes.json === 'function' ? await bRes.json().catch(() => []) : [];
+    const uData = typeof uRes.json === 'function' ? await uRes.json().catch(() => []) : [];
+    const sData = typeof sRes.json === 'function' ? await sRes.json().catch(() => []) : [];
+
+    moviesData   = Array.isArray(mData) ? mData : [];
+    eventsData   = Array.isArray(eData) ? eData : [];
+    bookingsData = Array.isArray(bData) ? bData : [];
+    usersData    = Array.isArray(uData) ? uData : [];
+    streamsData  = Array.isArray(sData) ? sData : [];
 
     updateCounts();
     renderDashboard();

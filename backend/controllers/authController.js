@@ -5,6 +5,68 @@ const User = require('../models/User.mongo')
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+exports.getMe = (req, res) => {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ message: 'Invalid or expired token' });
+
+  User.findById(userId)
+    .select('_id name email role createdAt')
+    .lean()
+    .then((u) => {
+      if (!u) return res.status(404).json({ message: 'User not found' });
+      res.json({
+        id: String(u._id),
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        created_at: u.createdAt
+      });
+    })
+    .catch(() => res.status(500).json({ message: 'Database error' }));
+};
+
+exports.updateMe = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ message: 'Invalid or expired token' });
+
+    const { name, email, password } = req.body || {};
+
+    const update = {};
+    if (typeof name === 'string' && name.trim()) update.name = name.trim();
+
+    if (typeof email === 'string' && email.trim()) {
+      const nextEmail = email.toLowerCase().trim();
+      const existing = await User.findOne({ email: nextEmail, _id: { $ne: userId } }).select('_id').lean();
+      if (existing) return res.status(409).json({ message: 'Email already registered' });
+      update.email = nextEmail;
+    }
+
+    if (typeof password === 'string' && password.trim()) {
+      if (password.trim().length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
+      update.password = bcrypt.hashSync(password.trim(), 8);
+    }
+
+    const updated = await User.findByIdAndUpdate(userId, { $set: update }, { new: true })
+      .select('_id name email role createdAt');
+
+    if (!updated) return res.status(404).json({ message: 'User not found' });
+
+    res.json({
+      message: 'Profile updated',
+      user: {
+        id: String(updated._id),
+        name: updated.name,
+        email: updated.email,
+        role: updated.role,
+        created_at: updated.createdAt
+      }
+    });
+  } catch (e) {
+    res.status(500).json({ message: 'Database error' });
+  }
+};
+
 exports.signup = (req, res) => {
   const { name, email, password } = req.body;
 
