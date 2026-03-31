@@ -152,8 +152,10 @@ async function loadBookings() {
     container.innerHTML = data.map(b => {
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SHOWTIME-${b.id}-${b.user_id}`;
       const showDate = b.show_date ? formatDate(b.show_date) : formatDate(b.booking_time);
-      const isEvent = b.seats && String(b.seats).toLowerCase().includes('general');
-      const venue = isEvent ? 'Event Venue' : `PVR Cinemas, ${localStorage.getItem('city') || 'Mumbai'}`;
+      const isEvent = Number(b.is_event) === 1;
+      const venue = isEvent
+        ? (b.event_venue ? `${b.event_venue}${b.event_city ? ', ' + b.event_city : ''}` : 'Event Venue')
+        : `PVR Cinemas, ${localStorage.getItem('city') || 'Mumbai'}`;
       
       return `
       <div class="real-ticket">
@@ -174,7 +176,7 @@ async function loadBookings() {
               </div>
               <div class="t-cell">
                 <span class="t-label">Time</span>
-                <span class="t-val">${isEvent ? 'TBA' : '7:30 PM'}</span>
+                <span class="t-val">${isEvent ? (b.event_time || 'TBA') : '7:30 PM'}</span>
               </div>
               <div class="t-cell">
                 <span class="t-label">${isEvent ? 'Tickets' : 'Seats'}</span>

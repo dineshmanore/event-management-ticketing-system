@@ -235,15 +235,31 @@ body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--t
 
 .event-thumb {
   width: 100%;
-  height: 200px;
+  height: 260px;
   object-fit: cover;
+  object-position: center top;
   display: block;
   background: #1a1a2e;
 }
 
+/* Make native dropdown menus readable (prevents white option list on dark banners) */
+select.sort-select,
+.city-banner select,
+#cityFilter {
+  background: rgba(0, 0, 0, 0.28) !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.28) !important;
+}
+select.sort-select option,
+.city-banner select option,
+#cityFilter option {
+  background: #111827;
+  color: #fff;
+}
+
 .event-thumb-placeholder {
   width: 100%;
-  height: 200px;
+  height: 260px;
   display: flex;
   align-items: center;
   justify-content: center;

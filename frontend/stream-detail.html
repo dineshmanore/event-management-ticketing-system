@@ -26,6 +26,13 @@
     .btn-rent:hover { background: rgba(255,255,255,0.2); }
     .btn-trailer { background: #cc0c39; color: white; border: none; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 15px rgba(204,12,57,0.4); }
     .btn-trailer:hover { background: #a50930; }
+    .trailer-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .trailer-modal.open { display: flex; }
+    .trailer-box { width: min(980px, 100%); background: #111; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+    .trailer-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #17181f; color: #fff; font-size: 14px; font-weight: 600; }
+    .trailer-close { border: none; background: transparent; color: #fff; font-size: 22px; cursor: pointer; line-height: 1; }
+    .trailer-frame-wrap { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
+    .trailer-frame-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
   </style>
 </head>
 <body>
@@ -49,11 +56,21 @@
       </div>
       <p class="stream-desc" id="streamDesc">Loading overview...</p>
       <div class="action-row">
-        <button class="btn-trailer" onclick="alert('Trailer playing soon!')"><i class="fa fa-play"></i></button>
+        <button class="btn-trailer" onclick="playTrailer()"><i class="fa fa-play"></i></button>
         <button class="btn-rent" id="btnRent" onclick="buyStream('Rent')">Rent ₹0</button>
         <button class="btn-buy" id="btnBuy" onclick="buyStream('Buy')">Buy ₹0</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="trailerModal" class="trailer-modal" onclick="closeTrailer(event)">
+  <div class="trailer-box" onclick="event.stopPropagation()">
+    <div class="trailer-head">
+      <span id="trailerTitle">Trailer</span>
+      <button class="trailer-close" onclick="closeTrailer()">&times;</button>
+    </div>
+    <div class="trailer-frame-wrap" id="trailerFrameWrap"></div>
   </div>
 </div>
 
@@ -63,15 +80,23 @@
 <script src="components/footer.js"></script>
 <script>
 const params = new URLSearchParams(window.location.search);
-const id = params.get('id');
+const pathParts = window.location.pathname.split('/').filter(Boolean);
+const lastPart = pathParts[pathParts.length - 1] || '';
+const pathId = /^\d+$/.test(lastPart) ? lastPart : null;
+const id = params.get('id') || pathId;
+let streamData = null;
 
-if (!id) window.location.href = 'stream.html';
+if (!id) {
+  document.body.innerHTML = '<div style="padding:100px;text-align:center;color:white"><h2>Missing stream ID</h2><a href="stream" style="color:#cc0c39">Go Back</a></div>';
+  throw new Error('Missing stream id');
+}
 
 async function loadStream() {
   try {
     const res = await fetch(`http://localhost:5000/api/stream/${id}`);
     if (!res.ok) throw new Error('Not found');
     const s = await res.json();
+    streamData = s;
     
     document.title = `${s.title} — ShowTime Stream`;
     document.getElementById('streamTitle').innerText = s.title;
@@ -88,7 +113,7 @@ async function loadStream() {
     document.getElementById('bannerBg').style.backgroundImage = `url(${s.banner_image || s.poster_image || ''})`;
     
   } catch(e) {
-    document.body.innerHTML = '<div style="padding:100px;text-align:center;color:white"><h2>Stream Not Found</h2><a href="stream.html" style="color:#cc0c39">Go Back</a></div>';
+    document.body.innerHTML = '<div style="padding:100px;text-align:center;color:white"><h2>Stream Not Found</h2><a href="stream" style="color:#cc0c39">Go Back</a></div>';
   }
 }
 
@@ -100,6 +125,61 @@ function buyStream(type) {
   }
   alert(`Successfully processed ${type} request! This feature is in beta.`);
 }
+
+function toEmbedUrl(url) {
+  if (!url) return '';
+
+  // YouTube formats
+  const ytWatch = url.match(/youtube\.com\/watch\?v=([^&]+)/i);
+  const ytShort = url.match(/youtu\.be\/([^?&]+)/i);
+  const ytEmbed = url.match(/youtube\.com\/embed\/([^?&]+)/i);
+  const ytId = (ytWatch && ytWatch[1]) || (ytShort && ytShort[1]) || (ytEmbed && ytEmbed[1]);
+  if (ytId) return `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&playsinline=1&mute=0`;
+
+  // Vimeo format
+  const vimeo = url.match(/vimeo\.com\/(\d+)/i);
+  if (vimeo && vimeo[1]) return `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=0`;
+
+  // Allow pre-embedded links and generic video urls as-is
+  return url;
+}
+
+function isDirectVideoUrl(url) {
+  return /\.(mp4|webm|ogg)(\?.*)?$/i.test(url || '');
+}
+
+function playTrailer() {
+  const trailerUrl = streamData && streamData.trailer_url ? String(streamData.trailer_url).trim() : '';
+  if (!trailerUrl) {
+    alert('Trailer is not available for this stream yet.');
+    return;
+  }
+
+  const modal = document.getElementById('trailerModal');
+  const wrap = document.getElementById('trailerFrameWrap');
+  const titleEl = document.getElementById('trailerTitle');
+  const embedUrl = toEmbedUrl(trailerUrl);
+
+  titleEl.innerText = `${streamData.title || 'Stream'} — Trailer`;
+  if (isDirectVideoUrl(trailerUrl)) {
+    wrap.innerHTML = `<video src="${trailerUrl}" controls autoplay playsinline style="position:absolute;inset:0;width:100%;height:100%;background:#000"></video>`;
+  } else {
+    wrap.innerHTML = `<iframe src="${embedUrl}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  }
+  modal.classList.add('open');
+}
+
+function closeTrailer(e) {
+  if (e && e.target && e.target.id !== 'trailerModal') return;
+  const modal = document.getElementById('trailerModal');
+  const wrap = document.getElementById('trailerFrameWrap');
+  wrap.innerHTML = '';
+  modal.classList.remove('open');
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeTrailer();
+});
 
 loadStream();
 </script>

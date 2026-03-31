@@ -91,9 +91,28 @@ exports.getUserBookings = (req, res) => {
   const user_id = req.user.id   // real user from JWT
 
   db.query(
-    `SELECT b.*, m.title, m.poster, m.genre, m.language
+    `SELECT
+      b.*,
+      CASE
+        WHEN LOWER(COALESCE(b.seats, '')) LIKE 'general%' THEN 1
+        ELSE 0
+      END AS is_event,
+      CASE
+        WHEN LOWER(COALESCE(b.seats, '')) LIKE 'general%' THEN e.title
+        ELSE m.title
+      END AS title,
+      CASE
+        WHEN LOWER(COALESCE(b.seats, '')) LIKE 'general%' THEN COALESCE(e.image, e.banner)
+        ELSE m.poster
+      END AS poster,
+      m.genre,
+      m.language,
+      e.venue AS event_venue,
+      e.city  AS event_city,
+      e.time  AS event_time
      FROM bookings b
-     JOIN movies m ON b.movie_id = m.id
+     LEFT JOIN movies m ON b.movie_id = m.id
+     LEFT JOIN events e ON b.movie_id = e.id
      WHERE b.user_id = ?
      ORDER BY b.booking_time DESC`,
     [user_id],

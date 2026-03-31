@@ -74,7 +74,9 @@ function renderContent(list) {
 }
 
 function openStream(id) {
-  window.location.href = `stream-detail.html?id=${id}`;
+  if (!id) return;
+  // Use extension-less route to match apps served with clean URLs.
+  window.location.href = `stream-detail?id=${encodeURIComponent(id)}`;
 }
 
 function streamCard(m, isNew) {
