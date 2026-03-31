@@ -87,8 +87,8 @@ async function loadBookings() {
              onerror="this.src='https://via.placeholder.com/90x130/cc0c39/white?text=Movie'">
         <div class="booking-info">
           <h3>${b.title || 'Movie #' + b.movie_id}</h3>
-          <div class="info-row"><i class="fa fa-map-marker-alt"></i>PVR Cinemas, Baner Multiplex</div>
-          <div class="info-row"><i class="fa fa-calendar"></i>${formatDate(b.booking_time)}</div>
+          <div class="info-row"><i class="fa fa-map-marker-alt"></i>PVR Cinemas, ${localStorage.getItem('city') || 'Mumbai'} Multiplex</div>
+          <div class="info-row"><i class="fa fa-calendar"></i>${b.show_date ? formatDate(b.show_date) : formatDate(b.booking_time)}</div>
           <div class="info-row"><i class="fa fa-clock"></i>7:30 PM · 2D</div>
           <div class="seats-badge"><i class="fa fa-couch" style="margin-right:5px"></i>${b.seats}</div>
           <div class="booking-price">₹${b.total_price}</div>

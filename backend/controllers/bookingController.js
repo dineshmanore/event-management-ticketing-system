@@ -1,15 +1,20 @@
 const db = require('../models/db')
 
 // ── GET BOOKED SEATS FOR A MOVIE ─────────────────────────────────────────
-// Called by seats.js: GET /api/bookings/seats/:movieId
+// Called by seats.js: GET /api/bookings/seats/:movieId?date=YYYY-MM-DD
 // No auth required — anyone needs to see which seats are taken
 exports.getBookedSeats = (req, res) => {
-  const { movieId } = req.params
+  const { movieId } = req.params;
+  const { date } = req.query;
 
-  db.query(
-    'SELECT seats FROM bookings WHERE movie_id = ?',
-    [movieId],
-    (err, results) => {
+  let query = 'SELECT seats FROM bookings WHERE movie_id = ?';
+  let params = [movieId];
+  if (date) {
+    query += ' AND show_date = ?';
+    params.push(date);
+  }
+
+  db.query(query, params, (err, results) => {
       if (err) return res.status(500).json([])
 
       // Flatten all seat strings into one array of seat IDs
@@ -33,7 +38,7 @@ exports.getBookedSeats = (req, res) => {
 // Requires auth token → user_id comes from req.user.id (set by middleware)
 exports.bookSeats = (req, res) => {
   const user_id = req.user.id                 // from JWT middleware — real user
-  const { movieId, seats, totalPrice } = req.body
+  const { movieId, seats, totalPrice, date } = req.body
 
   if (!movieId || !seats || seats.length === 0) {
     return res.status(400).json({ message: 'Movie ID and seats are required' })
@@ -42,10 +47,14 @@ exports.bookSeats = (req, res) => {
   const seatString = Array.isArray(seats) ? seats.join(',') : seats
 
   // Check for seat conflicts (race condition guard)
-  db.query(
-    'SELECT seats FROM bookings WHERE movie_id = ?',
-    [movieId],
-    (err, results) => {
+  let query = 'SELECT seats FROM bookings WHERE movie_id = ?';
+  let params = [movieId];
+  if (date) {
+    query += ' AND show_date = ?';
+    params.push(date);
+  }
+
+  db.query(query, params, (err, results) => {
       if (err) return res.status(500).json({ message: 'Database error' })
 
       const alreadyBooked = []
@@ -60,10 +69,12 @@ exports.bookSeats = (req, res) => {
         return res.status(409).json({ message: 'One or more seats are already booked. Please reselect.' })
       }
 
+      const showDate = date || new Date().toISOString().split('T')[0];
+
       // All clear — insert booking
       db.query(
-        'INSERT INTO bookings (user_id, movie_id, seats, total_price) VALUES (?, ?, ?, ?)',
-        [user_id, movieId, seatString, totalPrice || 0],
+        'INSERT INTO bookings (user_id, movie_id, seats, total_price, show_date) VALUES (?, ?, ?, ?, ?)',
+        [user_id, movieId, seatString, totalPrice || 0, showDate],
         (err2, result) => {
           if (err2) return res.status(500).json({ message: 'Booking failed', error: err2.message })
           res.json({ success: true, bookingId: result.insertId })

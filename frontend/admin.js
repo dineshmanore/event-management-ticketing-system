@@ -170,7 +170,6 @@ function renderEvents(data) {
     </tr>`).join('');
 }
 
-// ── BOOKINGS TABLE ────────────────────────────────────────────────────────
 function renderBookings(data) {
   const list  = data || bookingsData;
   const tbody = document.getElementById('bookingsTable');
@@ -185,8 +184,8 @@ function renderBookings(data) {
       <td>${b.title || 'Movie #' + b.movie_id}</td>
       <td style="font-size:12px">${b.seats}</td>
       <td style="font-weight:600;color:#cc0c39">₹${b.total_price}</td>
-      <td style="font-size:12px;color:#888">
-        ${b.booking_time ? new Date(b.booking_time).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+      <td style="font-size:13px;color:#333;font-weight:600">
+        ${b.show_date ? new Date(b.show_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : (b.booking_time ? new Date(b.booking_time).toLocaleDateString('en-IN') : '—')}
       </td>
       <td><span class="badge paid">Confirmed</span></td>
     </tr>`).join('');

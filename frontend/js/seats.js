@@ -40,17 +40,33 @@ async function loadMovieTitle() {
   }
 }
 
+// Dynamically set theater location based on User's City selection
+const userCity = localStorage.getItem('city') || 'Mumbai';
+const locEl = document.getElementById('theaterLocation');
+if (locEl) {
+  locEl.innerHTML = `<i class="fa fa-map-marker-alt" style="color:#cc0c39;margin-right:6px"></i> PVR Cinemas, ${userCity}`;
+}
+
+// Track selected date
+let selectedDate = '';
+
 function buildDateStrip() {
   const strip  = document.getElementById('dateStrip');
   const days   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const today  = new Date();
+  
+  // Set default selectedDate to today
+  selectedDate = today.toISOString().split('T')[0];
+
   let html = '';
   for (let i = 0; i < 7; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
+    const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
     const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : days[d.getDay()];
-    html += `<div class="date-pill ${i === 0 ? 'active' : ''}" onclick="selectDate(this)">
+    
+    html += `<div class="date-pill ${i === 0 ? 'active' : ''}" data-date="${dateStr}" onclick="selectDate(this)">
                <div class="day">${label}</div>
                <div class="month">${d.getDate()} ${months[d.getMonth()]}</div>
              </div>`;
@@ -61,12 +77,17 @@ function buildDateStrip() {
 function selectDate(el) {
   document.querySelectorAll('.date-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
+  selectedDate = el.dataset.date;
+  
+  // Reset selected seats when date changes
+  selectedSeats = [];
+  updateStickyBar();
   loadBookedSeats();
 }
 
 async function loadBookedSeats() {
   try {
-    const res = await fetch(`${API}/bookings/seats/${movieId}`);
+    const res = await fetch(`${API}/bookings/seats/${movieId}?date=${selectedDate}`);
     if (!res.ok) throw new Error('Failed');
     bookedSeatsDB = await res.json();
   } catch (e) {
@@ -149,7 +170,7 @@ async function confirmSeats() {
   const totalPrice = selectedSeats.reduce((s, x) => s + x.price, 0);
 
   try {
-    const checkRes = await fetch(`${API}/bookings/seats/${movieId}`);
+    const checkRes = await fetch(`${API}/bookings/seats/${movieId}?date=${selectedDate}`);
     const latestBooked = await checkRes.json();
     const conflict = seatIds.some(s => latestBooked.includes(s));
     if (conflict) {
@@ -169,7 +190,7 @@ async function confirmSeats() {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + token
       },
-      body: JSON.stringify({ movieId, seats: seatIds, totalPrice })
+      body: JSON.stringify({ movieId, seats: seatIds, totalPrice, date: selectedDate })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -178,6 +199,7 @@ async function confirmSeats() {
     }
     localStorage.setItem('selectedSeats', JSON.stringify(seatIds));
     localStorage.setItem('totalPrice',    totalPrice);
+    localStorage.setItem('bookingDate',   selectedDate);
     window.location.href = 'payment.html';
   } catch (e) {
     console.error(e);
