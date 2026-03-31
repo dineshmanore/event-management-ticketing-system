@@ -81,7 +81,7 @@ function openStream(id) {
 
 function streamCard(m, isNew) {
   return `
-  <div class="s-card" onclick="openStream(${m.id})">
+  <div class="s-card" onclick="openStream('${m.id}')">
     <img src="${m.poster_image || 'https://via.placeholder.com/300x450/222/555'}" alt="${m.title}"
          onerror="this.src='https://via.placeholder.com/300x450/222/555?text=No+Poster'">
     ${isNew ? '<div class="new-badge">PREMIERE</div>' : ''}

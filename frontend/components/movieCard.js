@@ -7,7 +7,7 @@ function formatVotes(votes) {
 function createMovieCard(movie) {
   const ratingPercent = Math.round((movie.rating / 10) * 100);
   return `
-    <div class="card" onclick="openMovie(${movie.id})">
+    <div class="card" onclick="openMovie('${movie.id}')">
       <div class="poster">
         <img src="${movie.poster || movie.image || 'https://via.placeholder.com/300x450'}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/170x250/cc0c39/white?text=No+Image'">
         <div class="liked-badge"><i class="fa fa-thumbs-up" style="font-size:10px;margin-right:3px"></i>${ratingPercent}%</div>
