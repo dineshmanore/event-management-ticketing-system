@@ -7,6 +7,7 @@ router.get('/seats/:movieId', c.getBookedSeats)
 
 // Protected — must be logged in
 router.get('/my-bookings', auth, c.getUserBookings)
-router.post('/',            auth, c.bookSeats)
+router.post('/',           auth, c.bookSeats)
+router.delete('/:id',      auth, c.cancelBooking)
 
 module.exports = router

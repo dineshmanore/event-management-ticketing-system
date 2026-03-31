@@ -103,3 +103,23 @@ exports.getUserBookings = (req, res) => {
     }
   )
 }
+
+// ── CANCEL OWN BOOKING ──────────────────────────────────────────────────
+// Called by dashboard.html: DELETE /api/bookings/:id
+// Requires auth token
+exports.cancelBooking = (req, res) => {
+  const user_id = req.user.id;
+  const { id } = req.params;
+
+  db.query(
+    'DELETE FROM bookings WHERE id = ? AND user_id = ?',
+    [id, user_id],
+    (err, result) => {
+      if (err) return res.status(500).json({ message: 'Database error' });
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Booking not found or not authorized' });
+      }
+      res.json({ message: 'Booking successfully canceled.' });
+    }
+  );
+}
