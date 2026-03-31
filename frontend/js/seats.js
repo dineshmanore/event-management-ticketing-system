@@ -8,18 +8,25 @@ const tiers = [
   { id: 'silverGrid',   name: 'silver',   rows: ['F', 'G', 'H', 'I'],  cols: 10 },
 ];
 
-let selectedSeats   = [];        // { id: 'A1', price: 500 }
-let bookedSeatsDB   = [];        // ['A1', 'C3', ...] from server
+let selectedSeats   = [];
+let bookedSeatsDB   = [];
 
-// ── READ movieId FROM localStorage ─────────────────────────────────────
-const movieId = localStorage.getItem('movieId');
+// FIX #1: Read movieId from URL param FIRST, then fall back to localStorage.
+// Previously only localStorage was checked, so clicking a movie card (which
+// navigates via openMovie() without saving to localStorage in the old code)
+// would leave movieId as null and cause an immediate redirect to home.
+// Now api.js's openMovie() saves to localStorage, AND we read URL as a backup.
+const urlId = new URLSearchParams(window.location.search).get('id');
+const movieId = urlId || localStorage.getItem('movieId');
 
-if (!movieId) {
+if (!movieId || movieId === 'null' || movieId === 'undefined') {
   alert('No movie selected. Redirecting to home.');
   window.location.href = 'index.html';
+} else {
+  // Keep localStorage in sync with the URL param
+  localStorage.setItem('movieId', movieId);
 }
 
-// ── LOAD MOVIE TITLE ────────────────────────────────────────────────────
 async function loadMovieTitle() {
   try {
     const res = await fetch(`${API}/movies/${movieId}`);
@@ -33,7 +40,6 @@ async function loadMovieTitle() {
   }
 }
 
-// ── DATE STRIP ──────────────────────────────────────────────────────────
 function buildDateStrip() {
   const strip  = document.getElementById('dateStrip');
   const days   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -55,17 +61,14 @@ function buildDateStrip() {
 function selectDate(el) {
   document.querySelectorAll('.date-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
-  // Reload booked seats for the new date
-  // (In production you'd pass the date to the API — for now we show same real data)
   loadBookedSeats();
 }
 
-// ── FETCH REAL BOOKED SEATS FROM DATABASE ────────────────────────────────
 async function loadBookedSeats() {
   try {
     const res = await fetch(`${API}/bookings/seats/${movieId}`);
     if (!res.ok) throw new Error('Failed');
-    bookedSeatsDB = await res.json();   // e.g. ['A1','C3','F5']
+    bookedSeatsDB = await res.json();
   } catch (e) {
     console.warn('Could not fetch booked seats, showing all as available.');
     bookedSeatsDB = [];
@@ -73,7 +76,6 @@ async function loadBookedSeats() {
   buildSeats();
 }
 
-// ── BUILD SEAT GRID ──────────────────────────────────────────────────────
 function buildSeats() {
   tiers.forEach(tier => {
     const grid = document.getElementById(tier.id);
@@ -83,7 +85,6 @@ function buildSeats() {
       const half = Math.floor(tier.cols / 2);
       html += '<div class="seat-row">';
       html += `<span class="row-label">${row}</span>`;
-
       for (let i = 1; i <= tier.cols; i++) {
         if (i === half + 1) html += '<div class="gap"></div>';
         const seatId  = `${row}${i}`;
@@ -102,11 +103,9 @@ function buildSeats() {
   });
 }
 
-// ── TOGGLE SEAT SELECTION ────────────────────────────────────────────────
 function toggleSeat(btn) {
   const seatId = btn.dataset.seat;
   const price  = parseInt(btn.dataset.price);
-
   if (btn.classList.contains('selected')) {
     btn.classList.replace('selected', 'available');
     selectedSeats = selectedSeats.filter(s => s.id !== seatId);
@@ -121,11 +120,9 @@ function toggleSeat(btn) {
   updateStickyBar();
 }
 
-// ── STICKY BOTTOM BAR ────────────────────────────────────────────────────
 function updateStickyBar() {
   const bar   = document.getElementById('stickyBar');
   const total = selectedSeats.reduce((sum, s) => sum + s.price, 0);
-
   if (selectedSeats.length === 0) {
     bar.classList.add('hidden');
   } else {
@@ -136,13 +133,11 @@ function updateStickyBar() {
   }
 }
 
-// ── CONFIRM & SAVE BOOKING TO DATABASE ──────────────────────────────────
 async function confirmSeats() {
   if (selectedSeats.length === 0) {
     alert('Please select at least one seat.');
     return;
   }
-
   const token = localStorage.getItem('token');
   if (!token) {
     alert('Please sign in to book tickets.');
@@ -153,7 +148,6 @@ async function confirmSeats() {
   const seatIds    = selectedSeats.map(s => s.id);
   const totalPrice = selectedSeats.reduce((s, x) => s + x.price, 0);
 
-  // Check again in real-time if any seat was grabbed
   try {
     const checkRes = await fetch(`${API}/bookings/seats/${movieId}`);
     const latestBooked = await checkRes.json();
@@ -175,33 +169,22 @@ async function confirmSeats() {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + token
       },
-      body: JSON.stringify({
-        movieId,
-        seats: seatIds,
-        totalPrice
-      })
+      body: JSON.stringify({ movieId, seats: seatIds, totalPrice })
     });
-
     const data = await res.json();
-
     if (!res.ok) {
       alert(data.message || 'Booking failed. Please try again.');
       return;
     }
-
-    // Save for payment page
     localStorage.setItem('selectedSeats', JSON.stringify(seatIds));
     localStorage.setItem('totalPrice',    totalPrice);
-
     window.location.href = 'payment.html';
-
   } catch (e) {
     console.error(e);
     alert('Server error. Please try again.');
   }
 }
 
-// ── INIT ─────────────────────────────────────────────────────────────────
 loadMovieTitle();
 buildDateStrip();
-loadBookedSeats();   // fetches real booked seats from DB, then calls buildSeats()
+loadBookedSeats();

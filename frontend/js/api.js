@@ -8,25 +8,21 @@ let activeGenre  = 'all';
 let activeLang   = null;
 let heroMovieId  = null;
 
-// Read which category tab is active from URL
 const urlParams  = new URLSearchParams(window.location.search);
 const activeCat  = urlParams.get('cat') || 'movies';
 
-// ── CATEGORY PAGES ──────────────────────────────────────────────────────
-// Pages other than "movies" get an empty-state / coming-soon layout
 const catConfig = {
-  stream:     { title: 'Stream',     icon: 'fa-play-circle',    msg: 'Streaming content coming soon! Check back later.' },
-  events:     { title: 'Events',     icon: 'fa-calendar-alt',   msg: 'No events found in your city right now. Check back soon!' },
-  plays:      { title: 'Plays',      icon: 'fa-theater-masks',  msg: 'Theatre plays are coming to your city soon!' },
-  sports:     { title: 'Sports',     icon: 'fa-futbol',         msg: 'Sports events will be listed here. Stay tuned!' },
-  activities: { title: 'Activities', icon: 'fa-running',        msg: 'Activity listings are coming soon!' }
+  stream:     { title: 'Stream',     icon: 'fa-play-circle',    msg: 'Streaming content coming soon!' },
+  events:     { title: 'Events',     icon: 'fa-calendar-alt',   msg: 'No events found right now.' },
+  plays:      { title: 'Plays',      icon: 'fa-theater-masks',  msg: 'Theatre plays coming soon!' },
+  sports:     { title: 'Sports',     icon: 'fa-futbol',         msg: 'Sports events coming soon!' },
+  activities: { title: 'Activities', icon: 'fa-running',        msg: 'Activity listings coming soon!' }
 };
 
 async function loadMovies() {
   try {
     const res = await fetch(`${API}/movies`);
     allMovies = await res.json();
-
     if (activeCat !== 'movies' && activeCat !== '') {
       renderCategoryPage(activeCat);
     } else {
@@ -39,22 +35,16 @@ async function loadMovies() {
   }
 }
 
-// ── CATEGORY EMPTY STATE ─────────────────────────────────────────────────
 function renderCategoryPage(cat) {
   const cfg = catConfig[cat] || { title: cat, icon: 'fa-star', msg: 'Content coming soon!' };
-
-  // Hide homepage sections, show a category view instead
   const hero = document.querySelector('.hero');
   const filterBar = document.querySelector('.filter-bar');
   if (hero)      hero.style.display = 'none';
   if (filterBar) filterBar.style.display = 'none';
 
-  // Show category header + movies tagged with this category (if any)
   const catMovies = allMovies.filter(m =>
     m.category && m.category.toLowerCase() === cat.toLowerCase()
   );
-
-  // Build the category section
   const sections = document.querySelectorAll('.section-wrap, .premiere-section');
   sections.forEach(s => s.style.display = 'none');
 
@@ -82,18 +72,20 @@ function renderCategoryPage(cat) {
         </a>
       </div>`;
   }
-
-  // Insert before footer
   const footer = document.getElementById('footer');
   footer.parentNode.insertBefore(main, footer);
 }
 
-// ── RENDER ALL SECTIONS ──────────────────────────────────────────────────
+// FIX #4: "Now Showing" and "Recommended" now use DIFFERENT datasets
+// - nowShowing: latest/chronological order
+// - recommended: sorted by rating (highest first) — genuinely different ranking
 function renderAll(movies) {
+  if (!movies.length) return;
+
   const nowShowing  = movies.slice(0, 8);
-  const recommended = movies.slice(0, 10);
+  const recommended = [...movies].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 10);
   const premieres   = movies.slice(3, 9);
-  const trending    = [...movies].sort((a, b) => b.votes - a.votes).slice(0, 8);
+  const trending    = [...movies].sort((a, b) => (b.votes || 0) - (a.votes || 0)).slice(0, 8);
 
   renderRow(nowShowing,  'nowShowing');
   renderRow(recommended, 'recommended');
@@ -111,7 +103,6 @@ function renderRow(movies, containerId) {
   el.innerHTML = movies.map(m => createMovieCard(m)).join('');
 }
 
-// ── HERO BANNER ──────────────────────────────────────────────────────────
 function setupBanner(movies) {
   if (!movies.length) return;
   showBanner(movies[0]);
@@ -143,7 +134,6 @@ function setText(id, val) {
   if (el) el.innerText = val;
 }
 
-// ── ACTIONS ──────────────────────────────────────────────────────────────
 function bookHero() {
   if (!heroMovieId) return;
   if (!localStorage.getItem('token')) {
@@ -155,8 +145,11 @@ function bookHero() {
   window.location.href = `movie.html?id=${heroMovieId}`;
 }
 
+// FIX #1: Save movieId to localStorage BEFORE navigating to movie.html
+// seats.js reads movieId only from localStorage, so this must be set
 function openMovie(id) {
-  console.log("Opening movie ID:",id);
+  if (!id) return;
+  localStorage.setItem('movieId', id);
   window.location.href = `movie.html?id=${id}`;
 }
 
@@ -165,7 +158,6 @@ function scrollRow(id, dir) {
   if (el) el.scrollBy({ left: dir * 320, behavior: 'smooth' });
 }
 
-// ── FILTER PILLS ─────────────────────────────────────────────────────────
 function filterBy(btn, genre) {
   document.querySelectorAll('.filter-pill:not(.lang)').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
@@ -197,7 +189,6 @@ function applyFilters() {
   if (filtered.length > 0) setupBanner(filtered);
 }
 
-// ── SEARCH ────────────────────────────────────────────────────────────────
 function searchMovies(query) {
   if (!query.trim()) { renderAll(allMovies); return; }
   const q = query.toLowerCase();
@@ -209,7 +200,69 @@ function searchMovies(query) {
   renderAll(filtered);
 }
 
-// ── ERROR STATE ──────────────────────────────────────────────────────────
+// FIX #5: "See All" now opens a full-page overlay grid instead of doing nothing
+// Called from index.html See All buttons
+function showSeeAll(event, section) {
+  event.preventDefault();
+
+  const sectionTitles = {
+    nowShowing:  'Now Showing',
+    recommended: 'Recommended For You',
+    premieres:   'Premieres',
+    trending:    'Trending Now'
+  };
+
+  let movies;
+  switch (section) {
+    case 'recommended':
+      movies = [...allMovies].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      break;
+    case 'trending':
+      movies = [...allMovies].sort((a, b) => (b.votes || 0) - (a.votes || 0));
+      break;
+    case 'premieres':
+      movies = allMovies.slice(3);
+      break;
+    default:
+      movies = [...allMovies];
+  }
+
+  const existing = document.getElementById('seeAllOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'seeAllOverlay';
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:#f8f8f8;z-index:9999;overflow-y:auto;animation:fadeIn .2s;
+  `;
+  overlay.innerHTML = `
+    <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}</style>
+    <div style="position:sticky;top:0;background:white;padding:18px 40px;border-bottom:1px solid #eee;
+                display:flex;align-items:center;justify-content:space-between;z-index:1;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+      <div>
+        <h2 style="font-size:22px;font-weight:700;margin:0 0 2px">${sectionTitles[section] || 'All Movies'}</h2>
+        <p style="font-size:13px;color:#888;margin:0">${movies.length} movies</p>
+      </div>
+      <button onclick="closeSeeAll()"
+              style="background:#cc0c39;color:white;border:none;padding:10px 22px;border-radius:8px;
+                     font-size:14px;font-weight:600;cursor:pointer;">✕ Close</button>
+    </div>
+    <div style="padding:30px 40px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:24px;">
+        ${movies.map(m => createMovieCard(m)).join('')}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSeeAll() {
+  const o = document.getElementById('seeAllOverlay');
+  if (o) o.remove();
+  document.body.style.overflow = '';
+}
+
 function showError(msg) {
   const hero = document.getElementById('heroBanner');
   if (hero) {
@@ -222,5 +275,4 @@ function showError(msg) {
   }
 }
 
-// ── INIT ─────────────────────────────────────────────────────────────────
 loadMovies();

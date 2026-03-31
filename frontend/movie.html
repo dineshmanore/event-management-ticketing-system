@@ -102,8 +102,8 @@
     }
     .cast-name { font-size: 13px; font-weight: 600; }
     .cast-role { font-size: 11px; color: #888; }
-    .similar-section { padding: 0 40px 40px; }
-    .similar-section h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+    .similar-section { padding: 0 40px 40px; background: #f8f8f8; }
+    .similar-section h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; padding-top: 30px; }
   </style>
 </head>
 <body>
@@ -113,23 +113,28 @@
 <div class="movie-banner-wrap" id="movieBanner">
   <div class="movie-banner-bg" id="bannerBg"></div>
   <div class="movie-banner-content">
-    <img id="mainPoster" class="movie-poster-main" src="" alt="Movie Poster">
+    <img id="mainPoster" class="movie-poster-main" src="" alt="Movie Poster"
+         onerror="this.src='https://via.placeholder.com/160x230/1a1a2e/white?text=No+Poster'">
     <div class="movie-main-info">
       <h1 id="movieTitle">Loading...</h1>
       <div class="movie-rating-row">
         <span class="rating-big"><i class="fa fa-star"></i><span id="movieRating">0</span>/10</span>
         <span class="votes-text"><span id="movieVotes">0</span> Votes</span>
       </div>
+      <!-- FIX #2: movieTags is now populated in loadMovie() below -->
       <div class="movie-tags" id="movieTags"></div>
       <button class="book-tickets-btn" onclick="goToSeats()">Book Tickets</button>
     </div>
   </div>
 </div>
 
+<!-- FIX #2: Added missing closing </div> tags — the white-background wrapper
+     was never closed, causing similar-section to inherit white background
+     and breaking the overall page layout. -->
 <div style="background:white;">
   <div class="movie-tabs">
     <div class="movie-tab active" onclick="switchTab(this, 'about')">About</div>
-    <div class="movie-tab" onclick="switchTab(this, 'cast')">Cast & Crew</div>
+    <div class="movie-tab" onclick="switchTab(this, 'cast')">Cast &amp; Crew</div>
   </div>
 
   <div id="about" class="tab-content active">
@@ -141,9 +146,10 @@
 
   <div id="cast" class="tab-content">
     <div class="cast-grid" id="castGrid">
-      
-      
+      <!-- cast cards injected by JS -->
+    </div>
   </div>
+  <!-- FIX: closing </div> for <div style="background:white;"> was missing -->
 </div>
 
 <div class="similar-section">
@@ -159,95 +165,118 @@
 <script>
 const API = 'http://localhost:5000/api';
 
-const params = new URLSearchParams(window.location.search);
-const movieid = params.get('id');
+const params  = new URLSearchParams(window.location.search);
+let movieid = params.get('id');
+
+// Fallback to localStorage if the URL query parameter was stripped by the server
 if (!movieid) {
-  window.location.href = "index.html";
+  movieid = localStorage.getItem('movieId');
 }
-console.log("MOVIE ID:", movieid)
+
+// FIX #1: Save movieId to localStorage so seats.js can read it
+if (!movieid) {
+  window.location.href = 'index.html';
+} else {
+  localStorage.setItem('movieId', movieid);
+}
+
 function formatVotes(votes) {
   if (votes >= 1000000) return Math.round(votes / 1000000) + 'M+';
-  if (votes >= 1000) return Math.round(votes / 1000) + 'K+';
+  if (votes >= 1000)    return Math.round(votes / 1000)    + 'K+';
   return votes;
 }
 
 async function loadMovie() {
   try {
-    const res = await fetch(`${API}/movies/${movieid}`)
-const movie = await res.json()
-
-    console.log("MOVIE:", movie);
+    const res   = await fetch(`${API}/movies/${movieid}`);
+    const movie = await res.json();
 
     if (!movie || !movie.id) {
-      document.body.innerHTML = "<h1>Movie not found</h1>";
+      document.body.innerHTML = '<div style="padding:80px;text-align:center"><h2>Movie not found</h2><a href="index.html">Go Home</a></div>';
       return;
     }
-     
-    // ✅ TITLE
+
+    // Title
     document.getElementById('movieTitle').innerText = movie.title;
-    
-    // CAST RENDER
-   const castContainer = document.getElementById('castGrid');
+    document.title = `${movie.title} — ShowTime`;
 
-    castContainer.innerHTML = (movie.cast || []).map(actor => `
-     <div class="cast-card">
-     <img class="cast-avatar" src="${actor.image}" />
-      <div class="cast-name">${actor.name}</div>
-      <div class="cast-role">${actor.role}</div>
-     </div>
-    `).join('');
-
-    // ✅ RATING
+    // Rating & votes
     document.getElementById('movieRating').innerText = movie.rating || 0;
+    document.getElementById('movieVotes').innerText  = formatVotes(movie.votes || 0);
 
-    // ✅ VOTES
-    document.getElementById('movieVotes').innerText = formatVotes (movie.votes || 0);
+    // FIX #2: Populate movie tags (genre + language chips) — was never done before
+    const tagsContainer = document.getElementById('movieTags');
+    const tags = [];
+    if (movie.genre)    movie.genre.split(',').forEach(g => tags.push(g.trim()));
+    if (movie.language) tags.push(movie.language);
+    if (movie.rating)   tags.push(`★ ${movie.rating}`);
+    tagsContainer.innerHTML = tags.map(t =>
+      `<span class="movie-tag">${t}</span>`
+    ).join('');
 
-    // ✅ DESCRIPTION
-    document.getElementById('movieDesc').innerText = movie.description;
+    // Description
+    document.getElementById('movieDesc').innerText = movie.description || 'No description available.';
 
-    // ✅ POSTER
-    document.getElementById('mainPoster').src = movie.poster;
+    // Poster
+    const posterEl = document.getElementById('mainPoster');
+    posterEl.src = movie.poster || '';
 
-    // ✅ BANNER
-    document.getElementById('bannerBg').style.backgroundImage = `url(${movie.banner})`;
+    // Banner background
+    document.getElementById('bannerBg').style.backgroundImage =
+      `url(${movie.banner || movie.poster || ''})`;
+
+    // Cast
+    const castContainer = document.getElementById('castGrid');
+    if (movie.cast && movie.cast.length > 0) {
+      castContainer.innerHTML = movie.cast.map(actor => `
+        <div class="cast-card">
+          <img class="cast-avatar"
+               src="${actor.image || 'https://via.placeholder.com/80x80/e0e0e0/888?text=Actor'}"
+               onerror="this.src='https://via.placeholder.com/80x80/e0e0e0/888?text=Actor'"
+               alt="${actor.name}">
+          <div class="cast-name">${actor.name}</div>
+          <div class="cast-role">${actor.role || ''}</div>
+        </div>
+      `).join('');
+    } else {
+      castContainer.innerHTML = '<p style="color:#aaa;font-size:14px">No cast information available.</p>';
+    }
 
   } catch (err) {
-    console.error(err);
+    console.error('loadMovie error:', err);
   }
 }
-function switchTab(el, tabId) {
-  document.querySelectorAll('.movie-tab').forEach(tab => tab.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
 
+function switchTab(el, tabId) {
+  document.querySelectorAll('.movie-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById(tabId).classList.add('active');
 }
 
+// FIX #1: goToSeats also saves movieId so seats.js always has it
 function goToSeats() {
+  localStorage.setItem('movieId', movieid);
   window.location.href = `seats.html?id=${movieid}`;
+}
+
+async function loadSimilarMovies() {
+  try {
+    const res    = await fetch(`${API}/movies`);
+    const movies = await res.json();
+    const container = document.getElementById('similarMovies');
+    container.innerHTML = movies
+      .filter(m => m.id != movieid)
+      .slice(0, 6)
+      .map(m => createMovieCard(m))
+      .join('');
+  } catch (err) {
+    console.error('loadSimilarMovies error:', err);
+  }
 }
 
 loadMovie();
 loadSimilarMovies();
-
-async function loadSimilarMovies() {
-  try {
-    const res = await fetch(`${API}/movies`);
-    const movies = await res.json();
-
-    const container = document.getElementById('similarMovies');
-
-    container.innerHTML = movies
-      .filter(m => m.id != movieid)
-      .slice(0, 4)
-      .map(movie => createMovieCard(movie))
-      .join('');
-
-  } catch (err) {
-    console.error(err);
-  }
-}
 </script>
 </body>
 </html>

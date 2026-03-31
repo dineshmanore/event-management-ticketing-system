@@ -25,5 +25,6 @@ function createMovieCard(movie) {
 }
 
 function openMovie(id) {
+  if (id) localStorage.setItem('movieId', id);
   window.location.href = `movie.html?id=${id}`;
 }

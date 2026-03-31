@@ -12,7 +12,6 @@ function goto(page) {
 
   document.getElementById(`page-${page}`).classList.add('active');
 
-  // Find and highlight the correct sidebar item
   document.querySelectorAll('.nav-item').forEach(item => {
     if (item.getAttribute('onclick') === `goto('${page}')`) {
       item.classList.add('active');
@@ -73,7 +72,6 @@ function updateCounts() {
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
 function renderDashboard() {
-  // Recent bookings table
   const tbody  = document.getElementById('recentBookings');
   const recent = bookingsData.slice(0, 5);
   tbody.innerHTML = recent.length
@@ -88,7 +86,6 @@ function renderDashboard() {
         </tr>`).join('')
     : '<tr class="empty-row"><td colspan="6"><i class="fa fa-inbox" style="font-size:28px;display:block;margin-bottom:8px;color:#ddd"></i>No bookings yet</td></tr>';
 
-  // Bookings by movie bar chart
   const byMovie = {};
   bookingsData.forEach(b => {
     const t = b.title || 'Unknown';
@@ -105,7 +102,6 @@ function renderDashboard() {
         </div>`).join('')
     : '<div style="color:#aaa;font-size:13px;padding:20px 0;text-align:center">No booking data yet</div>';
 
-  // Recent activity feed
   const acts = [...bookingsData].slice(-5).reverse().map(b => ({
     text:  `New booking for <b>${b.title || 'a movie'}</b>`,
     time:  new Date(b.booking_time || Date.now()).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
@@ -224,7 +220,6 @@ function renderUsers(data) {
 
 // ── REPORTS ───────────────────────────────────────────────────────────────
 function renderReports() {
-  // Bookings by genre
   const byGenre = {};
   bookingsData.forEach(b => {
     const genre = (b.genre || 'Unknown').split(',')[0].trim();
@@ -241,7 +236,6 @@ function renderReports() {
         </div>`).join('')
     : '<div style="color:#aaa;font-size:13px;text-align:center;padding:20px">No data</div>';
 
-  // Top movies
   const topMovies = moviesData.map(m => ({
     ...m,
     bookingCount: bookingsData.filter(b => b.movie_id === m.id).length,
@@ -259,13 +253,11 @@ function renderReports() {
     : '<tr class="empty-row"><td colspan="4">No data</td></tr>';
 }
 
-// ── CAST: LOAD ACTORS INTO SELECT ─────────────────────────────────────────
-// BUG FIX: was defined twice with conflicting implementations.
-// Now there is one version that correctly targets #castSelect.
 // ── CAST SYSTEM ────────────────────────────────────────────────────────────
-let allActors    = [];   // [{id, name, image}]
-let selectedCast = [];   // [{actor_id, name, role}]
+let allActors    = [];
+let selectedCast = [];
 
+// FIX #3: loadActors now returns a Promise so callers can await it
 async function loadActors() {
   try {
     const res = await fetch(`${ADMIN_API}/actors`);
@@ -302,7 +294,7 @@ function renderActorChips() {
 
 function toggleActor(actorId, actorName) {
   const exists = selectedCast.some(s => s.actor_id === actorId);
-  if (exists) return; // already selected — use × to remove
+  if (exists) return;
   selectedCast.push({ actor_id: actorId, name: actorName, role: '' });
   renderActorChips();
 }
@@ -316,7 +308,7 @@ function renderRoleInputs() {
   const container = document.getElementById('rolesContainer');
   if (!container) return;
   if (!selectedCast.length) {
-    container.innerHTML = '';
+    container.innerHTML = '<p style="color:#aaa;font-size:13px">Select actors above to assign roles.</p>';
     return;
   }
   container.innerHTML = selectedCast.map((s, i) => `
@@ -337,57 +329,79 @@ function renderRoleInputs() {
 function getCastData() {
   return selectedCast.map(s => ({
     actor_id: s.actor_id,
-    role:     s.role.trim() || 'Unknown'
+    role:     (s.role || '').trim() || 'Unknown'
   }));
 }
 
 // ── MOVIE CRUD ────────────────────────────────────────────────────────────
+// FIX #3: openMovieModal no longer resets selectedCast = [] blindly.
+// It only resets for NEW movies. For edits, editMovie() pre-populates
+// selectedCast BEFORE this function runs, so we must not wipe it here.
 function openMovieModal(movie) {
-  selectedCast = [];   // reset cast on every open
-  loadActors();
-  document.getElementById('editMovieId').value     = movie?.id || '';
+  if (!movie) {
+    // Only reset cast when ADDING a new movie, not when EDITING
+    selectedCast = [];
+  }
+
+  document.getElementById('editMovieId').value        = movie?.id || '';
   document.getElementById('movieModalTitle').innerText = movie ? 'Edit Movie' : 'Add Movie';
-  document.getElementById('mTitle').value          = movie?.title || '';
-  document.getElementById('mGenre').value          = movie?.genre || '';
-  document.getElementById('mLang').value           = movie?.language || '';
-  document.getElementById('mRating').value         = movie?.rating || '';
-  document.getElementById('mVotes').value          = movie?.votes || '';
-  document.getElementById('mCategory').value       = movie?.category || 'Movies';
-  document.getElementById('mPoster').value         = movie?.poster || '';
-  document.getElementById('mBanner').value         = movie?.banner || '';
-  document.getElementById('mDesc').value           = movie?.description || '';
-  document.getElementById('rolesContainer').innerHTML = '<p style="color:#aaa;font-size:13px">Select actors above to assign roles.</p>';
+  document.getElementById('mTitle').value             = movie?.title || '';
+  document.getElementById('mGenre').value             = movie?.genre || '';
+  document.getElementById('mLang').value              = movie?.language || '';
+  document.getElementById('mRating').value            = movie?.rating || '';
+  document.getElementById('mVotes').value             = movie?.votes || '';
+  document.getElementById('mCategory').value          = movie?.category || 'Movies';
+  document.getElementById('mPoster').value            = movie?.poster || '';
+  document.getElementById('mBanner').value            = movie?.banner || '';
+  document.getElementById('mDesc').value              = movie?.description || '';
 
   const prev = document.getElementById('mPosterPreview');
   if (movie?.poster) { prev.src = movie.poster; prev.style.display = 'block'; }
   else prev.style.display = 'none';
 
+  // Load actors — when done, renderActorChips() runs and highlights
+  // already-selected cast members (selectedCast was set by editMovie before this call)
+  loadActors();
+
   document.getElementById('movieModal').classList.add('open');
 }
 
+// FIX #3: editMovie now loads actors FIRST (awaits the fetch), THEN sets
+// selectedCast, THEN opens the modal. This guarantees allActors is populated
+// when we try to match actor names to IDs for pre-selection.
 async function editMovie(id) {
   try {
+    // Step 1: Ensure actors are loaded so name→id lookup works
+    if (allActors.length === 0) {
+      const actRes = await fetch(`${ADMIN_API}/actors`);
+      allActors = await actRes.json();
+    }
+
+    // Step 2: Fetch the movie with its existing cast
     const res   = await fetch(`${API}/movies/${id}`);
     const movie = await res.json();
 
-    // Pre-populate selectedCast from existing DB data
+    // Step 3: Pre-populate selectedCast BEFORE openMovieModal runs
+    // (openMovieModal no longer resets selectedCast when movie is passed in)
     selectedCast = (movie.cast || []).map(c => ({
       actor_id: allActors.find(a => a.name === c.name)?.id || 0,
       name:     c.name,
-      role:     c.role
+      role:     c.role || ''
     })).filter(c => c.actor_id !== 0);
 
+    // Step 4: Open modal — selectedCast is intact, loadActors() inside will
+    // re-render chips and show the pre-selected actors highlighted in red
     openMovieModal(movie);
+
   } catch (e) {
     console.error('Could not load movie for edit:', e);
+    alert('Could not load movie data. Please try again.');
   }
 }
 
-// BUG FIX: was completely broken — try/catch was malformed, closeModal/refreshMovies
-// were outside the function body, edit (PUT) case was never handled.
 async function saveMovie() {
-  const id          = document.getElementById('editMovieId').value;
-  const title       = document.getElementById('mTitle').value.trim();
+  const id    = document.getElementById('editMovieId').value;
+  const title = document.getElementById('mTitle').value.trim();
   if (!title) { alert('Title is required.'); return; }
 
   const payload = {
@@ -405,7 +419,6 @@ async function saveMovie() {
 
   try {
     const token  = localStorage.getItem('token');
-    // BUG FIX: add uses POST /api/admin/movies, edit uses PUT /api/admin/movies/:id
     const url    = id ? `${ADMIN_API}/movies/${id}` : `${ADMIN_API}/movies`;
     const method = id ? 'PUT' : 'POST';
 
@@ -438,23 +451,23 @@ async function refreshMovies() {
 
 // ── EVENT CRUD ────────────────────────────────────────────────────────────
 function openEventModal(ev) {
-  document.getElementById('editEventId').value      = ev?.id || '';
+  document.getElementById('editEventId').value         = ev?.id || '';
   document.getElementById('eventModalTitle').innerText = ev ? 'Edit Event' : 'Add Event';
-  document.getElementById('eTitle').value           = ev?.title || '';
-  document.getElementById('eCat').value             = ev?.category || 'concert';
-  document.getElementById('eCity').value            = ev?.city || 'Mumbai';
-  document.getElementById('eVenue').value           = ev?.venue || '';
-  document.getElementById('eDate').value            = ev?.date?.split('T')[0] || '';
-  document.getElementById('eTime').value            = ev?.time
+  document.getElementById('eTitle').value              = ev?.title || '';
+  document.getElementById('eCat').value                = ev?.category || 'concert';
+  document.getElementById('eCity').value               = ev?.city || 'Mumbai';
+  document.getElementById('eVenue').value              = ev?.venue || '';
+  document.getElementById('eDate').value               = ev?.date?.split('T')[0] || '';
+  document.getElementById('eTime').value               = ev?.time
     ? ev.time.replace(' ', '').replace(/(\d+):(\d+)\s*(AM|PM)/i, (m, h, min, ap) =>
         `${ap === 'PM' && h !== '12' ? String(parseInt(h) + 12).padStart(2, '0') : h.padStart(2, '0')}:${min}`)
     : '';
-  document.getElementById('ePriceFrom').value       = ev?.price_from || '';
-  document.getElementById('ePriceTo').value         = ev?.price_to || '';
-  document.getElementById('eLang').value            = ev?.language || '';
-  document.getElementById('eAge').value             = ev?.age_limit || 'All Ages';
-  document.getElementById('eImage').value           = ev?.image || '';
-  document.getElementById('eDesc').value            = ev?.description || '';
+  document.getElementById('ePriceFrom').value  = ev?.price_from || '';
+  document.getElementById('ePriceTo').value    = ev?.price_to || '';
+  document.getElementById('eLang').value       = ev?.language || '';
+  document.getElementById('eAge').value        = ev?.age_limit || 'All Ages';
+  document.getElementById('eImage').value      = ev?.image || '';
+  document.getElementById('eDesc').value       = ev?.description || '';
 
   const prev = document.getElementById('eImgPreview');
   if (ev?.image) { prev.src = ev.image; prev.style.display = 'block'; }
@@ -477,16 +490,16 @@ async function saveEvent() {
 
   const payload = {
     title,
-    category:  document.getElementById('eCat').value,
-    city:      document.getElementById('eCity').value,
-    venue:     document.getElementById('eVenue').value,
-    date:      document.getElementById('eDate').value,
-    time:      formattedTime,
-    price_from: parseInt(document.getElementById('ePriceFrom').value) || 0,
-    price_to:   parseInt(document.getElementById('ePriceTo').value) || 0,
-    language:  document.getElementById('eLang').value,
-    age_limit: document.getElementById('eAge').value,
-    image:     document.getElementById('eImage').value,
+    category:    document.getElementById('eCat').value,
+    city:        document.getElementById('eCity').value,
+    venue:       document.getElementById('eVenue').value,
+    date:        document.getElementById('eDate').value,
+    time:        formattedTime,
+    price_from:  parseInt(document.getElementById('ePriceFrom').value) || 0,
+    price_to:    parseInt(document.getElementById('ePriceTo').value) || 0,
+    language:    document.getElementById('eLang').value,
+    age_limit:   document.getElementById('eAge').value,
+    image:       document.getElementById('eImage').value,
     description: document.getElementById('eDesc').value
   };
 

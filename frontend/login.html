@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="styles/style.css">
   <link rel="stylesheet" href="styles/auth.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -63,10 +64,22 @@
 
       <div class="auth-divider"><span>OR</span></div>
 
-      <button class="google-btn" onclick="alert('Google sign-in coming soon!')">
-        <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="G">
-        Continue with Google
-      </button>
+      <div id="g_id_onload"
+           data-client_id="771897370994-i74ucfjqpj0g0h36kvd66g8vku36qjln.apps.googleusercontent.com"
+           data-context="signin"
+           data-ux_mode="popup"
+           data-callback="handleGoogleResponse"
+           data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin"
+           data-type="standard"
+           data-shape="rectangular"
+           data-theme="outline"
+           data-text="continue_with"
+           data-size="large"
+           data-logo_alignment="left"
+           style="width: 100%; display: flex; justify-content: center; margin-bottom: 20px;">
+      </div>
 
       <div class="auth-footer">
         New to ShowTime? <a href="signup.html">Create Account</a>

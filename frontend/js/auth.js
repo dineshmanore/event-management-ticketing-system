@@ -94,7 +94,35 @@ async function login() {
 
 function logout() {
   localStorage.removeItem('token');
-  localStorage.removeItem('user');   // 👈 FIX THIS
+  localStorage.removeItem('user');
   window.location.href = 'index.html';
 }
+
+// Google Sign-In Handler
+async function handleGoogleResponse(response) {
+  const credential = response.credential;
+  if (!credential) return showError('Google login failed: no credential received.');
+
+  try {
+    const res = await fetch(`${API}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: credential })
+    });
+
+    const data = await res.json();
+    
+    if (res.ok && data.token && data.user) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      window.location.href = 'index.html';
+    } else {
+      showError(data.message || 'Google Sign-In failed');
+    }
+  } catch (err) {
+    console.error('Google Auth Error:', err);
+    showError('Server error during Google Sign-In.');
+  }
+}
+
 
