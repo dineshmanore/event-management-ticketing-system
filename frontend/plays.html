@@ -154,8 +154,13 @@ function sortPlays(val) { sortBy = val; render(); }
 function searchPlays(q) {
   if (!q.trim()) { render(); return; }
   const f = allPlays.filter(e => e.title.toLowerCase().includes(q.toLowerCase()));
-  document.getElementById('resultsCount').innerHTML = `<span>${f.length}</span> results`;
-  document.getElementById('playsList').innerHTML = f.map(p => playCard(p)).join('');
+  document.getElementById('resultsCount').innerHTML = `<span>${f.length}</span> results for "${q}"`;
+  const list = document.getElementById('playsList');
+  if (f.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:60px;background:white;border-radius:12px;border:1px solid #eee"><i class="fa fa-search" style="font-size:56px;color:#ddd;display:block;margin-bottom:16px"></i><h3 style="color:#555">No results</h3><p style="color:#aaa">Try searching for something else.</p></div>`;
+  } else {
+    list.innerHTML = f.map(p => playCard(p)).join('');
+  }
 }
 
 init();

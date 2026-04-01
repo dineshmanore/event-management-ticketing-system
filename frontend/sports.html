@@ -151,13 +151,18 @@ function sportCard(e) {
 }
 
 function filterCat(btn, cat) { document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); activeCat = cat; render(); }
-function filterCity(city) { activeCity = city; document.getElementById('cityLabel').innerText = city === 'all' ? 'All Sports' : `Sports in ${city}`; render(); }
+function filterCity(city) { activeCity = city; document.getElementById('cityLabel').innerText = city === 'all' ? 'Sports in Mumbai' : `Sports in ${city}`; render(); }
 function sortSports(val) { sortBy = val; render(); }
 function searchSports(q) {
   if (!q.trim()) { render(); return; }
   const f = allSports.filter(e => e.title.toLowerCase().includes(q.toLowerCase()));
-  document.getElementById('resultsCount').innerHTML = `<span>${f.length}</span> results`;
-  document.getElementById('sportsGrid').innerHTML = f.map(s => sportCard(s)).join('');
+  document.getElementById('resultsCount').innerHTML = `<span>${f.length}</span> results for "${q}"`;
+  const grid = document.getElementById('sportsGrid');
+  if (f.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><i class="fa fa-search"></i><h3>No results</h3><p>We couldn't find any sports matching "${q}".</p></div>`;
+  } else {
+    grid.innerHTML = f.map(s => sportCard(s)).join('');
+  }
 }
 
 init();

@@ -150,9 +150,17 @@ function sortEvents(val) { sortBy = val; render(); }
 
 function searchEvents(q) {
   if (!q.trim()) { render(); return; }
-  const filtered = allEvents.filter(e => e.title.toLowerCase().includes(q.toLowerCase()) || (e.venue && e.venue.toLowerCase().includes(q.toLowerCase())));
+  const filtered = allEvents.filter(e => 
+    e.title.toLowerCase().includes(q.toLowerCase()) || 
+    (e.venue && e.venue.toLowerCase().includes(q.toLowerCase()))
+  );
   document.getElementById('resultsCount').innerHTML = `<span>${filtered.length}</span> results for "${q}"`;
-  document.getElementById('eventsGrid').innerHTML = filtered.map(e => eventCard(e)).join('') || `<div class="empty-state"><i class="fa fa-search"></i><h3>No results</h3></div>`;
+  const grid = document.getElementById('eventsGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><i class="fa fa-search"></i><h3>No results</h3><p>We couldn't find any events matching "${q}".</p></div>`;
+  } else {
+    grid.innerHTML = filtered.map(e => eventCard(e)).join('');
+  }
 }
 
 init();

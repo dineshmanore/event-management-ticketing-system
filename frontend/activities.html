@@ -140,8 +140,13 @@ function sortAct(val) { sortBy = val; render(); }
 function searchAct(q) {
   if (!q.trim()) { render(); return; }
   const f = allActs.filter(e => e.title.toLowerCase().includes(q.toLowerCase()) || (e.city && e.city.toLowerCase().includes(q.toLowerCase())));
-  document.getElementById('resultsCount').innerHTML = `<span>${f.length}</span> results`;
-  document.getElementById('activitiesGrid').innerHTML = f.map(a => actCard(a)).join('');
+  document.getElementById('resultsCount').innerHTML = `<span>${f.length}</span> results for "${q}"`;
+  const grid = document.getElementById('activitiesGrid');
+  if (f.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><i class="fa fa-search"></i><h3>No results</h3><p>We couldn't find any activities matching "${q}".</p></div>`;
+  } else {
+    grid.innerHTML = f.map(a => actCard(a)).join('');
+  }
 }
 
 init();

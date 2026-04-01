@@ -1,4 +1,5 @@
 const Movie = require('../models/Movie.mongo')
+const Event = require('../models/Event.mongo')
 const Actor = require('../models/Actor.mongo')
 const { buildIdQuery, addLegacyId, isNumericId } = require('../utils/id')
 
@@ -18,21 +19,54 @@ exports.getMovies = (req, res) => {
     .catch(() => res.status(500).json({ message: 'Database error' }))
 }
 
-exports.searchMovies = (req, res) => {
-  const { q } = req.query;
+exports.searchMovies = async (req, res) => {
+  const { q, category } = req.query;
   if (!q) return res.json([]);
 
   const query = String(q).trim();
   const rx = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
 
-  Movie.find({
-    $or: [{ title: rx }, { genre: rx }, { language: rx }]
-  })
-    .limit(10)
-    .lean()
-    .then((docs) => res.json(docs.map(addLegacyId)))
-    .catch(() => res.status(500).json({ message: 'Database error' }));
-}
+  try {
+    let results = [];
+    
+    // Context-aware search logic
+    if (['events', 'sports', 'plays', 'activities'].includes(category)) {
+      const filter = { title: rx };
+      
+      if (category === 'sports') {
+        filter.category = { $in: ['cricket', 'football', 'kabaddi', 'sport', 'adventure'] };
+      } else if (category === 'plays') {
+        filter.category = 'play';
+      } else if (category === 'activities') {
+        filter.category = 'adventure';
+      } else if (category === 'events') {
+        // "Events" typically excludes sports, plays, etc.
+        filter.category = { $nin: ['play', 'cricket', 'football', 'kabaddi', 'sport', 'adventure'] };
+      }
+
+      const docs = await Event.find(filter).limit(10).lean();
+      results = docs.map(d => ({ ...addLegacyId(d), is_event: true }));
+    } else {
+      // Default: Search Movies or Streams
+      const filter = { $or: [{ title: rx }, { genre: rx }] };
+      
+      if (category === 'stream') {
+        filter.category = 'stream';
+      } else {
+        // Only search movies, exclude streams if category is specifically "index" or "movies"
+        filter.category = { $ne: 'stream' };
+      }
+
+      const docs = await Movie.find(filter).limit(10).lean();
+      results = docs.map(d => ({ ...addLegacyId(d), is_event: false }));
+    }
+
+    res.json(results);
+  } catch (err) {
+    console.error('Search error:', err);
+    res.status(500).json({ message: 'Database error' });
+  }
+};
 
 exports.getMovieById = (req, res) => {
   const { id } = req.params;

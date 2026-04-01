@@ -207,19 +207,19 @@ async function handleSearch(query) {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(async () => {
     try {
-      const res = await fetch(`https://event-management-ticketing-system.onrender.com/api/movies/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`https://event-management-ticketing-system.onrender.com/api/movies/search?q=${encodeURIComponent(query)}&category=${page}`);
       if (!res.ok) throw new Error('Search failed');
       const results = await res.json();
       
       if (results.length === 0) {
-        container.innerHTML = '<div style="padding:16px;color:#888;font-size:14px;text-align:center">No movies found</div>';
+        container.innerHTML = `<div style="padding:16px;color:#888;font-size:14px;text-align:center">No ${page === 'index' ? 'movies' : page} found</div>`;
       } else {
         container.innerHTML = results.map(m => `
-          <a href="movie.html?id=${m.id}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;text-decoration:none;color:var(--text);border-bottom:1px solid #eee;transition:background .2s">
-            <img src="${m.poster || 'https://via.placeholder.com/40x60'}" style="width:40px;height:60px;object-fit:cover;border-radius:6px">
+          <a href="${m.is_event ? 'event-booking.html' : 'movie.html'}?id=${m.id}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;text-decoration:none;color:var(--text);border-bottom:1px solid #eee;transition:background .2s">
+            <img src="${m.poster || m.image || 'https://via.placeholder.com/40x60'}" style="width:40px;height:60px;object-fit:cover;border-radius:6px">
             <div>
               <div style="font-weight:600;font-size:14px;margin-bottom:4px;color:#111">${m.title}</div>
-              <div style="font-size:12px;color:#777">${m.genre || ''} • ★ ${m.rating || 0}</div>
+              <div style="font-size:12px;color:#777">${m.genre || m.category || ''} • ${m.rating ? '★ ' + m.rating : (m.city || '')}</div>
             </div>
           </a>
         `).join('');
