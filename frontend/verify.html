@@ -92,8 +92,13 @@
                 iconEl.innerHTML = '<i class="fas fa-check-circle"></i>';
                 iconEl.className = 'verify-icon success';
                 titleEl.innerText = 'Email Verified!';
-                descEl.innerText = data.message || 'Your email has been successfully verified. You can now log in to your account.';
+                descEl.innerText = (data.message || 'Your email has been successfully verified.') + ' Redirecting to Login in 3 seconds...';
                 actionEl.style.display = 'block';
+                
+                // Automatic redirect after 3 seconds
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 3000);
             } else {
                 iconEl.innerHTML = '<i class="fas fa-times-circle"></i>';
                 iconEl.className = 'verify-icon error';
