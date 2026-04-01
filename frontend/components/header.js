@@ -198,6 +198,7 @@ function logout() {
 
 let searchTimeout;
 async function handleSearch(query) {
+  const page = window.location.pathname.split('/').pop().replace('.html','') || 'index';
   const container = document.getElementById('searchResults');
   if (!query.trim()) {
     container.style.display = 'none';
