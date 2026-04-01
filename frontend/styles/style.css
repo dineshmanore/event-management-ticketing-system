@@ -220,16 +220,16 @@ body {
 
 /* ── HERO BANNER ─────────────────────────── */
 .hero {
-  height: 400px;
-  background-size: cover;
+  height: 460px;
+  background-size: auto 100%;
   background-repeat: no-repeat;
-  background-position: 75% center;
+  background-position: right center;
   background-color: #000;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   position: relative;
-  margin: 20px 40px;
-  border-radius: 16px;
+  margin: 0;
+  border-radius: 0;
   overflow: hidden;
   transition: background-image 0.6s ease;
 }
@@ -243,15 +243,16 @@ body {
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.1) 100%);
+  background: linear-gradient(90deg, #000 0%, #000 35%, rgba(0,0,0,0.45) 60%, transparent 100%);
   display: flex;
   align-items: center;
 }
 
 .hero-content {
   color: white;
-  padding: 40px 50px;
-  max-width: 500px;
+  padding: 40px 60px;
+  max-width: 550px;
+  z-index: 2;
 }
 
 .hero-content h1 {
@@ -580,7 +581,7 @@ body {
     -webkit-overflow-scrolling: touch; 
   }
   
-  .hero { margin: 10px 16px; height: 260px; }
+  .hero { margin: 0; height: 300px; background-size: cover; background-position: center; border-radius: 0; }
   .hero-content { padding: 20px 24px; max-width: 100%; }
   .hero-content h1 { font-size: 24px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .section-wrap { padding: 0 16px; }
