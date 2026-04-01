@@ -39,8 +39,23 @@ async function signup() {
     console.log("FULL RESPONSE:", data);
 
     if (data.message === 'User created') {
-      alert('Account created! Please sign in.');
-      window.location.href = 'login.html';
+      const card = document.querySelector('.auth-card');
+      if (card) {
+        card.innerHTML = `
+          <div style="text-align: center; padding: 20px;">
+            <i class="fas fa-paper-plane" style="font-size: 50px; color: #ff385c; margin-bottom: 20px;"></i>
+            <h3 style="margin-bottom: 15px;">Check Your Email</h3>
+            <p>We've sent a verification link to <strong>${email}</strong>.</p>
+            <p>Please click the link in the email to activate your account.</p>
+            <div style="margin-top: 30px;">
+              <a href="login.html" class="auth-btn" style="text-decoration: none; display: inline-block;">Back to Login</a>
+            </div>
+          </div>
+        `;
+      } else {
+        alert('Account created! Please check your email to verify your account.');
+        window.location.href = 'login.html';
+      }
     } else if (data === 'Email exists' || (data.message && data.message.includes('exists'))) {
       showError('This email is already registered. Please sign in.');
     } else {
@@ -74,17 +89,15 @@ async function login() {
     const data = await res.json();
     console.log("DATA:", data);
 
-    if (data.token && data.user) {
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('user', JSON.stringify(data.user));
-
-  console.log("REAL USER:", data.user);
-
-  window.location.href = 'index.html';
-} else {
-  console.error("INVALID RESPONSE:", data);
-  showError("Login failed: invalid server response");
-}
+    if (res.ok && data.token && data.user) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      window.location.href = 'index.html';
+    } else if (res.status === 403) {
+      showError(data.message || 'Please verify your email address.');
+    } else {
+      showError(data.message || 'Login failed. Please try again.');
+    }
 
   } catch (err) {
     console.error("ERROR:", err);

@@ -1,7 +1,9 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
-const User = require('../models/User.mongo')
+const User = require('../models/User.mongo');
+const { sendVerificationEmail } = require('../utils/mailer');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -67,24 +69,61 @@ exports.updateMe = async (req, res) => {
   }
 };
 
-exports.signup = (req, res) => {
+exports.signup = async (req, res) => {
   const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
-  const hash = bcrypt.hashSync(password, 8);
+  try {
+    const hash = bcrypt.hashSync(password, 8);
+    const verificationToken = crypto.randomBytes(32).toString('hex');
 
-  User.create({ name, email, password: hash, role: 'user' })
-    .then(() => res.json({ message: 'User created' }))
-    .catch((err) => {
-      if (err && err.code === 11000) {
-        return res.status(409).json({ message: 'Email already registered' });
-      }
-      return res.status(500).json({ message: 'Database error' });
+    await User.create({ 
+      name, 
+      email: String(email).toLowerCase().trim(), 
+      password: hash, 
+      role: 'user',
+      isVerified: false,
+      verificationToken
     });
-}
+
+    // Send email (don't await so response is fast, or await for robustness)
+    await sendVerificationEmail(email, name, verificationToken);
+
+    res.json({ message: 'User created' });
+  } catch (err) {
+    if (err && err.code === 11000) {
+      return res.status(409).json({ message: 'Email already registered' });
+    }
+    console.error('Signup error:', err);
+    return res.status(500).json({ message: 'Database error' });
+  }
+};
+
+exports.verifyEmail = async (req, res) => {
+  const { token } = req.params;
+
+  if (!token) return res.status(400).json({ message: 'Token is required' });
+
+  try {
+    const user = await User.findOne({ verificationToken: token });
+
+    if (!user) {
+      return res.status(404).json({ message: 'Invalid or expired verification link' });
+    }
+
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    await user.save();
+
+    res.json({ message: 'Email verified successfully! You can now log in.' });
+  } catch (err) {
+    console.error('Verification error:', err);
+    res.status(500).json({ message: 'Server error during verification' });
+  }
+};
 
 exports.login = (req, res) => {
   const { email, password } = req.body;
@@ -98,6 +137,10 @@ exports.login = (req, res) => {
 
       const valid = bcrypt.compareSync(password, user.password);
       if (!valid) return res.status(401).json({ message: 'Incorrect password' });
+
+      if (user.isVerified === false) {
+        return res.status(403).json({ message: 'Please verify your email address before logging in.' });
+      }
 
       const token = jwt.sign(
         { id: String(user._id), role: user.role },

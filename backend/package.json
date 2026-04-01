@@ -17,6 +17,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.3.3",
     "mysql2": "^3.19.0",
+    "nodemailer": "^8.0.4",
     "razorpay": "^2.9.6"
   },
   "devDependencies": {

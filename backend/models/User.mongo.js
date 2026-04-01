@@ -7,6 +7,8 @@ const UserSchema = new mongoose.Schema(
     email: { type: String, required: true, lowercase: true, trim: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, default: 'user' },
+    isVerified: { type: Boolean, default: false },
+    verificationToken: { type: String },
     createdAtLegacy: { type: Date }
   },
   { timestamps: true }

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - ShowTime</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/auth.css">
+    <style>
+        .verify-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            padding: 20px;
+        }
+        .verify-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .verify-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        .success { color: #2ecc71; }
+        .error { color: #e74c3c; }
+        .loading { color: #3498db; }
+        
+        .verify-card h2 { margin-bottom: 15px; }
+        .verify-card p { color: #666; margin-bottom: 25px; line-height: 1.6; }
+        
+        .btn-home {
+            display: inline-block;
+            background: #ff385c;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .btn-home:hover { transform: translateY(-2px); }
+        
+        #status-icon.spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="verify-container">
+    <div class="verify-card" id="verifyCard">
+        <div id="status-icon" class="verify-icon loading"><i class="fas fa-spinner fa-spin"></i></div>
+        <h2 id="status-title">Verifying your email...</h2>
+        <p id="status-desc">Please wait a moment while we confirm your account.</p>
+        <div id="status-action" style="display: none;">
+            <a href="login.html" class="btn-home">Go to Login</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:3000/api'; // Standard for this project
+
+    async function verifyEmail() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        
+        const iconEl = document.getElementById('status-icon');
+        const titleEl = document.getElementById('status-title');
+        const descEl = document.getElementById('status-desc');
+        const actionEl = document.getElementById('status-action');
+
+        if (!token) {
+            iconEl.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+            iconEl.className = 'verify-icon error';
+            titleEl.innerText = 'Invalid link';
+            descEl.innerText = 'The verification link is missing or broken. Please try signing up again.';
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/auth/verify-email/${token}`);
+            const data = await res.json();
+
+            if (res.ok) {
+                iconEl.innerHTML = '<i class="fas fa-check-circle"></i>';
+                iconEl.className = 'verify-icon success';
+                titleEl.innerText = 'Email Verified!';
+                descEl.innerText = data.message || 'Your email has been successfully verified. You can now log in to your account.';
+                actionEl.style.display = 'block';
+            } else {
+                iconEl.innerHTML = '<i class="fas fa-times-circle"></i>';
+                iconEl.className = 'verify-icon error';
+                titleEl.innerText = 'Verification Failed';
+                descEl.innerText = data.message || 'The verification link may have expired or is already used.';
+                actionEl.innerHTML = '<a href="signup.html" class="btn-home">Back to Sign Up</a>';
+                actionEl.style.display = 'block';
+            }
+        } catch (err) {
+            iconEl.innerHTML = '<i class="fas fa-wifi"></i>';
+            iconEl.className = 'verify-icon error';
+            titleEl.innerText = 'Connection Error';
+            descEl.innerText = 'Could not reach the server. Please check your internet connection and try again.';
+        }
+    }
+
+    window.onload = verifyEmail;
+</script>
+
+</body>
+</html>

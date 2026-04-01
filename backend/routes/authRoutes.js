@@ -3,6 +3,7 @@ const c = require('../controllers/authController')
 const auth = require('../middleware/authMiddleware')
 
 router.post('/signup', c.signup)
+router.get('/verify-email/:token', c.verifyEmail)
 router.post('/login', c.login)
 router.post('/google', c.googleLogin)
 
