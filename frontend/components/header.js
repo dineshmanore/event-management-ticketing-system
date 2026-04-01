@@ -14,7 +14,10 @@
     const user = safeParseUser();
     if (user?.name) return;
     try {
-      const res = await fetch('https://event-management-ticketing-system.onrender.com/api/auth/me', {
+      const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000/api'
+        : 'https://event-management-ticketing-system.onrender.com/api';
+      const res = await fetch(`${apiBase}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;
@@ -208,7 +211,10 @@ async function handleSearch(query) {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(async () => {
     try {
-      const res = await fetch(`https://event-management-ticketing-system.onrender.com/api/movies/search?q=${encodeURIComponent(query)}&category=${page}`);
+      const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000/api'
+        : 'https://event-management-ticketing-system.onrender.com/api';
+      const res = await fetch(`${apiBase}/movies/search?q=${encodeURIComponent(query)}&category=${page}`);
       if (!res.ok) throw new Error('Search failed');
       const results = await res.json();
       

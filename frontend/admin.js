@@ -1,5 +1,7 @@
 // admin.js — ShowTime Admin Panel
-const API       = 'https://event-management-ticketing-system.onrender.com/api';
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000/api'
+  : 'https://event-management-ticketing-system.onrender.com/api';
 const ADMIN_API = `${API}/admin`;
 
 let moviesData = [], eventsData = [], bookingsData = [], usersData = [], streamsData = [];
@@ -146,8 +148,8 @@ function renderMovies(data) {
       <td>${(m.votes || 0) >= 1000 ? ((m.votes / 1000).toFixed(1) + 'K') : m.votes || 0}</td>
       <td><span class="badge active">Active</span></td>
       <td><div class="action-btns">
-        <button class="btn-edit"   onclick="editMovie(${m.id})"><i class="fa fa-edit"></i> Edit</button>
-        <button class="btn-delete" onclick="confirmDelete('movie',${m.id},'${(m.title || '').replace(/'/g, "\\'")}')">
+        <button class="btn-edit"   onclick="editMovie('${m.id}')"><i class="fa fa-edit"></i> Edit</button>
+        <button class="btn-delete" onclick="confirmDelete('movie','${m.id}','${(m.title || '').replace(/'/g, "\\'")}')">
           <i class="fa fa-trash"></i> Delete
         </button>
       </div></td>
@@ -172,8 +174,8 @@ function renderEvents(data) {
       <td>₹${e.price_from || 0}</td>
       <td><span class="badge ${e.status === 'inactive' ? 'inactive' : 'active'}">${e.status || 'active'}</span></td>
       <td><div class="action-btns">
-        <button class="btn-edit"   onclick="editEvent(${e.id})"><i class="fa fa-edit"></i> Edit</button>
-        <button class="btn-delete" onclick="confirmDelete('event',${e.id},'${(e.title || '').replace(/'/g, "\\'")}')">
+        <button class="btn-edit"   onclick="editEvent('${e.id}')"><i class="fa fa-edit"></i> Edit</button>
+        <button class="btn-delete" onclick="confirmDelete('event','${e.id}','${(e.title || '').replace(/'/g, "\\'")}')">
           <i class="fa fa-trash"></i> Delete
         </button>
       </div></td>
@@ -198,7 +200,8 @@ function renderStreams(data) {
       <td>₹${s.price_buy || 0}</td>
       <td><span class="badge ${s.status === 'inactive' ? 'inactive' : 'active'}">${s.status || 'active'}</span></td>
       <td><div class="action-btns">
-        <button class="btn-delete" onclick="confirmDelete('stream',${s.id},'${(s.title || '').replace(/'/g, "\\'")}')">
+        <button class="btn-edit"   onclick="editStream('${s.id}')"><i class="fa fa-edit"></i> Edit</button>
+        <button class="btn-delete" onclick="confirmDelete('stream','${s.id}','${(s.title || '').replace(/'/g, "\\'")}')">
           <i class="fa fa-trash"></i> Delete
         </button>
       </div></td>
@@ -248,8 +251,39 @@ function renderUsers(data) {
       <td style="color:#888">${u.email}</td>
       <td style="font-size:12px;color:#888">${u.created_at ? new Date(u.created_at).toLocaleDateString('en-IN') : '—'}</td>
       <td>${bookingMap[u.id] || 0}</td>
-      <td><button class="btn-view"><i class="fa fa-eye"></i> View</button></td>
+      <td><button class="btn-view" onclick="viewUser('${u.id}')"><i class="fa fa-eye"></i> View</button></td>
     </tr>`).join('');
+}
+
+async function viewUser(userId) {
+  try {
+    const user = usersData.find(u => String(u.id) === String(userId));
+    if (!user) return;
+
+    document.getElementById('uvName').innerText = user.name || '—';
+    document.getElementById('uvEmail').innerText = user.email || '—';
+    document.getElementById('uvId').innerText = user.id;
+    document.getElementById('uvJoined').innerText = user.created_at ? new Date(user.created_at).toLocaleDateString('en-IN') : '—';
+
+    const userBookings = bookingsData.filter(b => String(b.user_id) === String(userId));
+    const tbody = document.getElementById('userBookingsTable');
+    
+    tbody.innerHTML = userBookings.length
+      ? userBookings.map(b => `
+          <tr>
+            <td style="font-weight:600">#${b.id}</td>
+            <td>${b.title}</td>
+            <td>${b.seats}</td>
+            <td style="font-weight:600;color:#cc0c39">₹${b.total_price}</td>
+            <td style="font-size:12px">${b.show_date ? new Date(b.show_date).toLocaleDateString('en-IN') : '—'}</td>
+          </tr>`).join('')
+      : '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20px">No bookings found for this user</td></tr>';
+
+    document.getElementById('userViewModal').classList.add('open');
+  } catch (e) {
+    console.error(e);
+    alert('Error loading user details');
+  }
 }
 
 // ── REPORTS ───────────────────────────────────────────────────────────────
@@ -512,7 +546,11 @@ function openEventModal(ev) {
   document.getElementById('eventModal').classList.add('open');
 }
 
-function editEvent(id) { openEventModal(eventsData.find(e => e.id === id)); }
+function editEvent(id) { 
+  const ev = eventsData.find(e => String(e.id) === String(id));
+  if (ev) openEventModal(ev); 
+  else alert('Event not found');
+}
 
 async function saveEvent() {
   const id    = document.getElementById('editEventId').value;

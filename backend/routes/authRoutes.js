@@ -11,4 +11,8 @@ router.post('/google', c.googleLogin)
 router.get('/me', auth, c.getMe)
 router.put('/me', auth, c.updateMe)
 
-module.exports = router
+// Email Change
+router.post('/request-email-change', auth, c.requestEmailChange)
+router.get('/verify-email-change/:token', c.verifyEmailChange)
+
+module.exports = router;

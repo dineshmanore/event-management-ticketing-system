@@ -54,11 +54,17 @@
           </div>
           <div class="field">
             <label>Email</label>
-            <input id="pEmail" type="email" placeholder="you@example.com" />
+            <div style="display:flex;gap:10px">
+              <input id="pEmail" type="email" placeholder="you@example.com" style="flex:1" />
+              <button class="btn" id="verifyBtn" onclick="requestEmailVerify()" style="padding:0 14px;font-size:12px;white-space:nowrap;display:none">
+                <i class="fa fa-paper-plane" style="margin-right:2px"></i> Verify
+              </button>
+            </div>
+            <small id="emailHint">New email requires verification</small>
           </div>
           <div class="field">
             <label>Role</label>
-            <input id="pRole" type="text" disabled />
+            <input id="pRole" type="text" disabled style="background:#f5f5f5" />
             <small>Role is assigned by the system</small>
           </div>
           <div class="field full">
@@ -81,7 +87,9 @@
   <script src="components/header.js"></script>
   <script src="components/footer.js"></script>
   <script>
-    const API = 'https://event-management-ticketing-system.onrender.com/api';
+    const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:5000/api'
+      : 'https://event-management-ticketing-system.onrender.com/api';
 
     async function loadMe() {
       const token = localStorage.getItem('token');
@@ -96,24 +104,74 @@
         return;
       }
       const me = await res.json();
+      console.log('User Data:', me);
+
+      const emailInput = document.getElementById('pEmail');
+      const verifyBtn  = document.getElementById('verifyBtn');
+      const emailHint  = document.getElementById('emailHint');
+
       document.getElementById('pName').value = me.name || '';
-      document.getElementById('pEmail').value = me.email || '';
+      emailInput.value = me.email || '';
       document.getElementById('pRole').value = me.role || 'user';
       document.getElementById('pPassword').value = '';
       document.getElementById('pMeta').innerText = `Member since ${me.created_at ? new Date(me.created_at).toLocaleDateString('en-IN') : '—'}`;
       document.getElementById('pTitle').innerText = me.name ? me.name : 'Profile';
+
+      // Current email to track changes
+      emailInput.dataset.original = me.email || '';
+      
+      emailInput.oninput = () => {
+        const isChanged = emailInput.value.trim().toLowerCase() !== emailInput.dataset.original.toLowerCase();
+        verifyBtn.style.display = isChanged ? 'block' : 'none';
+        emailHint.innerText = isChanged ? 'Click Verify to update your email' : 'Your current email';
+        emailHint.style.color = isChanged ? '#cc0c39' : '#888';
+      };
+    }
+
+    async function requestEmailVerify() {
+      const token = localStorage.getItem('token');
+      const newEmail = document.getElementById('pEmail').value.trim();
+      const verifyBtn = document.getElementById('verifyBtn');
+
+      if (!newEmail) return alert('Please enter a new email address');
+      
+      verifyBtn.disabled = true;
+      verifyBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ...';
+
+      try {
+        const res = await fetch(`${API}/auth/request-email-change`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ newEmail })
+        });
+        const out = await res.json();
+        if (!res.ok) throw new Error(out.message || 'Request failed');
+        
+        alert('A verification link has been sent to ' + newEmail + '. Please check your inbox and click the link to confirm the change.');
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        verifyBtn.disabled = false;
+        verifyBtn.innerHTML = '<i class="fa fa-paper-plane"></i> Verify';
+      }
     }
 
     async function saveMe() {
       const token = localStorage.getItem('token');
       const btn = document.getElementById('saveBtn');
+      const emailInput = document.getElementById('pEmail');
+
+      if (emailInput.value.trim().toLowerCase() !== emailInput.dataset.original.toLowerCase()) {
+        alert('Please click the "Verify" button next to your email to update your email address. Other changes (name/password) will be saved now.');
+      }
+
       btn.disabled = true;
       btn.innerText = 'Saving...';
 
       try {
         const payload = {
           name: document.getElementById('pName').value.trim(),
-          email: document.getElementById('pEmail').value.trim(),
+          // We don't send the email here anymore, it's handled by verification flow
           password: document.getElementById('pPassword').value
         };
         if (!payload.password) delete payload.password;
@@ -128,8 +186,10 @@
 
         if (out.user) {
           localStorage.setItem('user', JSON.stringify(out.user));
+          // Update header name if component exists
+          if (window.updateHeaderName) window.updateHeaderName(out.user.name);
         }
-        alert('Profile updated!');
+        alert('Details updated!');
         await loadMe();
       } catch (e) {
         alert(e.message);

@@ -1,5 +1,7 @@
 // seats.js — real seat booking with DB integration
-const API = 'https://event-management-ticketing-system.onrender.com/api';
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000/api'
+  : 'https://event-management-ticketing-system.onrender.com/api';
 
 const tierPrices = { recliner: 500, gold: 350, silver: 200 };
 const tiers = [

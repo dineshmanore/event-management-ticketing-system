@@ -120,3 +120,34 @@ exports.sendBookingConfirmation = async (email, name, booking) => {
     console.error('Error sending booking confirmation:', error);
   }
 };
+
+exports.sendEmailChangeVerification = async (email, name, token) => {
+  const url = `${process.env.FRONTEND_URL || 'http://localhost:5500'}/verify-email.html?token=${token}`;
+
+  const mailOptions = {
+    from: `"ShowTime" <${process.env.EMAIL_USER || 'no-reply@showtime.com'}>`,
+    to: email,
+    subject: 'Confirm Your New Email - ShowTime',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #ff385c;">Update Your Email, ${name}!</h2>
+        <p>You requested to change your email address for your ShowTime account. Please click the button below to confirm this change:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${url}" style="background-color: #ff385c; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Confirm New Email</a>
+        </div>
+        <p>This link will expire in 24 hours. If you did not request this change, you can safely ignore this email.</p>
+        <p style="word-break: break-all; color: #666;">${url}</p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #999;">ShowTime Entertainment Pvt. Ltd.</p>
+      </div>
+    `,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email change verification sent: %s', info.messageId);
+  } catch (error) {
+    console.error('Error sending email change verification:', error);
+    throw new Error('Failed to send verification email');
+  }
+};

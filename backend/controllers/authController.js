@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken')
 const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User.mongo');
-const { sendVerificationEmail } = require('../utils/mailer');
+const { sendVerificationEmail, sendEmailChangeVerification } = require('../utils/mailer');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -66,6 +66,55 @@ exports.updateMe = async (req, res) => {
     });
   } catch (e) {
     res.status(500).json({ message: 'Database error' });
+  }
+};
+
+exports.requestEmailChange = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { newEmail } = req.body;
+
+    if (!newEmail) return res.status(400).json({ message: 'New email required' });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (user.email === newEmail.toLowerCase().trim()) {
+      return res.status(400).json({ message: 'New email is same as current email' });
+    }
+
+    const existing = await User.findOne({ email: newEmail.toLowerCase().trim() });
+    if (existing) return res.status(409).json({ message: 'Email already in use' });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    user.pendingEmail = newEmail.toLowerCase().trim();
+    user.emailVerificationToken = token;
+    await user.save();
+
+    await sendEmailChangeVerification(user.pendingEmail, user.name, token);
+
+    res.json({ message: 'Verification email sent to ' + user.pendingEmail });
+  } catch (e) {
+    res.status(500).json({ message: 'Error requesting email change' });
+  }
+};
+
+exports.verifyEmailChange = async (req, res) => {
+  try {
+    const { token } = req.params;
+    if (!token) return res.status(400).json({ message: 'Token required' });
+
+    const user = await User.findOne({ emailVerificationToken: token });
+    if (!user) return res.status(404).json({ message: 'Invalid or expired token' });
+
+    user.email = user.pendingEmail;
+    user.pendingEmail = undefined;
+    user.emailVerificationToken = undefined;
+    await user.save();
+
+    res.json({ message: 'Email updated successfully!' });
+  } catch (e) {
+    res.status(500).json({ message: 'Error verifying email change' });
   }
 };
 
