@@ -1,7 +1,9 @@
 const Booking = require('../models/Booking.mongo')
 const Movie = require('../models/Movie.mongo')
 const Event = require('../models/Event.mongo')
+const User = require('../models/User.mongo')
 const { buildIdQuery, addLegacyId } = require('../utils/id')
+const { sendBookingConfirmation } = require('../utils/mailer')
 
 // ── GET BOOKED SEATS FOR A MOVIE ─────────────────────────────────────────
 // Called by seats.js: GET /api/bookings/seats/:movieId?date=YYYY-MM-DD
@@ -84,7 +86,25 @@ exports.bookSeats = (req, res) => {
         totalPrice: Number(totalPrice || 0),
         showDate,
         bookingTimeLegacy: new Date()
-      }).then((b) => res.json({ success: true, bookingId: b.mysqlId ?? String(b._id) }));
+      }).then(async (b) => {
+        // Send Confirmation Email
+        try {
+          const user = await User.findById(user_id).select('name email').lean();
+          if (user && user.email) {
+            await sendBookingConfirmation(user.email, user.name, {
+              id: b.mysqlId ?? String(b._id),
+              title: item.title,
+              date: showDate,
+              seats: seatString,
+              price: totalPrice
+            });
+          }
+        } catch (mailErr) {
+          console.error('Failed to send booking confirmation email:', mailErr);
+        }
+        
+        res.json({ success: true, bookingId: b.mysqlId ?? String(b._id) });
+      });
     })
     .catch((e) => res.status(500).json({ message: 'Booking failed', error: e.message }));
 }

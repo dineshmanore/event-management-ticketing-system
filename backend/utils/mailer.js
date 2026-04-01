@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const qrcode = require('qrcode');
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
@@ -35,12 +36,87 @@ exports.sendVerificationEmail = async (email, name, token) => {
   try {
     const info = await transporter.sendMail(mailOptions);
     console.log('Email sent: %s', info.messageId);
-    // If using Ethereal, log the preview URL
-    if (process.env.EMAIL_HOST === 'smtp.ethereal.email' || !process.env.EMAIL_HOST) {
-        console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-    }
   } catch (error) {
     console.error('Error sending email:', error);
     throw new Error('Failed to send verification email');
+  }
+};
+
+exports.sendBookingConfirmation = async (email, name, booking) => {
+  try {
+    const qrData = JSON.stringify({
+      id: booking.id,
+      user: name,
+      item: booking.title,
+      seats: booking.seats,
+      date: booking.date
+    });
+
+    const qrCodeBuffer = await qrcode.toBuffer(qrData);
+
+    const mailOptions = {
+      from: `"ShowTime" <${process.env.EMAIL_USER || 'bookings@showtime.com'}>`,
+      to: email,
+      subject: `Booking Confirmed: ${booking.title} - ShowTime`,
+      html: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
+          <div style="text-align: center; margin-bottom: 25px;">
+            <div style="background-color: #ff385c; color: white; display: inline-block; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 24px;">ST</div>
+            <h1 style="color: #333; margin-top: 15px; font-size: 22px;">Booking Confirmation</h1>
+          </div>
+          
+          <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border-left: 5px solid #ff385c;">
+            <p style="margin: 0; color: #666; font-size: 14px;">Hi ${name},</p>
+            <h2 style="margin: 5px 0 0 0; color: #333; font-size: 18px;">Your tickets are ready!</h2>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #777;">Booking ID</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #333; font-weight: bold; text-align: right;">#${booking.id}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #777;">Show / Event</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #333; font-weight: bold; text-align: right;">${booking.title}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #777;">Date</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #333; font-weight: bold; text-align: right;">${booking.date}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #777;">Seats</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #333; font-weight: bold; text-align: right;">${booking.seats}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #777;">Total Paid</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #ff385c; font-weight: bold; text-align: right;">₹${booking.price}</td>
+            </tr>
+          </table>
+
+          <div style="text-align: center; border: 2px dashed #ff385c; padding: 25px; border-radius: 12px; background-color: #fff9fa;">
+            <p style="margin: 0 0 15px 0; font-weight: bold; color: #333;">Your Entry QR Code</p>
+            <img src="cid:ticket_qr" alt="Ticket QR Code" style="width: 180px; height: 180px;" />
+            <p style="margin: 15px 0 0 0; font-size: 12px; color: #888;">Scan this at the entrance for entry</p>
+          </div>
+
+          <div style="margin-top: 30px; font-size: 13px; color: #999; text-align: center;">
+            <p>ShowTime Entertainment Pvt. Ltd.</p>
+            <p>If you have any questions, contact us at support@showtime.com</p>
+          </div>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: 'ticket_qr.png',
+          content: qrCodeBuffer,
+          cid: 'ticket_qr'
+        }
+      ]
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Booking confirmation sent: %s', info.messageId);
+  } catch (error) {
+    console.error('Error sending booking confirmation:', error);
   }
 };
