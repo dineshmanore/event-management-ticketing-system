@@ -89,8 +89,15 @@ exports.signup = async (req, res) => {
       verificationToken
     });
 
-    // Send email (don't await so response is fast, or await for robustness)
-    await sendVerificationEmail(email, name, verificationToken);
+    // Send email
+    try {
+      await sendVerificationEmail(email, name, verificationToken);
+    } catch (mailErr) {
+      console.error('Email error:', mailErr);
+      // We don't necessarily want to fail signup if email fails, 
+      // but for now let's return a clear error since it's required for verification.
+      return res.status(500).json({ message: 'User created but failed to send verification email. Please check SMTP settings.' });
+    }
 
     res.json({ message: 'User created' });
   } catch (err) {
@@ -98,7 +105,7 @@ exports.signup = async (req, res) => {
       return res.status(409).json({ message: 'Email already registered' });
     }
     console.error('Signup error:', err);
-    return res.status(500).json({ message: 'Database error' });
+    return res.status(500).json({ message: 'Database error: ' + (err.message || 'unknown') });
   }
 };
 
