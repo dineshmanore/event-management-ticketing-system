@@ -263,6 +263,15 @@ exports.getActors = (req, res) => {
     .catch(() => res.status(500).json({ message: 'DB error' }))
 }
 
+exports.addActor = (req, res) => {
+  const { name, image } = req.body
+  if (!name) return res.status(400).json({ message: 'Actor name required' })
+
+  Actor.create({ name, image })
+    .then((doc) => res.json({ message: 'Actor added', id: String(doc._id) }))
+    .catch((err) => res.status(500).json({ message: 'DB error', error: err.message }))
+}
+
 // ── DASHBOARD STATS ────────────────────────────────────────────────────────
 exports.getStats = (req, res) => {
   Promise.all([

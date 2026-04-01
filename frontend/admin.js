@@ -27,6 +27,8 @@ function goto(page) {
   if (page === 'movies')   renderMovies();
   if (page === 'events')   renderEvents();
   if (page === 'streams')  renderStreams();
+  if (page === 'actors')   renderActors();
+  if (page === 'bookings') renderBookings();
   if (page === 'users')    renderUsers();
   if (page === 'reports')  renderReports();
 }
@@ -37,12 +39,13 @@ async function loadAll() {
     const token = localStorage.getItem('token');
     const authH = { Authorization: 'Bearer ' + token };
 
-    const [mRes, eRes, bRes, uRes, sRes] = await Promise.all([
+    const [mRes, eRes, bRes, uRes, sRes, aRes] = await Promise.all([
       fetch(`${API}/movies`),
       fetch(`${API}/events`).catch(() => ({ json: () => [] })),
       fetch(`${ADMIN_API}/bookings`, { headers: authH }).catch(() => ({ json: () => [] })),
       fetch(`${ADMIN_API}/users`,    { headers: authH }).catch(() => ({ json: () => [] })),
-      fetch(`${API}/stream`).catch(() => ({ json: () => [] }))
+      fetch(`${API}/stream`).catch(() => ({ json: () => [] })),
+      fetch(`${ADMIN_API}/actors`).catch(() => ({ json: () => [] }))
     ]);
 
     const mData = await mRes.json().catch(() => []);
@@ -50,12 +53,14 @@ async function loadAll() {
     const bData = typeof bRes.json === 'function' ? await bRes.json().catch(() => []) : [];
     const uData = typeof uRes.json === 'function' ? await uRes.json().catch(() => []) : [];
     const sData = typeof sRes.json === 'function' ? await sRes.json().catch(() => []) : [];
+    const aData = typeof aRes.json === 'function' ? await aRes.json().catch(() => []) : [];
 
     moviesData   = Array.isArray(mData) ? mData : [];
     eventsData   = Array.isArray(eData) ? eData : [];
     bookingsData = Array.isArray(bData) ? bData : [];
     usersData    = Array.isArray(uData) ? uData : [];
     streamsData  = Array.isArray(sData) ? sData : [];
+    allActors    = Array.isArray(aData) ? aData : [];
 
     updateCounts();
     renderDashboard();
@@ -63,6 +68,7 @@ async function loadAll() {
     renderEvents();
     renderBookings();
     renderUsers();
+    renderActors();
   } catch (e) {
     console.error(e);
   }
@@ -176,32 +182,6 @@ function renderEvents(data) {
       <td><div class="action-btns">
         <button class="btn-edit"   onclick="editEvent('${e.id}')"><i class="fa fa-edit"></i> Edit</button>
         <button class="btn-delete" onclick="confirmDelete('event','${e.id}','${(e.title || '').replace(/'/g, "\\'")}')">
-          <i class="fa fa-trash"></i> Delete
-        </button>
-      </div></td>
-    </tr>`).join('');
-}
-
-// ── STREAMS TABLE ─────────────────────────────────────────────────────────
-function renderStreams(data) {
-  const list  = data || streamsData;
-  const tbody = document.getElementById('streamsTable');
-  if (!list.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="8"><i class="fa fa-play-circle" style="font-size:28px;display:block;margin-bottom:8px;color:#ddd"></i>No streams. Add one!</td></tr>';
-    return;
-  }
-  tbody.innerHTML = list.map(s => `
-    <tr data-search="${s.title} ${s.language} ${s.genres}">
-      <td><img class="thumb" src="${s.poster_image}" onerror="this.style.display='none'" alt=""></td>
-      <td style="font-weight:600;max-width:180px">${s.title}</td>
-      <td>${s.language || '—'}</td>
-      <td>${s.release_date ? new Date(s.release_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBA'}</td>
-      <td>₹${s.price_rent || 0}</td>
-      <td>₹${s.price_buy || 0}</td>
-      <td><span class="badge ${s.status === 'inactive' ? 'inactive' : 'active'}">${s.status || 'active'}</span></td>
-      <td><div class="action-btns">
-        <button class="btn-edit"   onclick="editStream('${s.id}')"><i class="fa fa-edit"></i> Edit</button>
-        <button class="btn-delete" onclick="confirmDelete('stream','${s.id}','${(s.title || '').replace(/'/g, "\\'")}')">
           <i class="fa fa-trash"></i> Delete
         </button>
       </div></td>
@@ -399,6 +379,63 @@ function getCastData() {
     actor_id: s.actor_id,
     role:     (s.role || '').trim() || 'Unknown'
   }));
+}
+
+// ── ACTOR CRUD ────────────────────────────────────────────────────────────
+function openActorModal() {
+  document.getElementById('actName').value = '';
+  document.getElementById('actImage').value = '';
+  document.getElementById('actImgPreview').style.display = 'none';
+  document.getElementById('actorModal').classList.add('open');
+}
+
+async function saveActor() {
+  const name  = document.getElementById('actName').value.trim();
+  const image = document.getElementById('actImage').value.trim();
+  if (!name) { alert('Actor name is required.'); return; }
+
+  try {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${ADMIN_API}/actors`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ name, image })
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    closeModal('actorModal');
+    alert('Actor added successfully!');
+    
+    // Refresh actors list so it shows up in Movie Modal
+    await loadActors();
+    if (document.getElementById('page-actors').classList.contains('active')) renderActors();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+function renderActors(data) {
+  const list  = data || allActors;
+  const tbody = document.getElementById('actorsTable');
+  if (!tbody) return;
+  if (!list.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="4"><i class="fa fa-users" style="font-size:28px;display:block;margin-bottom:8px;color:#ddd"></i>No actors yet. Add one!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(a => `
+    <tr data-search="${a.name}">
+      <td><img class="thumb" src="${a.image || 'https://via.placeholder.com/150'}" style="width:40px;height:40px;border-radius:50%;object-fit:cover" onerror="this.src='https://via.placeholder.com/150'"></td>
+      <td style="font-weight:600">${a.name}</td>
+      <td style="font-size:12px;color:#888">${a.id}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-delete" onclick="confirmDelete('actor','${a.id}','${(a.name || '').replace(/'/g, "\\'")}')">
+            <i class="fa fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    </tr>`).join('');
 }
 
 // ── MOVIE CRUD ────────────────────────────────────────────────────────────
@@ -622,9 +659,9 @@ function renderStreams(data) {
       <td>₹${s.price_buy || 0}</td>
       <td><span class="badge ${s.status === 'inactive' ? 'inactive' : 'active'}">${s.status || 'active'}</span></td>
       <td><div class="action-btns">
-        <button class="btn-edit"   onclick="editStream(${s.id})"><i class="fa fa-edit"></i></button>
-        <button class="btn-delete" onclick="confirmDelete('stream',${s.id},'${(s.title || '').replace(/'/g, "\\'")}')">
-          <i class="fa fa-trash"></i>
+        <button class="btn-edit"   onclick="editStream('${s.id}')"><i class="fa fa-edit"></i> Edit</button>
+        <button class="btn-delete" onclick="confirmDelete('stream','${s.id}','${(s.title || '').replace(/'/g, "\\'")}')">
+          <i class="fa fa-trash"></i> Delete
         </button>
       </div></td>
     </tr>`).join('');

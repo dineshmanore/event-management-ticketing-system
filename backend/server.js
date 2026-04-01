@@ -13,10 +13,14 @@ const eventRoutes   = require('./routes/eventRoutes')
 const adminRoutes   = require('./routes/adminRoutes')
 const streamRoutes  = require('./routes/streamRoutes')
 
+const path = require('path')
 const app = express()
 
 app.use(cors())
 app.use(express.json())
+
+// Serve static files from the frontend directory
+app.use(express.static(path.join(__dirname, '../frontend')))
 
 app.use('/api/auth',     authRoutes)
 app.use('/api/movies',   movieRoutes)
