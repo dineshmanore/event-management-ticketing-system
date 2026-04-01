@@ -155,7 +155,11 @@ function filterCity(city) { activeCity = city; document.getElementById('cityLabe
 function sortSports(val) { sortBy = val; render(); }
 function searchSports(q) {
   if (!q.trim()) { render(); return; }
-  const f = allSports.filter(e => e.title.toLowerCase().includes(q.toLowerCase()));
+  const f = allSports.filter(e => 
+    e.title.toLowerCase().includes(q.toLowerCase()) ||
+    (e.venue && e.venue.toLowerCase().includes(q.toLowerCase())) ||
+    (e.city && e.city.toLowerCase().includes(q.toLowerCase()))
+  );
   document.getElementById('resultsCount').innerHTML = `<span>${f.length}</span> results for "${q}"`;
   const grid = document.getElementById('sportsGrid');
   if (f.length === 0) {

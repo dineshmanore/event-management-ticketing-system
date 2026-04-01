@@ -150,9 +150,11 @@ function sortEvents(val) { sortBy = val; render(); }
 
 function searchEvents(q) {
   if (!q.trim()) { render(); return; }
-  const filtered = allEvents.filter(e => 
+  const base = allEvents.filter(e => !['play', 'cricket', 'kabaddi', 'football', 'adventure', 'sport'].includes(e.category));
+  const filtered = base.filter(e => 
     e.title.toLowerCase().includes(q.toLowerCase()) || 
-    (e.venue && e.venue.toLowerCase().includes(q.toLowerCase()))
+    (e.venue && e.venue.toLowerCase().includes(q.toLowerCase())) ||
+    (e.city && e.city.toLowerCase().includes(q.toLowerCase()))
   );
   document.getElementById('resultsCount').innerHTML = `<span>${filtered.length}</span> results for "${q}"`;
   const grid = document.getElementById('eventsGrid');

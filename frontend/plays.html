@@ -153,7 +153,11 @@ function sortPlays(val) { sortBy = val; render(); }
 
 function searchPlays(q) {
   if (!q.trim()) { render(); return; }
-  const f = allPlays.filter(e => e.title.toLowerCase().includes(q.toLowerCase()));
+  const f = allPlays.filter(e => 
+    e.title.toLowerCase().includes(q.toLowerCase()) ||
+    (e.venue && e.venue.toLowerCase().includes(q.toLowerCase())) ||
+    (e.city && e.city.toLowerCase().includes(q.toLowerCase()))
+  );
   document.getElementById('resultsCount').innerHTML = `<span>${f.length}</span> results for "${q}"`;
   const list = document.getElementById('playsList');
   if (f.length === 0) {

@@ -121,7 +121,7 @@
           <span class="logo-text">ShowTime</span>
         </a>
 
-        <div class="search-box" style="position:relative">
+        <div class="search-box" style="position:relative; display: ${['events','plays','sports','activities'].includes(page) ? 'none' : 'flex'}">
           <i class="fa fa-search"></i>
           <input type="text" placeholder="Search for Movies, Events..." oninput="handleSearch(this.value)" autocomplete="off">
           <div id="searchResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.15);max-height:380px;overflow-y:auto;z-index:9999;margin-top:12px;width:350px;"></div>
