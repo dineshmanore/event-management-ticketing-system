@@ -276,6 +276,19 @@ function renderActivityMap() {
 }
 
 function selectTicket(btn, price, title) {
+  const pBtn = document.getElementById('proceedBtn');
+  
+  if (btn.classList.contains('added')) {
+    // DESELECT
+    selectedTicket = null;
+    btn.classList.remove('added');
+    btn.innerText = 'Add';
+    pBtn.classList.remove('active');
+    pBtn.innerText = 'Proceed';
+    return;
+  }
+
+  // SELECT
   selectedTicket = { price, title };
   document.querySelectorAll('.add-btn').forEach(b => {
     b.classList.remove('added');
@@ -284,7 +297,6 @@ function selectTicket(btn, price, title) {
   btn.classList.add('added');
   btn.innerText = 'Added';
   
-  const pBtn = document.getElementById('proceedBtn');
   pBtn.classList.add('active');
   pBtn.innerText = `Proceed - ₹${(price * selectedQty).toLocaleString('en-IN')}`;
 }

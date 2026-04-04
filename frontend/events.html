@@ -88,7 +88,7 @@ async function init() {
 }
 
 function render() {
-  let list = [...allEvents].filter(e => e.category !== 'play' && e.category !== 'cricket' && e.category !== 'kabaddi' && e.category !== 'football' && e.category !== 'adventure' && e.category !== 'sport');
+  let list = [...allEvents].filter(e => !['play', 'comedy', 'musical', 'children', 'cricket', 'kabaddi', 'football', 'adventure', 'sport'].includes(e.category));
   if (activeCat !== 'all') list = list.filter(e => e.category === activeCat);
   if (activeCity !== 'all') list = list.filter(e => e.city === activeCity);
   if (sortBy === 'date')  list.sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -152,7 +152,7 @@ function sortEvents(val) { sortBy = val; render(); }
 
 function searchEvents(q) {
   if (!q.trim()) { render(); return; }
-  const base = allEvents.filter(e => !['play', 'cricket', 'kabaddi', 'football', 'adventure', 'sport'].includes(e.category));
+  const base = allEvents.filter(e => !['play', 'comedy', 'musical', 'children', 'cricket', 'kabaddi', 'football', 'adventure', 'sport'].includes(e.category));
   const filtered = base.filter(e => 
     e.title.toLowerCase().includes(q.toLowerCase()) || 
     (e.venue && e.venue.toLowerCase().includes(q.toLowerCase())) ||
