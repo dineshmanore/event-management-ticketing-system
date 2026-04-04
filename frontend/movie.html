@@ -430,7 +430,8 @@ function closeTrailer(e) {
 
 async function loadSimilarMovies() {
   try {
-    const res    = await fetch(`${API}/movies`);
+    // Fetch only 7 (6 + current) to find similar ones
+    const res    = await fetch(`${API}/movies?limit=7`);
     const movies = await res.json();
     const container = document.getElementById('similarMovies');
     container.innerHTML = movies

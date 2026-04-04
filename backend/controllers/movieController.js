@@ -4,8 +4,23 @@ const Actor = require('../models/Actor.mongo')
 const { buildIdQuery, addLegacyId, isNumericId } = require('../utils/id')
 
 exports.getMovies = (req, res) => {
-  Movie.find({})
-    .sort({ createdAt: -1 })
+  const { genre, language, category, limit } = req.query;
+  const filter = {};
+
+  if (genre && genre !== 'all') {
+    filter.genre = new RegExp(genre.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  }
+  if (language) {
+    filter.language = new RegExp(language.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  }
+  if (category) {
+    filter.category = category;
+  }
+
+  let query = Movie.find(filter).sort({ createdAt: -1 });
+  if (limit) query = query.limit(parseInt(limit));
+
+  query
     .lean()
     .then((docs) =>
       res.json(

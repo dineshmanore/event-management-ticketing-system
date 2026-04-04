@@ -3,7 +3,7 @@ const API = window.location.hostname === 'localhost' || window.location.hostname
   ? 'http://localhost:5000/api'
   : 'https://event-management-ticketing-system.onrender.com/api';
 
-let allMovies    = [];
+
 let bannerIndex  = 0;
 let bannerTimer  = null;
 let activeGenre  = 'all';
@@ -24,13 +24,23 @@ const catConfig = {
 
 async function loadMovies() {
   try {
-    const res = await fetch(`${API}/movies`);
-    allMovies = await res.json();
+    let url = `${API}/movies`;
+    const params = new URLSearchParams();
+    if (activeGenre && activeGenre !== 'all') params.set('genre', activeGenre);
+    if (activeLang) params.set('language', activeLang);
+    if (activeCat && activeCat !== 'movies') params.set('category', activeCat);
+
+    const queryString = params.toString();
+    if (queryString) url += `?${queryString}`;
+
+    const res = await fetch(url);
+    const movies = await res.json();
+
     if (activeCat !== 'movies' && activeCat !== '') {
-      renderCategoryPage(activeCat);
+      renderCategoryPage(activeCat, movies);
     } else {
-      renderAll(allMovies);
-      setupBanner(allMovies);
+      renderAll(movies);
+      setupBanner(movies);
     }
   } catch (err) {
     console.error('Could not load movies:', err);
@@ -38,16 +48,14 @@ async function loadMovies() {
   }
 }
 
-function renderCategoryPage(cat) {
+function renderCategoryPage(cat, catMovies) {
   const cfg = catConfig[cat] || { title: cat, icon: 'fa-star', msg: 'Content coming soon!' };
+  // ... (rest of logic remains similar, but we use passed catMovies)
   const hero = document.querySelector('.hero');
   const filterBar = document.querySelector('.filter-bar');
   if (hero)      hero.style.display = 'none';
   if (filterBar) filterBar.style.display = 'none';
 
-  const catMovies = allMovies.filter(m =>
-    m.category && m.category.toLowerCase() === cat.toLowerCase()
-  );
   const sections = document.querySelectorAll('.section-wrap, .premiere-section');
   sections.forEach(s => s.style.display = 'none');
 
@@ -58,7 +66,7 @@ function renderCategoryPage(cat) {
     <p style="color:#888;font-size:14px;margin-bottom:30px">Showing ${cfg.title.toLowerCase()} in your city</p>
   `;
 
-  if (catMovies.length > 0) {
+  if (catMovies && catMovies.length > 0) {
     const row = document.createElement('div');
     row.className = 'movie-row';
     row.innerHTML = catMovies.map(m => createMovieCard(m)).join('');
@@ -178,30 +186,19 @@ function filterLang(btn, lang) {
 }
 
 function applyFilters() {
-  let filtered = [...allMovies];
-  if (activeGenre && activeGenre !== 'all') {
-    filtered = filtered.filter(m =>
-      m.genre && m.genre.toLowerCase().includes(activeGenre.toLowerCase())
-    );
-  }
-  if (activeLang) {
-    filtered = filtered.filter(m =>
-      m.language && m.language.toLowerCase().includes(activeLang.toLowerCase())
-    );
-  }
-  renderAll(filtered);
-  if (filtered.length > 0) setupBanner(filtered);
+  loadMovies();
 }
 
-function searchMovies(query) {
-  if (!query.trim()) { renderAll(allMovies); return; }
-  const q = query.toLowerCase();
-  const filtered = allMovies.filter(m =>
-    m.title.toLowerCase().includes(q) ||
-    (m.genre     && m.genre.toLowerCase().includes(q)) ||
-    (m.language  && m.language.toLowerCase().includes(q))
-  );
-  renderAll(filtered);
+async function searchMovies(query) {
+  if (!query.trim()) { loadMovies(); return; }
+  try {
+    const res = await fetch(`${API}/movies/search?q=${encodeURIComponent(query)}`);
+    const movies = await res.json();
+    renderAll(movies);
+    if (movies.length > 0) setupBanner(movies);
+  } catch (err) {
+    console.error('Search error:', err);
+  }
 }
 
 
