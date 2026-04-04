@@ -96,7 +96,7 @@
 <div class="step-overlay" id="step1">
   <div class="qty-card">
     <h3 class="qty-title">How many seats?</h3>
-    <img src="assets/scooter.png" class="scooter-img" alt="Scooter Illustration">
+    <img src="assets/scooter.png" id="qtyImage" class="scooter-img" alt="Illustration" onerror="this.src='assets/scooter.png'">
     <div class="qty-btns" id="qtyBtns">
       <button class="qty-btn" data-val="1">1</button>
       <button class="qty-btn active" data-val="2">2</button>
@@ -198,6 +198,11 @@ async function loadEvent() {
       const d = eventData.date ? new Date(eventData.date).toLocaleDateString('en-US', {day:'numeric', month:'short', weekday: 'short'}) : 'Date TBA';
       document.getElementById('ebSubDesc').innerText = `${d} | ${eventData.venue}: ${eventData.city}`;
       
+      if (eventData.image) {
+        document.getElementById('qtyImage').src = eventData.image;
+        document.getElementById('qtyImage').style.borderRadius = "12px";
+      }
+
       renderTickets();
     }
   } catch(e) { console.error(e); }
