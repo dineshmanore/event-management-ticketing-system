@@ -11,14 +11,15 @@
   <style>
     .sport-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #e0e0e0; cursor: pointer; transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; display: flex; flex-direction: column; height: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
     .sport-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
-    .sport-banner { height: 450px; object-fit: cover; width: 100%; display: block; border-bottom: 1px solid #eee; }
-    .sport-banner-placeholder { height: 450px; display: flex; align-items: center; justify-content: center; font-size: 60px; }
-    .sport-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
-    .sport-date { color: #b8860b; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-    .sport-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; color: #111; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .sport-loc { font-size: 13px; color: #777; margin-bottom: 12px; }
-    .sport-price { font-size: 15px; font-weight: 700; color: #333; margin-top: auto; }
-    .sports-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+    .sport-banner { height: 400px; object-fit: cover; width: 100%; display: block; border-bottom: 1px solid #eee; }
+    .sport-banner-placeholder { height: 400px; display: flex; align-items: center; justify-content: center; font-size: 60px; }
+    .sport-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+    .sport-date { color: #b8860b; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+    .sport-title { font-size: 14px; font-weight: 800; margin-bottom: 4px; color: #111; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .sport-loc { font-size: 12px; color: #777; margin-bottom: 10px; }
+    .sport-price { font-size: 14px; font-weight: 700; color: #333; margin-top: auto; }
+    .sports-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+    .content-wrap { max-width: 1240px; margin: 0 auto; padding: 20px; }
   </style>
 </head>
 <body>
