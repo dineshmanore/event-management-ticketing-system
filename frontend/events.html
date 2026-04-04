@@ -98,9 +98,18 @@ async function init() {
 }
 
 function render() {
-  let list = [...allEvents].filter(e => !['play', 'comedy', 'musical', 'children', 'cricket', 'kabaddi', 'football', 'adventure', 'sport'].includes(e.category));
-  if (activeCat !== 'all') list = list.filter(e => e.category === activeCat);
-  if (activeCity !== 'all') list = list.filter(e => e.city === activeCity);
+  console.log('Rendering Events. activeCat:', activeCat, 'activeCity:', activeCity);
+  // Base filtering: remove sports, plays, etc.
+  let list = allEvents.filter(e => !['play', 'comedy', 'musical', 'children', 'cricket', 'kabaddi', 'football', 'adventure', 'sport', 'tennis', 'basketball'].includes(e.category));
+  
+  if (activeCat && activeCat !== 'all') {
+    list = list.filter(e => e.category === activeCat);
+  }
+  
+  if (activeCity && activeCity !== 'all') {
+    list = list.filter(e => e.city === activeCity);
+  }
+  
   if (sortBy === 'date')  list.sort((a,b) => new Date(a.date) - new Date(b.date));
   if (sortBy === 'price') list.sort((a,b) => a.price_from - b.price_from);
   if (sortBy === 'title') list.sort((a,b) => a.title.localeCompare(b.title));
@@ -135,7 +144,8 @@ function eventCard(e) {
 }
 
 function filterCat(btn, cat) {
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  console.log('Category clicked:', cat);
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
   btn.classList.add('active');
   activeCat = cat;
   render();
