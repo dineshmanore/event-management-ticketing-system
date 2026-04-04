@@ -15,7 +15,8 @@ const StreamSchema = new mongoose.Schema(
     priceRent: { type: Number, default: 0 },
     priceBuy: { type: Number, default: 0 },
     trailerUrl: { type: String },
-    status: { type: String, default: 'active' }
+    status: { type: String, default: 'active' },
+    category: { type: String, default: 'Stream' }
   },
   { timestamps: true }
 );

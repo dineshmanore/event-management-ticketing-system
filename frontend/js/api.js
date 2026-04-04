@@ -33,13 +33,18 @@ async function loadMovies() {
     const queryString = params.toString();
     if (queryString) url += `?${queryString}`;
 
-    const res = await fetch(url);
-    const movies = await res.json();
+    const [mRes, sRes] = await Promise.all([
+      fetch(url),
+      fetch(`${API}/stream`)
+    ]);
+    
+    const movies = await mRes.json();
+    const streams = await sRes.json();
 
     if (activeCat && activeCat.toLowerCase() !== 'movies' && activeCat !== '') {
       renderCategoryPage(activeCat, movies);
     } else {
-      renderAll(movies);
+      renderAll(movies, streams);
       setupBanner(movies);
     }
   } catch (err) {
@@ -90,7 +95,7 @@ function renderCategoryPage(cat, catMovies) {
 // FIX #4: "Now Showing" and "Recommended" now use DIFFERENT datasets
 // - nowShowing: latest/chronological order
 // - recommended: sorted by rating (highest first) — genuinely different ranking
-function renderAll(movies) {
+function renderAll(movies, streams) {
   if (!movies || movies.length === 0) {
     renderRow([], 'nowShowing');
     renderRow([], 'recommended');
@@ -102,7 +107,14 @@ function renderAll(movies) {
   const nowShowing  = [...movies].sort((a,b) => new Date(b.release_date || 0) - new Date(a.release_date || 0)).slice(0, 8);
   const recommended = [...movies].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 10);
   const trending    = [...movies].sort((a, b) => (b.votes || 0) - (a.votes || 0)).slice(0, 8);
-  const premieres   = [...movies].filter(m => m.category === 'Premiere').slice(0, 8);
+  
+  // Premieres now ONLY shows streams with Category 'Premiere'
+  const premieres   = (streams || []).filter(s => s.category === 'Premiere').map(s => ({
+    ...s,
+    poster: s.poster_image,
+    banner: s.banner_image,
+    type: 'stream'
+  })).slice(0, 8);
 
   renderRow(nowShowing,  'nowShowing');
   renderRow(recommended, 'recommended');
@@ -160,7 +172,15 @@ function showBanner(movie) {
   }
   setText('heroTitle',       movie.title);
   setText('heroDescription', movie.description || 'An amazing cinematic experience.');
-  setText('heroRating',      `★ ${movie.rating}`);
+  const ratingEl = document.getElementById('heroRating');
+  if (ratingEl) {
+    if (movie.rating && movie.rating > 0) {
+      ratingEl.innerText = `★ ${movie.rating}`;
+      ratingEl.style.display = 'inline-block';
+    } else {
+      ratingEl.style.display = 'none';
+    }
+  }
   setText('heroGenre',       movie.genre ? movie.genre.split(',')[0].trim() : '');
   setText('heroLang',        movie.language || '');
 }
@@ -179,14 +199,6 @@ function bookHero() {
   }
   localStorage.setItem('movieId', heroMovieId);
   window.location.href = `movie.html?id=${heroMovieId}`;
-}
-
-// FIX #1: Save movieId to localStorage BEFORE navigating to movie.html
-// seats.js reads movieId only from localStorage, so this must be set
-function openMovie(id) {
-  if (!id) return;
-  localStorage.setItem('movieId', id);
-  window.location.href = `movie.html?id=${id}`;
 }
 
 function scrollRow(id, dir) {

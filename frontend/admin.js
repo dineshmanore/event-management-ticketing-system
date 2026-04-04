@@ -481,7 +481,6 @@ function openMovieModal(movie) {
   document.getElementById('mLang').value              = movie?.language || '';
   document.getElementById('mRating').value            = movie?.rating || '';
   document.getElementById('mVotes').value             = movie?.votes || '';
-  document.getElementById('mPremiere').checked        = (movie?.category === 'Premiere');
   document.getElementById('mPoster').value            = movie?.poster || '';
   document.getElementById('mBanner').value            = movie?.banner || '';
   document.getElementById('mTrailer').value           = movie?.trailer_url || movie?.trailerUrl || '';
@@ -542,7 +541,7 @@ async function saveMovie() {
     language:    document.getElementById('mLang').value,
     rating:      parseFloat(document.getElementById('mRating').value) || 0,
     votes:       parseInt(document.getElementById('mVotes').value) || 0,
-    category:    document.getElementById('mPremiere').checked ? 'Premiere' : 'Movies',
+    category:    'Movies',
     poster:      document.getElementById('mPoster').value,
     banner:      document.getElementById('mBanner').value,
     trailer_url: document.getElementById('mTrailer').value,
@@ -709,6 +708,7 @@ function openStreamModal(st) {
   document.getElementById('sRent').value                = st?.price_rent || '';
   document.getElementById('sBuy').value                 = st?.price_buy || '';
   document.getElementById('sDate').value                = st?.release_date?.split('T')[0] || '';
+  document.getElementById('sPremiere').checked        = (st?.category === 'Premiere');
   document.getElementById('sTrailer').value             = st?.trailer_url || '';
   document.getElementById('sPoster').value              = st?.poster_image || '';
   document.getElementById('sBanner').value              = st?.banner_image || '';
@@ -742,7 +742,8 @@ async function saveStream() {
     trailer_url:  document.getElementById('sTrailer').value,
     poster_image: document.getElementById('sPoster').value,
     banner_image: document.getElementById('sBanner').value,
-    description:  document.getElementById('sDesc').value
+    description:  document.getElementById('sDesc').value,
+    category:     document.getElementById('sPremiere').checked ? 'Premiere' : 'Stream'
   };
 
   try {

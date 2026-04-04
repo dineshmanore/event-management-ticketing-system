@@ -103,14 +103,33 @@ async function loadStream() {
     
     document.title = `${s.title} — ShowTime Stream`;
     document.getElementById('streamTitle').innerText = s.title;
-    document.getElementById('streamRating').innerText = s.rating || 0;
+    
+    const ratingEl = document.querySelector('.rating-big');
+    if (s.rating && s.rating > 0) {
+      document.getElementById('streamRating').innerText = s.rating;
+      ratingEl.style.display = 'inline-block';
+    } else {
+      ratingEl.style.display = 'none';
+    }
+
     document.getElementById('streamGenres').innerText = s.genres || 'Drama';
     document.getElementById('streamDuration').innerText = s.duration ? `${s.duration} mins` : '120 mins';
     document.getElementById('streamLang').innerText = s.language || 'English';
     document.getElementById('streamDesc').innerText = s.description || 'No description available for this stream.';
     
-    document.getElementById('btnRent').innerHTML = `<i class="fa fa-ticket-alt"></i>Rent ₹${s.price_rent}`;
-    document.getElementById('btnBuy').innerHTML = `<i class="fa fa-shopping-cart"></i>Buy ₹${s.price_buy}`;
+    if (s.price_rent && s.price_rent > 0) {
+      document.getElementById('btnRent').innerHTML = `<i class="fa fa-ticket-alt"></i>Rent ₹${s.price_rent}`;
+      document.getElementById('btnRent').style.display = 'flex';
+    } else {
+      document.getElementById('btnRent').style.display = 'none';
+    }
+
+    if (s.price_buy && s.price_buy > 0) {
+      document.getElementById('btnBuy').innerHTML = `<i class="fa fa-shopping-cart"></i>Buy ₹${s.price_buy}`;
+      document.getElementById('btnBuy').style.display = 'flex';
+    } else {
+      document.getElementById('btnBuy').style.display = 'none';
+    }
     
     document.getElementById('mainPoster').src = s.poster_image || '';
     document.getElementById('bannerBg').style.backgroundImage = `url(${s.banner_image || s.poster_image || ''})`;

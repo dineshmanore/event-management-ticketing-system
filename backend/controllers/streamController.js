@@ -14,6 +14,7 @@ exports.getStreams = (req, res) => {
         out.price_rent = s.priceRent || 0;
         out.price_buy = s.priceBuy || 0;
         out.trailer_url = s.trailerUrl || '';
+        out.category = s.category || 'Stream';
         return out;
       });
       res.json(mapped);
@@ -37,13 +38,14 @@ exports.getStreamById = (req, res) => {
       out.price_rent = s.priceRent || 0;
       out.price_buy = s.priceBuy || 0;
       out.trailer_url = s.trailerUrl || '';
+      out.category = s.category || 'Stream';
       res.json(out);
     })
     .catch((err) => res.status(500).json({ message: 'Database error', error: err.message }));
 };
 
 exports.addStream = (req, res) => {
-  const { title, description, banner_image, poster_image, release_date, duration, genres, language, rating, price_rent, price_buy, trailer_url } = req.body;
+  const { title, description, banner_image, poster_image, release_date, duration, genres, language, rating, price_rent, price_buy, trailer_url, category } = req.body;
   
   if (!title) return res.status(400).json({ message: 'Title is required' });
   Stream.create({
@@ -59,7 +61,8 @@ exports.addStream = (req, res) => {
     priceRent: Number(price_rent || 0),
     priceBuy: Number(price_buy || 0),
     trailerUrl: trailer_url,
-    status: 'active'
+    status: 'active',
+    category: category || 'Stream'
   })
     .then((doc) => res.json({ message: 'Stream added successfully', id: doc.mysqlId ?? String(doc._id) }))
     .catch((err) => res.status(500).json({ message: 'Database error', error: err.message }));
@@ -67,7 +70,7 @@ exports.addStream = (req, res) => {
 
 exports.updateStream = (req, res) => {
   const { id } = req.params;
-  const { title, description, banner_image, poster_image, release_date, duration, genres, language, rating, price_rent, price_buy, trailer_url } = req.body;
+  const { title, description, banner_image, poster_image, release_date, duration, genres, language, rating, price_rent, price_buy, trailer_url, category } = req.body;
   if (!title) return res.status(400).json({ message: 'Title is required' });
   const q = buildIdQuery(id);
   if (!q) return res.status(404).json({ message: 'Stream not found' });
@@ -87,7 +90,8 @@ exports.updateStream = (req, res) => {
         rating: Number(rating || 0),
         priceRent: Number(price_rent || 0),
         priceBuy: Number(price_buy || 0),
-        trailerUrl: trailer_url
+        trailerUrl: trailer_url,
+        category: category || 'Stream'
       }
     },
     { new: true }

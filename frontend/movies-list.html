@@ -44,40 +44,51 @@
       const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:5000/api'
         : 'https://event-management-ticketing-system.onrender.com/api';
-      const res = await fetch(`${apiBase}/movies`);
-      let movies = await res.json();
       
-      switch(type) {
-        case 'now-showing':
-          title = 'Now Showing';
-          desc = 'All movies sorted by latest release date';
-          movies = movies.sort((a,b) => new Date(b.release_date || 0) - new Date(a.release_date || 0));
-          break;
-        case 'recommended':
-          title = 'Recommended For You';
-          desc = 'All movies sorted by highest ratings';
-          movies = movies.sort((a,b) => (b.rating || 0) - (a.rating || 0));
-          break;
-        case 'trending':
-          title = 'Trending Now';
-          desc = 'All movies sorted by votes and popularity';
-          movies = movies.sort((a,b) => (b.votes || 0) - (a.votes || 0));
-          break;
-        case 'premieres':
-          title = 'Premieres';
-          desc = 'Brand new releases — streaming now';
-          movies = movies.filter(m => m.category === 'Premiere');
-          break;
+      let items = [];
+      if (type === 'premieres') {
+        const res = await fetch(`${apiBase}/stream`);
+        const streams = await res.json();
+        items = (streams || []).filter(s => s.category === 'Premiere').map(s => ({
+          ...s,
+          poster: s.poster_image,
+          banner: s.banner_image,
+          type: 'stream'
+        }));
+        title = 'Premieres';
+        desc = 'Brand new releases — streaming now';
+      } else {
+        const res = await fetch(`${apiBase}/movies`);
+        let movies = await res.json();
+        
+        switch(type) {
+          case 'now-showing':
+            title = 'Now Showing';
+            desc = 'All movies sorted by latest release date';
+            movies = movies.sort((a,b) => new Date(b.release_date || 0) - new Date(a.release_date || 0));
+            break;
+          case 'recommended':
+            title = 'Recommended For You';
+            desc = 'All movies sorted by highest ratings';
+            movies = movies.sort((a,b) => (b.rating || 0) - (a.rating || 0));
+            break;
+          case 'trending':
+            title = 'Trending Now';
+            desc = 'All movies sorted by votes and popularity';
+            movies = movies.sort((a,b) => (b.votes || 0) - (a.votes || 0));
+            break;
+        }
+        items = movies;
       }
       
       document.getElementById('pageTitle').innerText = title;
       document.getElementById('pageDesc').innerText = desc;
       document.title = `${title} — ShowTime`;
       
-      if(movies.length === 0) {
-        document.getElementById('moviesGrid').innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:40px;color:#888;">No movies found.</p>';
+      if(items.length === 0) {
+        document.getElementById('moviesGrid').innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:40px;color:#888;">No items found.</p>';
       } else {
-        document.getElementById('moviesGrid').innerHTML = movies.map(m => createMovieCard(m)).join('');
+        document.getElementById('moviesGrid').innerHTML = items.map(m => createMovieCard(m)).join('');
       }
     } catch(e) {
       console.error(e);

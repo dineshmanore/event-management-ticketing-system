@@ -82,12 +82,14 @@ function openStream(id) {
 }
 
 function streamCard(m, isNew) {
+  const rentBadge = m.price_rent > 0 ? `<div class="rent-badge">Rent ₹${m.price_rent}</div>` : '';
+  
   return `
   <div class="s-card" onclick="openStream('${m.id}')">
     <img src="${m.poster_image || 'https://via.placeholder.com/300x450/222/555'}" alt="${m.title}"
          onerror="this.src='https://via.placeholder.com/300x450/222/555?text=No+Poster'">
     ${isNew ? '<div class="new-badge">PREMIERE</div>' : ''}
-    <div class="rent-badge">Rent ₹${m.price_rent}</div>
+    ${rentBadge}
     <div class="play-overlay"><i class="fa fa-play"></i></div>
     <div class="s-card-overlay">
       <div class="st">${m.title}</div>
