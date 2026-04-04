@@ -412,6 +412,14 @@ body {
   margin-bottom: 20px;
 }
 
+.premiere-section .movie-title {
+  color: #ffffff;
+}
+
+.premiere-section .movie-genre {
+  color: rgba(255,255,255,0.7);
+}
+
 /* ── FOOTER ──────────────────────────────── */
 .footer {
   background: #1a1a2e;
