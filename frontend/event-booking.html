@@ -78,6 +78,14 @@
     .eb-modal-body ol li strong { color: #555; }
 
     .hidden { display: none !important; }
+
+    /* SEAT VIZ STYLES */
+    .seat-viz-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 30px auto; max-width: 260px; perspective: 1000px; }
+    .seat-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 6px; position: relative; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .seat-icon::after { content:''; position: absolute; bottom: 4px; left: 4px; right: 4px; height: 10px; background: rgba(255,255,255,0.05); border-radius: 2px; }
+    .seat-icon.active { background: #f43f5e; border-color: #f43f5e; transform: translateZ(20px); box-shadow: 0 0 20px rgba(244, 63, 94, 0.6); }
+    .seat-icon.active::after { background: rgba(255,255,255,0.3); }
+    .seat-row { width: 100%; display: flex; justify-content: center; gap: 8px; margin-bottom: 8px; }
   </style>
 </head>
 <body>
@@ -96,7 +104,10 @@
 <div class="step-overlay" id="step1">
   <div class="qty-card">
     <h3 class="qty-title">How many seats?</h3>
-    <img id="qtyImage" class="scooter-img hidden" alt="Event Poster" style="border-radius:12px; height: 160px; object-fit: cover;">
+    
+    <div class="seat-viz-container" id="seatViz">
+      <!-- Generated via JS -->
+    </div>
     <div class="qty-btns" id="qtyBtns">
       <button class="qty-btn" data-val="1">1</button>
       <button class="qty-btn active" data-val="2">2</button>
@@ -185,9 +196,30 @@ document.querySelectorAll('.qty-btn').forEach(btn => {
     document.querySelectorAll('.qty-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     selectedQty = parseInt(btn.dataset.val);
+    updateViz(selectedQty);
   };
 });
 
+function initViz() {
+  const viz = document.getElementById('seatViz');
+  viz.innerHTML = '';
+  for(let i=0; i<10; i++){
+    const seat = document.createElement('div');
+    seat.className = 'seat-icon';
+    seat.id = `vizSeat-${i}`;
+    viz.appendChild(seat);
+  }
+}
+
+function updateViz(qty) {
+  for(let i=0; i<10; i++){
+    const seat = document.getElementById(`vizSeat-${i}`);
+    if(seat) {
+      if(i < qty) seat.classList.add('active');
+      else seat.classList.remove('active');
+    }
+  }
+}
 async function loadEvent() {
   if(!eventId) { alert('No event selected.'); window.location.href='events.html'; return; }
   try {
@@ -198,12 +230,8 @@ async function loadEvent() {
       const d = eventData.date ? new Date(eventData.date).toLocaleDateString('en-US', {day:'numeric', month:'short', weekday: 'short'}) : 'Date TBA';
       document.getElementById('ebSubDesc').innerText = `${d} | ${eventData.venue}: ${eventData.city}`;
       
-      if (eventData.image) {
-        const qImg = document.getElementById('qtyImage');
-        qImg.src = eventData.image;
-        qImg.classList.remove('hidden');
-      }
-
+      initViz();
+      updateViz(selectedQty);
       renderTickets();
     }
   } catch(e) { console.error(e); }
