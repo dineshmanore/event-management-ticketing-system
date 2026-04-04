@@ -6,6 +6,7 @@ const ADMIN_API = `${API}/admin`;
 
 let moviesData = [], eventsData = [], bookingsData = [], usersData = [], streamsData = [];
 let deleteTarget = null;
+let actorSearchQuery = '';
 
 // ── NAVIGATION ──────────────────────────────────────────────────────────
 function goto(page) {
@@ -322,13 +323,13 @@ function renderActorChips() {
   if (!container) return;
 
   container.innerHTML = allActors.map(a => {
-    const isSelected = selectedCast.some(s => s.actor_id === a.id);
+    const isSelected = selectedCast.some(s => String(s.actor_id) === String(a.id));
     return `
-      <div onclick="toggleActor(${a.id}, '${a.name.replace(/'/g,"\\'")}')">
+      <div onclick="toggleActor('${a.id}', '${a.name.replace(/'/g,"\\'")}')">
         ${isSelected
           ? `<span style="display:inline-flex;align-items:center;gap:6px;background:#cc0c39;color:white;padding:6px 12px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer">
                ${a.name}
-               <span onclick="event.stopPropagation();removeActor(${a.id})" style="font-size:16px;line-height:1;opacity:.8;cursor:pointer">&times;</span>
+               <span onclick="event.stopPropagation();removeActor('${a.id}')" style="font-size:16px;line-height:1;opacity:.8;cursor:pointer">&times;</span>
              </span>`
           : `<span style="display:inline-flex;align-items:center;background:#f0f0f0;color:#555;padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='#f0f0f0'">
                ${a.name}
@@ -338,17 +339,38 @@ function renderActorChips() {
   }).join('');
 
   renderRoleInputs();
+  applyActorFilter();
+}
+
+function filterActors(q) {
+  actorSearchQuery = q.toLowerCase();
+  applyActorFilter();
+}
+
+function applyActorFilter() {
+  const container = document.getElementById('actorChips');
+  if (!container) return;
+  const chips = container.querySelectorAll('div');
+  chips.forEach(chip => {
+    const name = chip.innerText.toLowerCase();
+    chip.style.display = name.includes(actorSearchQuery) ? 'block' : 'none';
+  });
 }
 
 function toggleActor(actorId, actorName) {
-  const exists = selectedCast.some(s => s.actor_id === actorId);
-  if (exists) return;
-  selectedCast.push({ actor_id: actorId, name: actorName, role: '' });
+  const index = selectedCast.findIndex(s => String(s.actor_id) === String(actorId));
+  if (index !== -1) {
+    // Remove if exists
+    selectedCast.splice(index, 1);
+  } else {
+    // Add if not exists
+    selectedCast.push({ actor_id: actorId, name: actorName, role: '' });
+  }
   renderActorChips();
 }
 
 function removeActor(actorId) {
-  selectedCast = selectedCast.filter(s => s.actor_id !== actorId);
+  selectedCast = selectedCast.filter(s => String(s.actor_id) !== String(actorId));
   renderActorChips();
 }
 
@@ -443,6 +465,10 @@ function renderActors(data) {
 // It only resets for NEW movies. For edits, editMovie() pre-populates
 // selectedCast BEFORE this function runs, so we must not wipe it here.
 function openMovieModal(movie) {
+  actorSearchQuery = '';
+  const searchInput = document.getElementById('actorSearch');
+  if (searchInput) searchInput.value = '';
+
   if (!movie) {
     // Only reset cast when ADDING a new movie, not when EDITING
     selectedCast = [];

@@ -28,7 +28,7 @@ async function loadMovies() {
     const params = new URLSearchParams();
     if (activeGenre && activeGenre !== 'all') params.set('genre', activeGenre);
     if (activeLang) params.set('language', activeLang);
-    if (activeCat && activeCat !== 'movies') params.set('category', activeCat);
+    if (activeCat && activeCat.toLowerCase() !== 'movies') params.set('category', activeCat);
 
     const queryString = params.toString();
     if (queryString) url += `?${queryString}`;
@@ -36,7 +36,7 @@ async function loadMovies() {
     const res = await fetch(url);
     const movies = await res.json();
 
-    if (activeCat !== 'movies' && activeCat !== '') {
+    if (activeCat && activeCat.toLowerCase() !== 'movies' && activeCat !== '') {
       renderCategoryPage(activeCat, movies);
     } else {
       renderAll(movies);
@@ -91,7 +91,13 @@ function renderCategoryPage(cat, catMovies) {
 // - nowShowing: latest/chronological order
 // - recommended: sorted by rating (highest first) — genuinely different ranking
 function renderAll(movies) {
-  if (!movies.length) return;
+  if (!movies || movies.length === 0) {
+    renderRow([], 'nowShowing');
+    renderRow([], 'recommended');
+    renderRow([], 'premieres');
+    renderRow([], 'trending');
+    return;
+  }
 
   const nowShowing  = [...movies].sort((a,b) => new Date(b.release_date || 0) - new Date(a.release_date || 0)).slice(0, 8);
   const recommended = [...movies].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 10);
@@ -115,14 +121,32 @@ function renderRow(movies, containerId) {
 }
 
 function setupBanner(movies) {
-  if (!movies.length) return;
+  clearInterval(bannerTimer);
+  if (!movies || !movies.length) {
+    showErrorBanner('No movies matching these filters found.');
+    return;
+  }
   showBanner(movies[0]);
   bannerIndex = 0;
-  clearInterval(bannerTimer);
   bannerTimer = setInterval(() => {
     bannerIndex = (bannerIndex + 1) % movies.length;
     showBanner(movies[bannerIndex]);
   }, 5000);
+}
+
+function showErrorBanner(msg) {
+  const banner = document.getElementById('heroBanner');
+  if (banner) {
+    banner.style.backgroundImage = 'none';
+    banner.style.background = '#1a1a2e';
+  }
+  setText('heroTitle', 'No Results');
+  setText('heroDescription', msg || 'Try adjusting your filters to find what you are looking for.');
+  setText('heroRating', '');
+  setText('heroGenre', '');
+  setText('heroLang', '');
+  heroMovieId = null;
+  heroTrailer = '';
 }
 
 function showBanner(movie) {
@@ -174,6 +198,13 @@ function filterBy(btn, genre) {
   document.querySelectorAll('.filter-pill:not(.lang)').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   activeGenre = genre;
+  
+  // If 'All' is clicked, we also clear language filters for a fresh start
+  if (genre === 'all') {
+    activeLang = null;
+    document.querySelectorAll('.filter-pill.lang').forEach(p => p.classList.remove('active'));
+  }
+  
   applyFilters();
 }
 
