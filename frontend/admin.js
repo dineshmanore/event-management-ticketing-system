@@ -669,11 +669,32 @@ function renderGenericEvents(tbodyId, list) {
 }
 
 // ── EVENT CRUD ────────────────────────────────────────────────────────────
-function openEventModal(ev) {
+function openEventModal(ev, section) {
   document.getElementById('editEventId').value         = ev?.id || '';
-  document.getElementById('eventModalTitle').innerText = ev ? 'Edit Event' : 'Add Event';
+  document.getElementById('eventModalTitle').innerText = ev ? 'Edit ' + (ev.category?.toUpperCase() || 'Event') : 'Add ' + (section || 'Event');
   document.getElementById('eTitle').value              = ev?.title || '';
-  document.getElementById('eCat').value                = ev?.category || 'concert';
+  
+  // Filter Categories based on Section
+  const select = document.getElementById('eCat');
+  const groups = Array.from(select.querySelectorAll('optgroup'));
+  
+  groups.forEach(g => {
+    // If editing, show all. If adding, show only target section
+    const match = !section || g.label.toLowerCase().includes(section.toLowerCase().split(' ')[0]);
+    g.style.display = match ? '' : 'none';
+    Array.from(g.children).forEach(opt => opt.disabled = !match);
+  });
+
+  if (ev) {
+    select.value = ev.category || 'concert';
+    // Show all groups when editing to allow switching
+    groups.forEach(g => { g.style.display = ''; Array.from(g.children).forEach(o => o.disabled = false); });
+  } else {
+    // Default to first enabled option if adding
+    const first = Array.from(select.options).find(o => !o.disabled);
+    if (first) select.value = first.value;
+  }
+
   document.getElementById('eCity').value               = ev?.city || 'Mumbai';
   document.getElementById('eVenue').value              = ev?.venue || '';
   document.getElementById('eDate').value               = ev?.date?.split('T')[0] || '';
