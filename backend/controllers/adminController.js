@@ -272,6 +272,37 @@ exports.addActor = (req, res) => {
     .catch((err) => res.status(500).json({ message: 'DB error', error: err.message }))
 }
 
+exports.updateActor = (req, res) => {
+  const { id } = req.params;
+  const { name, image } = req.body;
+  if (!name) return res.status(400).json({ message: 'Actor name required' });
+  const q = buildIdQuery(id);
+  if (!q) return res.status(404).json({ message: 'Not found' });
+
+  Actor.findOneAndUpdate(
+    q,
+    { $set: { name, image } },
+    { new: true }
+  )
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Not found' });
+      res.json({ message: 'Actor updated' });
+    })
+    .catch((err) => res.status(500).json({ message: 'DB error', error: err.message }));
+};
+
+exports.deleteActor = (req, res) => {
+  const q = buildIdQuery(req.params.id);
+  if (!q) return res.status(404).json({ message: 'Not found' });
+
+  Actor.findOneAndDelete(q)
+    .then((doc) => {
+      if (!doc) return res.status(404).json({ message: 'Not found' });
+      res.json({ message: 'Actor deleted' });
+    })
+    .catch(() => res.status(500).json({ message: 'DB error' }));
+};
+
 // ── DASHBOARD STATS ────────────────────────────────────────────────────────
 exports.getStats = (req, res) => {
   Promise.all([

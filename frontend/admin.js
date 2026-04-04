@@ -404,22 +404,42 @@ function getCastData() {
 }
 
 // ── ACTOR CRUD ────────────────────────────────────────────────────────────
-function openActorModal() {
-  document.getElementById('actName').value = '';
-  document.getElementById('actImage').value = '';
-  document.getElementById('actImgPreview').style.display = 'none';
+function openActorModal(act) {
+  document.getElementById('editActorId').value = act?.id || '';
+  document.getElementById('actorModalTitle').innerText = act ? 'Edit Actor' : 'Add New Actor';
+  document.getElementById('actName').value = act?.name || '';
+  document.getElementById('actImage').value = act?.image || '';
+  
+  const prev = document.getElementById('actImgPreview');
+  if (act?.image) {
+    prev.src = act.image;
+    prev.style.display = 'block';
+  } else {
+    prev.style.display = 'none';
+  }
+  
   document.getElementById('actorModal').classList.add('open');
 }
 
+function editActor(id) {
+  const act = allActors.find(a => String(a.id) === String(id));
+  if (act) openActorModal(act);
+  else alert('Actor not found');
+}
+
 async function saveActor() {
+  const id    = document.getElementById('editActorId').value;
   const name  = document.getElementById('actName').value.trim();
   const image = document.getElementById('actImage').value.trim();
   if (!name) { alert('Actor name is required.'); return; }
 
   try {
     const token = localStorage.getItem('token');
-    const res = await fetch(`${ADMIN_API}/actors`, {
-      method: 'POST',
+    const url    = id ? `${ADMIN_API}/actors/${id}` : `${ADMIN_API}/actors`;
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ name, image })
     });
@@ -427,7 +447,7 @@ async function saveActor() {
     if (!res.ok) throw new Error(await res.text());
 
     closeModal('actorModal');
-    alert('Actor added successfully!');
+    alert(id ? 'Actor updated!' : 'Actor added successfully!');
     
     // Refresh actors list so it shows up in Movie Modal
     await loadActors();
@@ -452,6 +472,9 @@ function renderActors(data) {
       <td style="font-size:12px;color:#888">${a.id}</td>
       <td>
         <div class="action-btns">
+          <button class="btn-edit" onclick="editActor('${a.id}')">
+            <i class="fa fa-edit"></i> Edit
+          </button>
           <button class="btn-delete" onclick="confirmDelete('actor','${a.id}','${(a.name || '').replace(/'/g, "\\'")}')">
             <i class="fa fa-trash"></i>
           </button>
@@ -788,12 +811,15 @@ async function doDelete() {
       ? `${ADMIN_API}/movies/${deleteTarget.id}`
       : deleteTarget.type === 'stream'
       ? `${API}/stream/${deleteTarget.id}`
+      : deleteTarget.type === 'actor'
+      ? `${ADMIN_API}/actors/${deleteTarget.id}`
       : `${ADMIN_API}/events/${deleteTarget.id}`;
     const res   = await fetch(url, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
     if (!res.ok) throw new Error(await res.text());
     closeModal('confirmModal');
     if (deleteTarget.type === 'movie') await refreshMovies();
     else if (deleteTarget.type === 'stream') await refreshStreams();
+    else if (deleteTarget.type === 'actor') await loadActors();
     else await refreshEvents();
     deleteTarget = null;
   } catch (e) {

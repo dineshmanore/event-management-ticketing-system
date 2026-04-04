@@ -5,6 +5,8 @@ const auth   = require('../middleware/authMiddleware')
 // Actors (no auth — needed before login in some flows, but safe read-only)
 router.get('/actors', c.getActors)
 router.post('/actors', auth, c.addActor)
+router.put('/actors/:id', auth, c.updateActor)
+router.delete('/actors/:id', auth, c.deleteActor)
 
 // Stats
 router.get('/stats', auth, c.getStats)
