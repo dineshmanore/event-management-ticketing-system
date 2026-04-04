@@ -27,6 +27,9 @@ function goto(page) {
   if (page === 'bookings') renderBookings();
   if (page === 'movies')   renderMovies();
   if (page === 'events')   renderEvents();
+  if (page === 'plays')    renderPlays();
+  if (page === 'sports')   renderSports();
+  if (page === 'activities') renderActivities();
   if (page === 'streams')  renderStreams();
   if (page === 'actors')   renderActors();
   if (page === 'bookings') renderBookings();
@@ -77,10 +80,24 @@ async function loadAll() {
 
 function updateCounts() {
   document.getElementById('movieCount').innerText   = moviesData.length;
-  document.getElementById('eventCount').innerText   = eventsData.length;
   document.getElementById('streamCount').innerText  = streamsData.length;
   document.getElementById('bookingCount').innerText = bookingsData.length;
   document.getElementById('userCount').innerText    = usersData.length;
+  
+  const playCats = ['play', 'comedy', 'musical', 'children'];
+  const sportCats = ['cricket', 'football', 'sport'];
+  const activityCats = ['adventure', 'workshop', 'fitness', 'activity'];
+  
+  const playsCount = eventsData.filter(e => playCats.includes(e.category)).length;
+  const sportsCount = eventsData.filter(e => sportCats.includes(e.category)).length;
+  const activitiesCount = eventsData.filter(e => activityCats.includes(e.category)).length;
+  const eventsOnlyCount = eventsData.filter(e => !playCats.includes(e.category) && !sportCats.includes(e.category) && !activityCats.includes(e.category)).length;
+
+  document.getElementById('eventCount').innerText = eventsOnlyCount;
+  document.getElementById('playsCount').innerText = playsCount;
+  document.getElementById('sportsCount').innerText = sportsCount;
+  document.getElementById('activitiesCount').innerText = activitiesCount;
+
   document.getElementById('statMovies').innerText   = moviesData.length;
   document.getElementById('statBookings').innerText = bookingsData.length;
   document.getElementById('statUsers').innerText    = usersData.length;
@@ -604,6 +621,54 @@ async function refreshMovies() {
   updateCounts();
 }
 
+const PLAY_CATS = ['play', 'comedy', 'musical', 'children'];
+const SPORT_CATS = ['cricket', 'football', 'sport'];
+const ACTIVITY_CATS = ['adventure', 'workshop', 'fitness', 'activity'];
+
+function renderEvents(data) {
+  const list = data || eventsData.filter(e => !PLAY_CATS.includes(e.category) && !SPORT_CATS.includes(e.category) && !ACTIVITY_CATS.includes(e.category));
+  renderGenericEvents('eventsTableBody', list);
+}
+
+function renderPlays() {
+  const list = eventsData.filter(e => PLAY_CATS.includes(e.category));
+  renderGenericEvents('playsTableBody', list);
+}
+
+function renderSports() {
+  const list = eventsData.filter(e => SPORT_CATS.includes(e.category));
+  renderGenericEvents('sportsTableBody', list);
+}
+
+function renderActivities() {
+  const list = eventsData.filter(e => ACTIVITY_CATS.includes(e.category));
+  renderGenericEvents('activitiesTableBody', list);
+}
+
+function renderGenericEvents(tbodyId, list) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  if (!list.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No items found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(e => `
+    <tr data-search="${e.title} ${e.category} ${e.city}">
+      <td style="font-size:11px;color:#888">#${(e.id || '').substring(0,8)}</td>
+      <td><img class="thumb" src="${e.image}" onerror="this.src='https://via.placeholder.com/150'" style="width:40px;height:40px;border-radius:4px;object-fit:cover"></td>
+      <td style="font-weight:600;max-width:200px">${e.title}</td>
+      <td><span class="badge active">${e.category || 'event'}</span></td>
+      <td style="font-size:12px;color:#888">${e.city} | ${e.date ? new Date(e.date).toLocaleDateString('en-IN') : 'TBA'}</td>
+      <td><span class="badge active">active</span></td>
+      <td><div class="action-btns">
+        <button class="btn-edit" onclick="editEvent('${e.id}')"><i class="fa fa-edit"></i> Edit</button>
+        <button class="btn-delete" onclick="confirmDelete('event','${e.id}','${(e.title || '').replace(/'/g, "\\'")}')">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div></td>
+    </tr>`).join('');
+}
+
 // ── EVENT CRUD ────────────────────────────────────────────────────────────
 function openEventModal(ev) {
   document.getElementById('editEventId').value         = ev?.id || '';
@@ -685,6 +750,9 @@ async function refreshEvents() {
     const res  = await fetch(`${API}/events`);
     eventsData = await res.json();
     renderEvents();
+    renderPlays();
+    renderSports();
+    renderActivities();
     updateCounts();
   } catch (e) {}
 }

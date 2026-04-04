@@ -130,6 +130,9 @@
     <div class="nav-item" onclick="goto('movies')"><i class="fa fa-film"></i>Movies<span class="nav-count" id="movieCount">0</span></div>
     <div class="nav-item" onclick="goto('actors')"><i class="fa fa-user-tie"></i>Actors</div>
     <div class="nav-item" onclick="goto('events')"><i class="fa fa-calendar-alt"></i>Events<span class="nav-count" id="eventCount">0</span></div>
+    <div class="nav-item" onclick="goto('plays')"><i class="fa fa-theater-masks"></i>Plays<span class="nav-count" id="playsCount">0</span></div>
+    <div class="nav-item" onclick="goto('sports')"><i class="fa fa-trophy"></i>Sports<span class="nav-count" id="sportsCount">0</span></div>
+    <div class="nav-item" onclick="goto('activities')"><i class="fa fa-running"></i>Activities<span class="nav-count" id="activitiesCount">0</span></div>
     <div class="nav-item" onclick="goto('streams')"><i class="fa fa-play-circle"></i>Streams<span class="nav-count" id="streamCount">0</span></div>
     <div class="nav-section">Transactions</div>
     <div class="nav-item" onclick="goto('bookings')"><i class="fa fa-ticket-alt"></i>Bookings<span class="nav-count" id="bookingCount">0</span></div>
@@ -245,18 +248,50 @@
 
   <!-- EVENTS PAGE -->
   <div class="page" id="page-events">
-    <div class="table-card">
-      <div class="table-header">
-        <div class="table-title">Events</div>
-        <div style="display:flex;gap:10px">
-          <div class="table-search"><i class="fa fa-search" style="color:#aaa"></i><input type="text" placeholder="Search events..." oninput="searchTable('eventsTable',this.value)"></div>
-          <button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Event</button>
-        </div>
-      </div>
-      <table class="tbl"><thead><tr><th>Image</th><th>Title</th><th>Category</th><th>City</th><th>Date</th><th>Price From</th><th>Status</th><th>Actions</th></tr></thead>
-      <tbody id="eventsTable"><tr class="empty-row"><td colspan="8">Loading...</td></tr></tbody>
-      </table>
+    <div class="p-head">
+      <h2><i class="fa fa-calendar-alt" style="margin-right:12px;color:var(--primary)"></i>Events Management</h2>
+      <div class="action-btns"><button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Event</button></div>
     </div>
+    <table class="data-table">
+      <thead><tr><th>ID</th><th>Poster</th><th>Title</th><th>Category</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="eventsTableBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- PLAYS PAGE -->
+  <div class="page" id="page-plays">
+    <div class="p-head">
+      <h2><i class="fa fa-theater-masks" style="margin-right:12px;color:var(--primary)"></i>Plays & Theater</h2>
+      <div class="action-btns"><button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Play</button></div>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>ID</th><th>Poster</th><th>Title</th><th>Category</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="playsTableBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- SPORTS PAGE -->
+  <div class="page" id="page-sports">
+    <div class="p-head">
+      <h2><i class="fa fa-trophy" style="margin-right:12px;color:var(--primary)"></i>Sports Events</h2>
+      <div class="action-btns"><button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Sport</button></div>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>ID</th><th>Poster</th><th>Title</th><th>Category</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="sportsTableBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- ACTIVITIES PAGE -->
+  <div class="page" id="page-activities">
+    <div class="p-head">
+      <h2><i class="fa fa-running" style="margin-right:12px;color:var(--primary)"></i>Activities Management</h2>
+      <div class="action-btns"><button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Activity</button></div>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>ID</th><th>Poster</th><th>Title</th><th>Category</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="activitiesTableBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
+    </table>
   </div>
 
   <!-- STREAMS PAGE -->
@@ -436,7 +471,20 @@
       <div class="form-group"><label>Event Title *</label><input type="text" id="eTitle" placeholder="e.g. Coldplay World Tour"></div>
       <div class="form-row">
         <div class="form-group"><label>Category</label>
-          <select id="eCat"><option value="concert">Concert</option><option value="festival">Festival</option><option value="comedy">Comedy</option><option value="play">Play</option><option value="cricket">Cricket</option><option value="football">Football</option><option value="adventure">Adventure</option><option value="workshop">Workshop</option></select>
+          <select id="eCat">
+            <option value="concert">Concert</option>
+            <option value="festival">Festival</option>
+            <option value="comedy">Comedy</option>
+            <option value="play">Play</option>
+            <option value="musical">Musical</option>
+            <option value="cricket">Cricket</option>
+            <option value="football">Football</option>
+            <option value="sport">Other Sport</option>
+            <option value="adventure">Adventure</option>
+            <option value="workshop">Workshop</option>
+            <option value="fitness">Fitness</option>
+            <option value="activity">General Activity</option>
+          </select>
         </div>
         <div class="form-group"><label>City</label>
           <select id="eCity"><option>Mumbai</option><option>Delhi</option><option>Bangalore</option><option>Pune</option><option>Hyderabad</option><option>Chennai</option><option>Kolkata</option><option>Goa</option></select>
