@@ -9,22 +9,15 @@
   <link rel="stylesheet" href="styles/category-pages.css">
   <link rel="stylesheet" href="styles/cards.css">
   <style>
-    .event-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #e0e0e0; cursor: pointer; transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; height: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .event-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
-    .event-thumb { width: 100%; height: 400px; object-fit: cover; object-position: center top; display: block; border-bottom: 1px solid #f0f0f0; }
-    .event-thumb-placeholder { width: 100%; height: 400px; display: flex; align-items: center; justify-content: center; font-size: 60px; }
-    .event-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
-    .event-cat-badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; align-self: flex-start; background: #fff5f6; color: #cc0c39; border: 1px solid #ffe8eb; }
-    .event-title { font-size: 19px; font-weight: 800; margin-bottom: 12px; color: #111; line-height: 1.3; }
-    .event-meta { font-size: 13px; color: #666; margin-bottom: 16px; }
-    .event-meta span { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-    .event-meta i { color: #cc0c39; width: 14px; font-size: 13px; }
-    .event-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 16px; border-top: 1px solid #f5f5f5; flex-wrap: wrap; gap: 10px; }
-    .event-price { font-size: 18px; font-weight: 800; color: #111; }
-    .event-price span { font-size: 11px; color: #888; font-weight: 400; margin-left: 2px; }
-    .book-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s; background: #cc0c39; color: white; }
-    .book-btn:hover { background: #99092b; box-shadow: 0 4px 12px rgba(204,12,57,0.3); }
-    .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+    .event-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #e0e0e0; cursor: pointer; transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; height: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }    .event-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+    .event-thumb { width: 100%; height: 450px; object-fit: cover; object-position: center top; display: block; border-bottom: 1px solid #eee; }
+    .event-thumb-placeholder { width: 100%; height: 450px; display: flex; align-items: center; justify-content: center; font-size: 60px; }
+    .event-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+    .event-date { color: #b8860b; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .event-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; color: #111; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .event-loc { font-size: 13px; color: #777; margin-bottom: 12px; }
+    .event-price { font-size: 15px; font-weight: 700; color: #333; margin-top: auto; }
+    .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
   </style>
 </head>
 <body>
@@ -101,7 +94,6 @@ async function init() {
   } catch(e) {
     document.getElementById('eventsGrid').innerHTML = `<div class="empty-state"><i class="fa fa-calendar-alt"></i><h3>Events coming soon!</h3><p>Check back later for events in your city.</p></div>`;
   }
-  document.getElementById('cityLabel').innerText = `Events in ${activeCity}`;
 }
 
 function render() {
@@ -129,25 +121,14 @@ function eventCard(e) {
   const imgHtml = e.image
     ? `<img class="event-thumb" src="${e.image}" alt="${e.title}" onerror="this.outerHTML='<div class=event-thumb-placeholder style=background:${bg}><i class=fa style=font-size:48px> </i></div>'">`
     : `<div class="event-thumb-placeholder" style="background:${bg}"><i class="fa ${icon}"></i></div>`;
-  return `
-  <div class="event-card" onclick="localStorage.setItem('selectedEventId', '${e.id}'); window.location.href='event-booking.html?id=${e.id}'">
+
+  return `<div class="event-card" onclick="localStorage.setItem('selectedEventId', '${e.id}'); window.location.href='event-booking.html?id=${e.id}'">
     ${imgHtml}
     <div class="event-body">
-      <span class="event-cat-badge">${e.category || 'Event'}</span>
+      <div class="event-date">${d}, ${e.time || 'TBA'}</div>
       <div class="event-title">${e.title}</div>
-      <div class="event-meta">
-        <span><i class="fa fa-calendar"></i>${d}</span>
-        <span><i class="fa fa-clock"></i>${e.time || 'TBA'}</span>
-        <span><i class="fa fa-map-marker-alt"></i>${e.venue}, ${e.city}</span>
-        ${e.age_limit && e.age_limit !== 'All Ages' ? `<span><i class="fa fa-user"></i>${e.age_limit}</span>` : ''}
-      </div>
-      <div class="event-footer">
-        <div class="event-price">
-          ₹${e.price_from}${e.price_to && e.price_to !== e.price_from ? ' — ₹'+e.price_to : ''}
-          <span>onwards</span>
-        </div>
-        <button class="book-btn">Book Now</button>
-      </div>
+      <div class="event-loc">${e.venue || ''}, ${e.city || ''}</div>
+      <div class="event-price">₹${e.price_from} onwards</div>
     </div>
   </div>`;
 }
