@@ -649,12 +649,11 @@ function renderGenericEvents(tbodyId, list) {
   const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
   if (!list.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No items found.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No items found.</td></tr>';
     return;
   }
   tbody.innerHTML = list.map(e => `
     <tr data-search="${e.title} ${e.category} ${e.city}">
-      <td style="font-size:11px;color:#888">#${(e.id || '').substring(0,8)}</td>
       <td><img class="thumb" src="${e.image}" onerror="this.src='https://via.placeholder.com/150'" style="width:40px;height:40px;border-radius:4px;object-fit:cover"></td>
       <td style="font-weight:600;max-width:200px">${e.title}</td>
       <td><span class="badge active">${e.category || 'event'}</span></td>
