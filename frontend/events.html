@@ -8,6 +8,24 @@
   <link rel="stylesheet" href="styles/style.css">
   <link rel="stylesheet" href="styles/category-pages.css">
   <link rel="stylesheet" href="styles/cards.css">
+  <style>
+    .event-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #e0e0e0; cursor: pointer; transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; height: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .event-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); border-color: #cc0c39; }
+    .event-thumb { width: 100%; height: 400px; object-fit: cover; object-position: center top; display: block; border-bottom: 3px solid #cc0c39; }
+    .event-thumb-placeholder { width: 100%; height: 400px; display: flex; align-items: center; justify-content: center; font-size: 60px; }
+    .event-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+    .event-cat-badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; align-self: flex-start; background: #fff5f6; color: #cc0c39; border: 1px solid #ffe8eb; }
+    .event-title { font-size: 19px; font-weight: 800; margin-bottom: 12px; color: #111; line-height: 1.3; }
+    .event-meta { font-size: 13px; color: #666; margin-bottom: 16px; }
+    .event-meta span { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .event-meta i { color: #cc0c39; width: 14px; font-size: 13px; }
+    .event-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 16px; border-top: 1px solid #f5f5f5; flex-wrap: wrap; gap: 10px; }
+    .event-price { font-size: 18px; font-weight: 800; color: #111; }
+    .event-price span { font-size: 11px; color: #888; font-weight: 400; margin-left: 2px; }
+    .book-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s; background: #cc0c39; color: white; }
+    .book-btn:hover { background: #99092b; box-shadow: 0 4px 12px rgba(204,12,57,0.3); }
+    .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+  </style>
 </head>
 <body>
 

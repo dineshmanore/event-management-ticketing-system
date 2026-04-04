@@ -9,17 +9,19 @@
   <link rel="stylesheet" href="styles/category-pages.css">
   <link rel="stylesheet" href="styles/cards.css">
   <style>
-    .act-card { background: white; border-radius: 14px; overflow: hidden; border: 1px solid #e0e0e0; cursor: pointer; transition: transform .2s, box-shadow .2s; }
-    .act-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,.12); }
-    .act-img { width: 100%; height: 260px; object-fit: cover; object-position: center top; display: block; }
-    .act-img-ph { width: 100%; height: 260px; display: flex; align-items: center; justify-content: center; font-size: 56px; }
-    .act-body { padding: 16px; }
-    .act-badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
-    .act-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-    .act-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .act-detail { font-size: 13px; color: #666; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
-    .act-detail i { color: #cc0c39; width: 12px; font-size: 12px; }
-    .activities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+    .act-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #e0e0e0; cursor: pointer; transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; height: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .act-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); border-color: #cc0c39; }
+    .act-img { width: 100%; height: 400px; object-fit: cover; object-position: center top; display: block; border-bottom: 3px solid #cc0c39; }
+    .act-img-ph { width: 100%; height: 400px; display: flex; align-items: center; justify-content: center; font-size: 60px; }
+    .act-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+    .act-badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; align-self: flex-start; }
+    .act-title { font-size: 19px; font-weight: 800; margin-bottom: 12px; color: #111; line-height: 1.3; }
+    .act-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .act-detail { font-size: 13px; color: #666; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .act-detail i { color: #cc0c39; width: 14px; font-size: 13px; }
+    .activities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+    .book-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s; background: #cc0c39; color: white; margin-top: auto; }
+    .book-btn:hover { background: #99092b; box-shadow: 0 4px 12px rgba(204,12,57,0.3); }
     .diff-badge { display: inline-flex; gap: 3px; }
     .diff-dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; }
     .diff-dot.on { background: #cc0c39; }
