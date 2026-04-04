@@ -248,50 +248,70 @@
 
   <!-- EVENTS PAGE -->
   <div class="page" id="page-events">
-    <div class="p-head">
-      <h2><i class="fa fa-calendar-alt" style="margin-right:12px;color:var(--primary)"></i>Events Management</h2>
-      <div class="action-btns"><button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Event</button></div>
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title"><i class="fa fa-calendar-alt" style="margin-right:10px"></i>Events Management</div>
+        <div style="display:flex;gap:10px">
+          <div class="table-search"><i class="fa fa-search" style="color:#aaa"></i><input type="text" placeholder="Search events..." oninput="searchTable('eventsTableBody',this.value)"></div>
+          <button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Event</button>
+        </div>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Poster</th><th>Title</th><th>Category</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="eventsTableBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
+      </table>
     </div>
-    <table class="data-table">
-      <thead><tr><th>ID</th><th>Poster</th><th>Title</th><th>Category</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
-      <tbody id="eventsTableBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
-    </table>
   </div>
 
   <!-- PLAYS PAGE -->
   <div class="page" id="page-plays">
-    <div class="p-head">
-      <h2><i class="fa fa-theater-masks" style="margin-right:12px;color:var(--primary)"></i>Plays & Theater</h2>
-      <div class="action-btns"><button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Play</button></div>
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title"><i class="fa fa-theater-masks" style="margin-right:10px"></i>Plays & Theater</div>
+        <div style="display:flex;gap:10px">
+          <div class="table-search"><i class="fa fa-search" style="color:#aaa"></i><input type="text" placeholder="Search plays..." oninput="searchTable('playsTableBody',this.value)"></div>
+          <button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Play</button>
+        </div>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Poster</th><th>Title</th><th>Category</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="playsTableBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
+      </table>
     </div>
-    <table class="data-table">
-      <thead><tr><th>ID</th><th>Poster</th><th>Title</th><th>Category</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
-      <tbody id="playsTableBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
-    </table>
   </div>
 
   <!-- SPORTS PAGE -->
   <div class="page" id="page-sports">
-    <div class="p-head">
-      <h2><i class="fa fa-trophy" style="margin-right:12px;color:var(--primary)"></i>Sports Events</h2>
-      <div class="action-btns"><button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Sport</button></div>
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title"><i class="fa fa-trophy" style="margin-right:10px"></i>Sports Events</div>
+        <div style="display:flex;gap:10px">
+          <div class="table-search"><i class="fa fa-search" style="color:#aaa"></i><input type="text" placeholder="Search sports..." oninput="searchTable('sportsTableBody',this.value)"></div>
+          <button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Sport</button>
+        </div>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Poster</th><th>Title</th><th>Category</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="sportsTableBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
+      </table>
     </div>
-    <table class="data-table">
-      <thead><tr><th>ID</th><th>Poster</th><th>Title</th><th>Category</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
-      <tbody id="sportsTableBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
-    </table>
   </div>
 
   <!-- ACTIVITIES PAGE -->
   <div class="page" id="page-activities">
-    <div class="p-head">
-      <h2><i class="fa fa-running" style="margin-right:12px;color:var(--primary)"></i>Activities Management</h2>
-      <div class="action-btns"><button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Activity</button></div>
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title"><i class="fa fa-running" style="margin-right:10px"></i>Activities Management</div>
+        <div style="display:flex;gap:10px">
+          <div class="table-search"><i class="fa fa-search" style="color:#aaa"></i><input type="text" placeholder="Search activities..." oninput="searchTable('activitiesTableBody',this.value)"></div>
+          <button class="btn-primary" onclick="openEventModal()"><i class="fa fa-plus"></i>Add Activity</button>
+        </div>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>ID</th><th>Poster</th><th>Title</th><th>Category</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="activitiesTableBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
+      </table>
     </div>
-    <table class="data-table">
-      <thead><tr><th>ID</th><th>Poster</th><th>Title</th><th>Category</th><th>Details</th><th>Status</th><th>Actions</th></tr></thead>
-      <tbody id="activitiesTableBody"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
-    </table>
   </div>
 
   <!-- STREAMS PAGE -->
