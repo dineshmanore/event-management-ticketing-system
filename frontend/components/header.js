@@ -120,7 +120,7 @@
       <div class="top-header">
 
         <a href="index.html" class="logo">
-          <div class="logo-box">ST</div>
+          <img src="logo.png" alt="ShowTime" style="height: 48px; width: 48px; object-fit: contain; border-radius: 8px;">
           <span class="logo-text">ShowTime</span>
         </a>
 
