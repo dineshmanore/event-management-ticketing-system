@@ -59,23 +59,55 @@
       return;
     }
 
+    const executeScripts = (doc) => {
+      document.querySelectorAll('.spa-script').forEach(s => s.remove());
+      const scripts = doc.querySelectorAll('body script');
+      
+      scripts.forEach(oldScript => {
+        if (oldScript.src && (oldScript.src.includes('header.js') || oldScript.src.includes('footer.js'))) return;
+        const newScript = document.createElement('script');
+        newScript.classList.add('spa-script');
+        
+        if (oldScript.src) {
+          newScript.src = oldScript.src;
+        } else {
+          // Wrap in a block but expose functions to window so onclick works
+          let content = oldScript.innerHTML;
+          
+          // Safety: Convert common declarations to window assignments locally
+          content = content.replace(/\bconst\s+API\b/g, 'window.API');
+          content = content.replace(/\bconst\s+params\b/g, 'window.params');
+          content = content.replace(/\bconst\s+urlParams\b/g, 'window.urlParams');
+          content = content.replace(/\blet\s+allEvents\b/g, 'window.allEvents');
+          content = content.replace(/\blet\s+movies\b/g, 'window.movies');
+          content = content.replace(/\blet\s+currentMovie\b/g, 'window.currentMovie');
+          
+          newScript.innerHTML = `(function(){ ${content} })();`;
+        }
+        
+        Array.from(oldScript.attributes).forEach(attr => {
+          if (attr.name !== 'src') newScript.setAttribute(attr.name, attr.value);
+        });
+        document.body.appendChild(newScript);
+      });
+    };
+
     const loadPage = async (htmlText, isFromCache = false) => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlText, 'text/html');
       const newContent = doc.querySelector('#app-content');
 
       if (newContent) {
-        // Handle Head Assets (CSS)
-        document.querySelectorAll('.spa-head-asset').forEach(el => el.remove());
+        // CSS handling
+        const currentLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(l => l.getAttribute('href'));
         const newHeadAssets = doc.querySelectorAll('head link[rel="stylesheet"], head style');
+        
+        document.querySelectorAll('.spa-head-asset').forEach(el => el.remove());
         newHeadAssets.forEach(asset => {
-          if (asset.tagName === 'LINK') {
-            const href = asset.getAttribute('href');
-            if (document.querySelector(`link[href="${href}"]`)) return;
-          }
-          const clonedAsset = asset.cloneNode(true);
-          clonedAsset.classList.add('spa-head-asset');
-          document.head.appendChild(clonedAsset);
+          if (asset.tagName === 'LINK' && currentLinks.includes(asset.getAttribute('href'))) return;
+          const cloned = asset.cloneNode(true);
+          cloned.classList.add('spa-head-asset');
+          document.head.appendChild(cloned);
         });
 
         contentEl.innerHTML = newContent.innerHTML;
@@ -83,36 +115,7 @@
         if (!isFromCache) history.pushState({ spa: true }, '', url);
         
         updateNavState();
-
-        // Re-execute scripts
-        document.querySelectorAll('.spa-script').forEach(s => s.remove());
-        const scripts = doc.querySelectorAll('body script');
-        
-        scripts.forEach(oldScript => {
-          if (oldScript.src && (oldScript.src.includes('header.js') || oldScript.src.includes('footer.js'))) return;
-          const newScript = document.createElement('script');
-          newScript.classList.add('spa-script');
-          
-          if (oldScript.src) {
-            newScript.src = oldScript.src;
-          } else {
-            let content = oldScript.innerHTML;
-            content = content.replace(/\bconst\s+API\b/g, 'var API');
-            content = content.replace(/\bconst\s+params\b/g, 'var params');
-            content = content.replace(/\bconst\s+urlParams\b/g, 'var urlParams');
-            content = content.replace(/\bconst\s+catIcons\b/g, 'var catIcons');
-            content = content.replace(/\bconst\s+catColors\b/g, 'var catColors');
-            content = content.replace(/\bconst\s+catConfig\b/g, 'var catConfig');
-            content = content.replace(/\blet\s+allEvents\b/g, 'var allEvents');
-            content = content.replace(/\blet\s+movies\b/g, 'var movies');
-            content = content.replace(/\blet\s+currentMovie\b/g, 'var currentMovie');
-            newScript.innerHTML = content;
-          }
-          Array.from(oldScript.attributes).forEach(attr => {
-            if (attr.name !== 'src') newScript.setAttribute(attr.name, attr.value);
-          });
-          document.body.appendChild(newScript);
-        });
+        executeScripts(doc);
 
         if (!isFromCache) window.scrollTo({ top: 0, behavior: 'smooth' });
         return true;
@@ -121,33 +124,39 @@
     };
 
     try {
-      // Check cache first for INSTANT loading
+      // 1. INSTANT CACHE LOAD
       if (spaCache.has(url)) {
         console.log('SPA: Loading from cache...', url);
         await loadPage(spaCache.get(url), true);
-        // We still fetch in background to keep data fresh, but without spinner
+        // Refresh cache in background
         fetch(url).then(res => res.text()).then(text => spaCache.set(url, text));
         return;
       }
 
-      // 1. Show Spinner only if NOT in cache
-      const loader = document.createElement('div');
-      loader.className = 'spa-loader-wrap';
-      loader.innerHTML = '<div class="spa-spinner"></div><div class="spa-loader-text">Loading...</div>';
-      document.body.appendChild(loader);
-
+      // 2. FADE OUT & SPINNER (WITH DELAY)
       contentEl.style.opacity = '0.3';
       contentEl.style.transition = 'opacity 0.2s ease-out';
+      
+      // Delay spinner so fast networks don't see a flicker
+      const spinnerTimeout = setTimeout(() => {
+        if (!document.querySelector('.spa-loader-wrap')) {
+          const l = document.createElement('div');
+          l.className = 'spa-loader-wrap';
+          l.innerHTML = '<div class="spa-spinner"></div><div class="spa-loader-text">Loading...</div>';
+          document.body.appendChild(l);
+        }
+      }, 150);
 
       const res = await fetch(url);
       const text = await res.text();
-      spaCache.set(url, text); // Save to cache
+      clearTimeout(spinnerTimeout);
+      spaCache.set(url, text);
 
       const success = await loadPage(text);
       if (!success) window.location.href = url;
 
     } catch (err) {
-      console.error('SPA Nav error:', err);
+      console.error('SPA Fail:', err);
       window.location.href = url;
     } finally {
       document.querySelectorAll('.spa-loader-wrap').forEach(el => el.remove());
