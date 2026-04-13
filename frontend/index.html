@@ -16,6 +16,7 @@
 <main id="app-content">
 <!-- FILTER BAR -->
 <div class="filter-bar">
+  <!-- Genre filters -->
   <button class="filter-pill active" onclick="filterBy(this, 'all')">All</button>
   <button class="filter-pill" onclick="filterBy(this, 'Action')">Action</button>
   <button class="filter-pill" onclick="filterBy(this, 'Comedy')">Comedy</button>
@@ -23,6 +24,12 @@
   <button class="filter-pill" onclick="filterBy(this, 'Thriller')">Thriller</button>
   <button class="filter-pill" onclick="filterBy(this, 'Romantic')">Romantic</button>
   <button class="filter-pill" onclick="filterBy(this, 'Horror')">Horror</button>
+
+  <!-- Divider -->
+  <div class="filter-divider"></div>
+
+  <!-- Language filters -->
+  <span class="filter-label"><i class="fa fa-language"></i> Language</span>
   <button class="filter-pill lang" onclick="filterLang(this, 'Hindi')">Hindi</button>
   <button class="filter-pill lang" onclick="filterLang(this, 'English')">English</button>
   <button class="filter-pill lang" onclick="filterLang(this, 'Tamil')">Tamil</button>
