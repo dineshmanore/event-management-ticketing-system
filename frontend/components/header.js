@@ -49,9 +49,15 @@
     }
 
     try {
-      // Add a loading fade effect
-      contentEl.style.opacity = '0';
-      contentEl.style.transition = 'opacity 0.15s ease-out';
+      // 1. Show Spinner
+      const loader = document.createElement('div');
+      loader.className = 'spa-loader-wrap';
+      loader.innerHTML = '<div class="spa-spinner"></div><div class="spa-loader-text">Loading...</div>';
+      document.body.appendChild(loader);
+
+      // 2. Start fade out
+      contentEl.style.opacity = '0.3';
+      contentEl.style.transition = 'opacity 0.2s ease-out';
 
       const res = await fetch(url);
       const text = await res.text();
@@ -118,7 +124,13 @@
       console.error('SPA Nav error:', err);
       window.location.href = url;
     } finally {
-      if (contentEl) contentEl.style.opacity = '1';
+      // 3. Remove Spinner & Fade In
+      document.querySelectorAll('.spa-loader-wrap').forEach(el => el.remove());
+      if (contentEl) {
+        contentEl.style.opacity = '1';
+        contentEl.classList.add('fade-in');
+        setTimeout(() => contentEl.classList.remove('fade-in'), 300);
+      }
     }
   };
 
