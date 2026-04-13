@@ -3,19 +3,29 @@ const qrcode = require('qrcode');
 
 const mailConfig = {
   auth: {
-    user: process.env.EMAIL_USER || 'placeholder@example.com',
-    pass: process.env.EMAIL_PASS || 'placeholder_pass',
+    user: (process.env.EMAIL_USER || '').trim(),
+    pass: (process.env.EMAIL_PASS || '').replace(/\s/g, ''),
   },
   tls: {
     rejectUnauthorized: false
-  }
+  },
+  // Force IPv4 to avoid 'ENETUNREACH' issues on some cloud providers
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 20000
 };
 
-if (process.env.EMAIL_SERVICE) {
-  // Use automatic service configuration (Recommended for Gmail, Outlook, etc.)
-  mailConfig.service = process.env.EMAIL_SERVICE;
+const service = (process.env.EMAIL_SERVICE || '').toLowerCase();
+
+if (service === 'gmail') {
+  // Gmail on Render works best with port 587 + STARTTLS
+  mailConfig.service = 'gmail';
+  mailConfig.host = 'smtp.gmail.com';
+  mailConfig.port = 587;
+  mailConfig.secure = false; 
+} else if (service) {
+  mailConfig.service = service;
 } else {
-  // Manual SMTP configuration
   mailConfig.host = process.env.EMAIL_HOST || 'smtp.ethereal.email';
   mailConfig.port = parseInt(process.env.EMAIL_PORT || 587);
   mailConfig.secure = mailConfig.port === 465;
