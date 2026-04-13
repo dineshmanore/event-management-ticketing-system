@@ -3,13 +3,34 @@ const qrcode = require('qrcode');
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
-  port: process.env.EMAIL_PORT || 587,
-  secure: process.env.EMAIL_PORT == 465, // true for 465, false for 587
+  port: parseInt(process.env.EMAIL_PORT || 587),
+  secure: process.env.EMAIL_PORT == 465,
   auth: {
     user: process.env.EMAIL_USER || 'placeholder@example.com',
     pass: process.env.EMAIL_PASS || 'placeholder_pass',
   },
+  tls: {
+    rejectUnauthorized: false // Helps with some self-signed certificate issues
+  }
 });
+
+// Verify connection configuration
+transporter.verify(function (error, success) {
+  if (error) {
+    console.error('SMTP Connection Error:', error);
+  } else {
+    console.log('SMTP Server is ready to take our messages');
+  }
+});
+
+exports.verifyConnection = async () => {
+  try {
+    await transporter.verify();
+    return { success: true, user: process.env.EMAIL_USER };
+  } catch (err) {
+    return { success: false, error: err.message, code: err.code };
+  }
+};
 
 exports.sendVerificationEmail = async (email, name, token) => {
   const url = `${process.env.FRONTEND_URL || 'http://localhost:5500'}/verify.html?token=${token}`;
