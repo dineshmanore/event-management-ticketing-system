@@ -221,7 +221,6 @@ async function loadBookings() {
           <img class="ticket-poster"
                src="${b.poster || (isEvent ? 'https://via.placeholder.com/100x140/cc0c39/white?text=Event' : 'https://via.placeholder.com/100x140/cc0c39/white?text=Movie')}"
                alt="Poster"
-               crossorigin="anonymous"
                onerror="this.src='https://via.placeholder.com/100x140/cc0c39/white?text=Ticket'">
           
           <div class="ticket-details">
@@ -262,7 +261,7 @@ async function loadBookings() {
         
         <div class="ticket-right">
           <div class="qr-box">
-            <img src="${qrUrl}" alt="QR Code" crossorigin="anonymous">
+            <img src="${qrUrl}" alt="QR Code">
           </div>
           <div class="t-id">${ticketNo}</div>
           <div class="qr-caption">Scan at entry</div>
@@ -280,39 +279,38 @@ async function loadBookings() {
   }
 }
 
-function downloadTicketPDF(bookingId, ticketNo) {
+async function downloadTicketPDF(bookingId, ticketNo) {
+  if (typeof html2pdf === 'undefined') {
+    alert('Wait a moment, PDF system is loading...');
+    return;
+  }
   const element = document.getElementById(`ticket-container-${bookingId}`);
   if (!element) return;
 
   const actions = element.querySelector('.booking-actions');
-  const originalDisplay = actions.style.display;
-  const originalFilter = element.style.filter;
-  const originalBoxShadow = element.style.boxShadow;
+  const scrollPos = window.scrollY;
 
-  // Cleanup for sharp PDF capture
+  // 1. Prepare for clean capture
   actions.style.display = 'none';
-  element.style.filter = 'none';
-  element.style.boxShadow = 'none';
-  element.style.border = '1px solid #eee';
+  window.scrollTo(0, 0);
 
   const opt = {
-    margin:       10,
-    filename:     `ShowTime-Ticket-${ticketNo}.pdf`,
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { 
-      scale: 2, 
-      useCORS: true, 
-      logging: false,
-      scrollY: -window.scrollY // Fixes blank PDF if page is scrolled
-    },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    margin: 10,
+    filename: `ShowTime-Ticket-${ticketNo}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
   };
 
-  html2pdf().set(opt).from(element).save().finally(() => {
-    actions.style.display = originalDisplay || 'flex';
-    element.style.filter = originalFilter;
-    element.style.boxShadow = originalBoxShadow;
-  });
+  try {
+    await html2pdf().set(opt).from(element).save();
+  } catch (err) {
+    console.error(err);
+    alert('Error generating PDF. Please try again.');
+  } finally {
+    actions.style.display = 'flex';
+    window.scrollTo(0, scrollPos);
+  }
 }
 
 async function cancelBooking(id) {
@@ -326,47 +324,42 @@ async function cancelBooking(id) {
 }
 
 async function shareTicket(ticketNo, title, bookingId) {
+  if (typeof html2pdf === 'undefined') {
+    alert('Sharing system is loading...');
+    return;
+  }
   const element = document.getElementById(`ticket-container-${bookingId}`);
   if (!element) return;
   
   const actions = element.querySelector('.booking-actions');
-  const originalDisplay = actions.style.display;
-  const originalFilter = element.style.filter;
-  const originalBoxShadow = element.style.boxShadow;
+  const scrollPos = window.scrollY;
 
-  // Cleanup for sharp capture
   actions.style.display = 'none';
-  element.style.filter = 'none';
-  element.style.boxShadow = 'none';
-  element.style.border = '1px solid #eee';
+  window.scrollTo(0, 0);
 
   const opt = {
     margin: 10,
     filename: `Ticket-${ticketNo}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, scrollY: -window.scrollY },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
   };
 
   try {
     const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
     
-    // Restore styling
-    actions.style.display = originalDisplay || 'flex';
-    element.style.filter = originalFilter;
-    element.style.boxShadow = originalBoxShadow;
+    actions.style.display = 'flex';
+    window.scrollTo(0, scrollPos);
     
     const file = new File([pdfBlob], `Ticket-${ticketNo}.pdf`, { type: 'application/pdf' });
     
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      // Native File Sharing (Modern Mobile/Browsers)
       await navigator.share({
         files: [file],
         title: `ShowTime Ticket: ${title}`,
         text: `Here is my ticket for ${title}!`
       });
     } else {
-      // Fallback to text sharing if File sharing is not supported
       const text = `I'm going to ${title}! My ticket number is ${ticketNo}. Check it out on ShowTime! ${window.location.origin}`;
       if (navigator.share) {
         await navigator.share({ title: `Ticket: ${title}`, text });
@@ -377,6 +370,7 @@ async function shareTicket(ticketNo, title, bookingId) {
     }
   } catch (err) {
     actions.style.display = 'flex';
+    window.scrollTo(0, scrollPos);
     console.error('Share error:', err);
     alert('Failed to generate sharing file.');
   }
