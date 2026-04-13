@@ -51,14 +51,17 @@ transporter.verify(function (error, success) {
 
 // Diagnostic function for API
 exports.verifyConnection = async () => {
-  if (process.env.EMAIL_SERVICE === 'brevo' || process.env.EMAIL_SERVICE === 'sendinblue') {
+  const service = (process.env.EMAIL_SERVICE || '').trim().toLowerCase();
+  const apiKey = (process.env.EMAIL_PASS || '').replace(/\s/g, '').trim();
+  
+  if (service === 'brevo' || service === 'sendinblue') {
     try {
       const response = await fetch('https://api.brevo.com/v3/account', {
-        headers: { 'api-key': (process.env.EMAIL_PASS || '').replace(/\s/g, '') }
+        headers: { 'api-key': apiKey }
       });
       if (response.ok) return { success: true, user: process.env.EMAIL_USER, mode: 'API' };
       const err = await response.json();
-      return { success: false, error: err.message || 'API Key Invalid' };
+      return { success: false, error: err.message || 'API Key Invalid', status: response.status };
     } catch (e) {
       return { success: false, error: 'API Connection Failed: ' + e.message };
     }
@@ -72,13 +75,13 @@ exports.verifyConnection = async () => {
 };
 
 async function sendViaBrevoApi(mailOptions) {
-  const apiKey = (process.env.EMAIL_PASS || '').replace(/\s/g, '');
-  const senderEmail = process.env.EMAIL_USER || 'no-reply@showtime.com';
+  const apiKey = (process.env.EMAIL_PASS || '').replace(/\s/g, '').trim();
+  const senderEmail = (process.env.EMAIL_USER || '').trim() || 'no-reply@showtime.com';
   
   // Convert Nodemailer options to Brevo API format
   const body = {
     sender: { name: "ShowTime", email: senderEmail },
-    to: [{ email: mailOptions.to, name: mailOptions.toName || mailOptions.to }],
+    to: [{ email: mailOptions.to.trim(), name: (mailOptions.toName || mailOptions.to).trim() }],
     subject: mailOptions.subject,
     htmlContent: mailOptions.html,
   };
