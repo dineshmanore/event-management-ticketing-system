@@ -1,18 +1,27 @@
 const nodemailer = require('nodemailer');
 const qrcode = require('qrcode');
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
-  port: parseInt(process.env.EMAIL_PORT || 587),
-  secure: process.env.EMAIL_PORT == 465,
+const mailConfig = {
   auth: {
     user: process.env.EMAIL_USER || 'placeholder@example.com',
     pass: process.env.EMAIL_PASS || 'placeholder_pass',
   },
   tls: {
-    rejectUnauthorized: false // Helps with some self-signed certificate issues
+    rejectUnauthorized: false
   }
-});
+};
+
+if (process.env.EMAIL_SERVICE) {
+  // Use automatic service configuration (Recommended for Gmail, Outlook, etc.)
+  mailConfig.service = process.env.EMAIL_SERVICE;
+} else {
+  // Manual SMTP configuration
+  mailConfig.host = process.env.EMAIL_HOST || 'smtp.ethereal.email';
+  mailConfig.port = parseInt(process.env.EMAIL_PORT || 587);
+  mailConfig.secure = mailConfig.port === 465;
+}
+
+const transporter = nodemailer.createTransport(mailConfig);
 
 // Verify connection configuration
 transporter.verify(function (error, success) {
