@@ -87,23 +87,26 @@ exports.bookSeats = (req, res) => {
         showDate,
         bookingTimeLegacy: new Date()
       }).then(async (b) => {
-        // Send Confirmation Email
-        try {
-          const user = await User.findById(user_id).select('name email').lean();
-          if (user && user.email) {
-            await sendBookingConfirmation(user.email, user.name, {
-              id: b.mysqlId ?? String(b._id),
-              title: item.title,
-              date: showDate,
-              seats: seatString,
-              price: totalPrice
-            });
-          }
-        } catch (mailErr) {
-          console.error('Failed to send booking confirmation email:', mailErr);
-        }
-        
+        // Send response immediately to avoid timeout
         res.json({ success: true, bookingId: b.mysqlId ?? String(b._id) });
+
+        // Send Confirmation Email in the background
+        setImmediate(async () => {
+          try {
+            const user = await User.findById(user_id).select('name email').lean();
+            if (user && user.email) {
+              await sendBookingConfirmation(user.email, user.name, {
+                id: b.mysqlId ?? String(b._id),
+                title: item.title,
+                date: showDate,
+                seats: seatString,
+                price: totalPrice
+              });
+            }
+          } catch (mailErr) {
+            console.error('CRITICAL: Failed to send booking confirmation email:', mailErr.message);
+          }
+        });
       });
     })
     .catch((e) => res.status(500).json({ message: 'Booking failed', error: e.message }));

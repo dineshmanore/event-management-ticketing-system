@@ -55,7 +55,7 @@ exports.sendBookingConfirmation = async (email, name, booking) => {
     const qrCodeBuffer = await qrcode.toBuffer(qrData);
 
     const mailOptions = {
-      from: `"ShowTime" <${process.env.EMAIL_USER || 'bookings@showtime.com'}>`,
+      from: `"ShowTime" <${process.env.EMAIL_FROM || process.env.EMAIL_USER || 'bookings@showtime.com'}>`,
       to: email,
       subject: `Booking Confirmed: ${booking.title} - ShowTime`,
       html: `
