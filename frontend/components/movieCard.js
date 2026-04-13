@@ -29,11 +29,18 @@ function createMovieCard(movie) {
 }
 
 function openItem(id, type) {
-  if (type === 'stream') {
-    window.location.href = `stream-detail.html?id=${encodeURIComponent(id)}`;
+  const url = type === 'stream' 
+    ? `stream-detail.html?id=${encodeURIComponent(id)}` 
+    : `movie.html?id=${encodeURIComponent(id)}`;
+  
+  if (type !== 'stream' && id) {
+    localStorage.setItem('movieId', id);
+  }
+
+  if (window.spaNavigate) {
+    window.spaNavigate(url);
   } else {
-    if (id) localStorage.setItem('movieId', id);
-    window.location.href = `movie.html?id=${encodeURIComponent(id)}`;
+    window.location.href = url;
   }
 }
 

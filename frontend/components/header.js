@@ -50,8 +50,8 @@
 
     try {
       // Add a loading fade effect
-      contentEl.style.opacity = '0.5';
-      contentEl.style.transition = 'opacity 0.2s';
+      contentEl.style.opacity = '0';
+      contentEl.style.transition = 'opacity 0.15s ease-out';
 
       const res = await fetch(url);
       const text = await res.text();
@@ -64,8 +64,8 @@
         document.title = doc.title;
         history.pushState({ spa: true }, '', url);
         
-        // Update header active states
-        renderHeader();
+        // Update ONLY the nav states, don't re-render the whole header
+        updateNavState();
 
         // Re-execute scripts found in the new page (excluding global ones)
         document.querySelectorAll('.spa-script').forEach(s => s.remove());
@@ -104,10 +104,26 @@
     }
   };
 
+  function updateNavState() {
+    const currentPage = window.location.pathname.split('/').pop().replace('.html','') || 'index';
+    
+    // Update active class on links
+    document.querySelectorAll('.nav-menu a').forEach(a => {
+      const href = a.getAttribute('href');
+      const pageName = href? href.replace('.html', '') : '';
+      const isActive = currentPage === pageName || (currentPage === 'index' && pageName === 'movies');
+      a.className = isActive ? 'active' : '';
+    });
+
+    // Update search box visibility
+    const searchBox = document.querySelector('.search-box');
+    if (searchBox) {
+      searchBox.style.display = ['events','plays','sports','activities'].includes(currentPage) ? 'none' : 'flex';
+    }
+  }
+
   // Handle browser back/forward buttons
   window.addEventListener('popstate', (e) => {
-    // For simplicity, we just reload on popstate to ensure correct state, 
-    // or we could implement the same fetch logic here.
     location.reload(); 
   });
 
@@ -293,10 +309,12 @@ async function handleSearch(query) {
       const results = await res.json();
       
       if (results.length === 0) {
-        container.innerHTML = `<div style="padding:16px;color:#888;font-size:14px;text-align:center">No ${page === 'index' ? 'movies' : page} found</div>`;
+        container.innerHTML = `<div style="padding:16px;color:#888;font-size:14px;text-align:center">No results found</div>`;
       } else {
         container.innerHTML = results.map(m => `
-          <a href="${m.is_event ? 'event-booking.html' : 'movie.html'}?id=${m.id}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;text-decoration:none;color:var(--text);border-bottom:1px solid #eee;transition:background .2s">
+          <a href="${m.is_event ? 'event-booking.html' : 'movie.html'}?id=${m.id}" 
+             onclick="spaNavigate('${m.is_event ? 'event-booking.html' : 'movie.html'}?id=${m.id}', event); document.getElementById('searchResults').style.display='none';"
+             style="display:flex;align-items:center;gap:12px;padding:12px 16px;text-decoration:none;color:var(--text);border-bottom:1px solid #eee;transition:background .2s">
             <img src="${m.poster || m.image || 'https://via.placeholder.com/40x60'}" style="width:40px;height:60px;object-fit:cover;border-radius:6px">
             <div>
               <div style="font-weight:600;font-size:14px;margin-bottom:4px;color:#111">${m.title}</div>

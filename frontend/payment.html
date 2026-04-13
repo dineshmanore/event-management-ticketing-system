@@ -45,9 +45,23 @@
 <header id="header"></header>
 
 <div class="page-header">
-  <h1>Complete Booking</h1>
+  <h1 id="paymentPageTitle">Checkout & Payment</h1>
   <p>Secure payment powered by Razorpay</p>
 </div>
+
+<script>
+  // Safety check: If user lands here but seats/event are already cleared, 
+  // they probably finished booking already. Redirect to dashboard.
+  (function() {
+    const type = localStorage.getItem('bookingType');
+    const seats = localStorage.getItem('selectedSeats');
+    const eventId = localStorage.getItem('eventId');
+    
+    if ((type === 'movie' && !seats) || (type === 'event' && !eventId)) {
+      window.location.href = 'dashboard.html';
+    }
+  })();
+</script>
 
 <div class="payment-wrap">
 

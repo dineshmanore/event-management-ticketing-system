@@ -115,14 +115,13 @@ async function pay() {
           const booking = await bookingRes.json();
 
           if (booking.success || booking.id || booking.bookingId) {
+            // Success! Clear local storage and redirect immediately
             localStorage.removeItem('selectedSeats');
             localStorage.removeItem('totalPrice');
             localStorage.removeItem('ticketCount');
-            alert('Booking Confirmed! Your tickets are ready.');
             
-            setTimeout(() => {
-              window.location.href = 'dashboard.html';
-            }, 500);
+            // Redirect immediately to My Bookings
+            window.location.href = 'dashboard.html';
           } else {
             throw new Error(booking.message || 'Booking failed after payment');
           }

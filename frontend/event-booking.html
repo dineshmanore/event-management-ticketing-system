@@ -88,6 +88,7 @@
 </head>
 <body>
 
+<main id="app-content">
 <!-- PAGE HEADER -->
 <header class="eb-page-header">
   <div class="back-btn" onclick="history.back()"><i class="fa fa-angle-left"></i></div>
@@ -178,6 +179,8 @@
   </div>
 </div>
 
+<script src="components/header.js"></script>
+<script src="components/footer.js"></script>
 <script>
 const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000/api'
@@ -346,7 +349,11 @@ function finalizeBooking() {
   localStorage.setItem('selectedSeats', JSON.stringify([])); 
   localStorage.setItem('bookingDate', (eventData.date || new Date().toISOString()).split('T')[0]);
 
-  window.location.href = `payment.html?eventId=${eventId}`;
+  if (window.spaNavigate) {
+    window.spaNavigate(`payment.html?eventId=${eventId}`);
+  } else {
+    window.location.href = `payment.html?eventId=${eventId}`;
+  }
 }
 
 // Show info modal on load
@@ -355,6 +362,7 @@ window.onload = () => {
   loadEvent();
 };
 </script>
+</main>
 
 </body>
 </html>
