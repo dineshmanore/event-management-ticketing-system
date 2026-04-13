@@ -68,13 +68,14 @@
 
 <script src="components/header.js"></script>
 <script src="components/footer.js"></script>
+<script src="js/cache.js"></script>
 <script>
 var API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000/api'
   : 'https://event-management-ticketing-system.onrender.com/api';
-let allActs = [], activeCat = 'all', sortBy = 'date';
+var allActs = [], activeCat = 'all', sortBy = 'date';
 
-const catMeta = {
+var catMeta = {
   adventure: { color: '#0a2e1a', bg: '#e6f4ee', text: '#0a5c2e', icon: 'fa-mountain' },
   workshop:  { color: '#2e1a0a', bg: '#fdf0e6', text: '#5c2e0a', icon: 'fa-hammer' },
   fitness:   { color: '#0a1a2e', bg: '#e6eef4', text: '#0a2e5c', icon: 'fa-dumbbell' },
@@ -84,9 +85,10 @@ const catMeta = {
 };
 
 async function init() {
+  // Show skeletons immediately
+  showSkeletons('activitiesGrid', 6, 'list');
   try {
-    const res = await fetch(`${API}/events`);
-    const all = await res.json();
+    var all = await cachedFetch(`${API}/events`);
     allActs = all.filter(e => ['adventure','workshop','fitness','food','art','activity'].includes(e.category));
     render();
   } catch(e) {

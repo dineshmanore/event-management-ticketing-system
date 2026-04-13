@@ -80,6 +80,7 @@
 
 <script src="components/header.js"></script>
 <script src="components/footer.js"></script>
+<script src="js/cache.js"></script>
 <script>
 var API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000/api'
@@ -90,9 +91,11 @@ var catIcons = { concert:'fa-music', festival:'fa-star', comedy:'fa-laugh', work
 var catColors = { concert:'#8b1a2e', festival:'#1a3a5c', comedy:'#3a5c1a', workshop:'#5c3a1a', exhibition:'#1a4a4a', event:'#4a1a5c' };
 
 async function init() {
+  // Show skeletons immediately for fast perceived load
+  showSkeletons('eventsGrid', 6, 'list');
   try {
-    const res = await fetch(`${API}/events`);
-    allEvents = await res.json();
+    var all = await cachedFetch(`${API}/events`);
+    allEvents = all;
     render();
   } catch(e) {
     document.getElementById('eventsGrid').innerHTML = `<div class="empty-state"><i class="fa fa-calendar-alt"></i><h3>Events coming soon!</h3><p>Check back later for events in your city.</p></div>`;
