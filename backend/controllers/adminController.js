@@ -206,7 +206,8 @@ exports.getAllBookings = (req, res) => {
           genre: isEvent ? (item?.category || '') : (item?.genre || ''),
           total_price: b.totalPrice ?? 0,
           seats: b.seats || '',
-          show_date: b.showDate || null
+          show_date: b.showDate || null,
+          booking_time: b.createdAt || b.bookingTimeLegacy
         };
       });
       res.json(out);

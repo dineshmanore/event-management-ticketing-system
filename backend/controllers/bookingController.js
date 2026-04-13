@@ -136,7 +136,8 @@ exports.getUserBookings = (req, res) => {
           seats: b.seats || '',
           event_venue: isEvent ? (item?.venue || '') : null,
           event_city: isEvent ? (item?.city || '') : null,
-          event_time: isEvent ? (item?.time || '') : null
+          event_time: isEvent ? (item?.time || '') : null,
+          booking_time: b.createdAt || b.bookingTimeLegacy
         };
         return mapped;
       });

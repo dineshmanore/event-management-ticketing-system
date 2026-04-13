@@ -92,8 +92,9 @@ if (type === 'event') {
           localStorage.removeItem('totalPrice');
           localStorage.removeItem('ticketCount');
           alert('Booking Confirmed! Your tickets are ready.');
-          window.location.href = 'dashboard.html';
+          window.location.replace('dashboard.html');
         } else {
+          console.error("Booking error:", booking);
           alert('Booking failed after payment. Please contact support.');
         }
       },

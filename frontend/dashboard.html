@@ -223,6 +223,7 @@ async function loadBookings() {
             </div>
             <h3>${b.title || (isEvent ? 'Event #' + b.movie_id : 'Movie #' + b.movie_id)}</h3>
             <div class="ticket-meta"><i class="fa fa-map-marker-alt"></i> ${venue}</div>
+            <div class="ticket-meta" style="margin-top:-6px; font-size:11px; color:#777;"><i class="fa fa-history" style="color:#777"></i> Booked: ${b.booking_time ? new Date(b.booking_time).toLocaleString('en-IN', {day:'numeric', month:'short', hour:'numeric', minute:'numeric', hour12:true}) : 'N/A'}</div>
             
             <div class="ticket-grid">
               <div class="t-cell">
