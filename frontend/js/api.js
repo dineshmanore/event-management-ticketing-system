@@ -4,17 +4,17 @@ var API = window.location.hostname === 'localhost' || window.location.hostname =
   : 'https://event-management-ticketing-system.onrender.com/api';
 
 
-let bannerIndex  = 0;
-let bannerTimer  = null;
-let activeGenre  = 'all';
-let activeLang   = null;
-let heroMovieId  = null;
-let heroTrailer  = '';
+var bannerIndex  = 0;
+var bannerTimer  = null;
+var activeGenre  = 'all';
+var activeLang   = null;
+var heroMovieId  = null;
+var heroTrailer  = '';
 
-const urlParams  = new URLSearchParams(window.location.search);
-const activeCat  = urlParams.get('cat') || 'movies';
+var urlParams  = new URLSearchParams(window.location.search);
+var activeCat  = urlParams.get('cat') || 'movies';
 
-const catConfig = {
+var catConfig = {
   stream:     { title: 'Stream',     icon: 'fa-play-circle',    msg: 'Streaming content coming soon!' },
   events:     { title: 'Events',     icon: 'fa-calendar-alt',   msg: 'No events found right now.' },
   plays:      { title: 'Plays',      icon: 'fa-theater-masks',  msg: 'Theatre plays coming soon!' },
