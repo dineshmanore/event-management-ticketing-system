@@ -18,11 +18,14 @@ const mailConfig = {
 const service = (process.env.EMAIL_SERVICE || '').toLowerCase();
 
 if (service === 'gmail') {
-  // Gmail on Render works best with port 587 + STARTTLS
-  mailConfig.service = 'gmail';
+  // Gmail on Render works best with port 587 + STARTTLS + Explicit Manual Config
   mailConfig.host = 'smtp.gmail.com';
   mailConfig.port = 587;
   mailConfig.secure = false; 
+  mailConfig.requireTLS = true;
+  mailConfig.connectionTimeout = 30000; // 30 seconds
+  mailConfig.greetingTimeout = 30000;
+  mailConfig.socketTimeout = 30000;
 } else if (service) {
   mailConfig.service = service;
 } else {
