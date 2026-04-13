@@ -85,8 +85,7 @@ const catMeta = {
 
 async function init() {
   try {
-    const res = await fetch(`${API}/events`);
-    const all = await res.json();
+    const all = await fetchWithCache(`${API}/events`);
     allActs = all.filter(e => ['adventure','workshop','fitness','food','art','activity'].includes(e.category));
     render();
   } catch(e) {

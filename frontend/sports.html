@@ -89,8 +89,7 @@ const sportBg = { cricket:'#0d2a3a', football:'#0a2e0a', kabaddi:'#2a0d0d', tenn
 
 async function init() {
   try {
-    const res = await fetch(`${API}/events`);
-    const all = await res.json();
+    const all = await fetchWithCache(`${API}/events`);
     allSports = all.filter(e => ['cricket','football','kabaddi','tennis','basketball','sport'].includes(e.category));
     render();
   } catch(e) {

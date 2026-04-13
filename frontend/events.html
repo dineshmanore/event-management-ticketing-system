@@ -91,8 +91,8 @@ const catColors = { concert:'#8b1a2e', festival:'#1a3a5c', comedy:'#3a5c1a', wor
 
 async function init() {
   try {
-    const res = await fetch(`${API}/events`);
-    allEvents = await res.json();
+    const events = await fetchWithCache(`${API}/events`);
+    allEvents = events;
     render();
   } catch(e) {
     document.getElementById('eventsGrid').innerHTML = `<div class="empty-state"><i class="fa fa-calendar-alt"></i><h3>Events coming soon!</h3><p>Check back later for events in your city.</p></div>`;

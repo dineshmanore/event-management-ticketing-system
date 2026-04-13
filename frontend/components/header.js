@@ -37,6 +37,17 @@
   const city = localStorage.getItem('city') || 'Mumbai';
 
   const page = window.location.pathname.split('/').pop().replace('.html','') || 'index';
+  const spaCache = new Map(); // Global cache for SPA page content and assets
+  
+  // GLOBAL DATA CACHE (Shared across pages)
+  window.apiDataCache = window.apiDataCache || new Map();
+  window.fetchWithCache = async function(url) {
+    if (window.apiDataCache.has(url)) return window.apiDataCache.get(url);
+    const res = await fetch(url);
+    const data = await res.json();
+    window.apiDataCache.set(url, data);
+    return data;
+  };
 
   window.spaNavigate = async function(url, e) {
     if (e) e.preventDefault();
@@ -48,37 +59,20 @@
       return;
     }
 
-    try {
-      // 1. Show Spinner
-      const loader = document.createElement('div');
-      loader.className = 'spa-loader-wrap';
-      loader.innerHTML = '<div class="spa-spinner"></div><div class="spa-loader-text">Loading...</div>';
-      document.body.appendChild(loader);
-
-      // 2. Start fade out
-      contentEl.style.opacity = '0.3';
-      contentEl.style.transition = 'opacity 0.2s ease-out';
-
-      const res = await fetch(url);
-      const text = await res.text();
+    const loadPage = async (htmlText, isFromCache = false) => {
       const parser = new DOMParser();
-      const doc = parser.parseFromString(text, 'text/html');
+      const doc = parser.parseFromString(htmlText, 'text/html');
       const newContent = doc.querySelector('#app-content');
 
       if (newContent) {
         // Handle Head Assets (CSS)
-        // 1. Clear old page-specific assets
         document.querySelectorAll('.spa-head-asset').forEach(el => el.remove());
-        
-        // 2. Identify and inject new head assets
         const newHeadAssets = doc.querySelectorAll('head link[rel="stylesheet"], head style');
         newHeadAssets.forEach(asset => {
-          // Check if this global asset already exists to avoid double-loading
           if (asset.tagName === 'LINK') {
             const href = asset.getAttribute('href');
             if (document.querySelector(`link[href="${href}"]`)) return;
           }
-          
           const clonedAsset = asset.cloneNode(true);
           clonedAsset.classList.add('spa-head-asset');
           document.head.appendChild(clonedAsset);
@@ -86,28 +80,22 @@
 
         contentEl.innerHTML = newContent.innerHTML;
         document.title = doc.title;
-        history.pushState({ spa: true }, '', url);
+        if (!isFromCache) history.pushState({ spa: true }, '', url);
         
-        // Update ONLY the nav states, don't re-render the whole header
         updateNavState();
 
-        // Re-execute scripts found in the new page (excluding global ones)
+        // Re-execute scripts
         document.querySelectorAll('.spa-script').forEach(s => s.remove());
-        const docBody = doc.querySelector('body');
-        const scripts = docBody.querySelectorAll('script');
+        const scripts = doc.querySelectorAll('body script');
         
         scripts.forEach(oldScript => {
-          // Skip core component scripts to avoid double initialization
           if (oldScript.src && (oldScript.src.includes('header.js') || oldScript.src.includes('footer.js'))) return;
-          
           const newScript = document.createElement('script');
           newScript.classList.add('spa-script');
           
           if (oldScript.src) {
             newScript.src = oldScript.src;
           } else {
-            // Fix for "Identifier already declared" errors in SPA navigation
-            // We convert these specific common constants and let variables to 'var' so they can be re-declared safely
             let content = oldScript.innerHTML;
             content = content.replace(/\bconst\s+API\b/g, 'var API');
             content = content.replace(/\bconst\s+params\b/g, 'var params');
@@ -120,23 +108,48 @@
             content = content.replace(/\blet\s+currentMovie\b/g, 'var currentMovie');
             newScript.innerHTML = content;
           }
-          
           Array.from(oldScript.attributes).forEach(attr => {
             if (attr.name !== 'src') newScript.setAttribute(attr.name, attr.value);
           });
-          
           document.body.appendChild(newScript);
         });
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        window.location.href = url;
+        if (!isFromCache) window.scrollTo({ top: 0, behavior: 'smooth' });
+        return true;
       }
+      return false;
+    };
+
+    try {
+      // Check cache first for INSTANT loading
+      if (spaCache.has(url)) {
+        console.log('SPA: Loading from cache...', url);
+        await loadPage(spaCache.get(url), true);
+        // We still fetch in background to keep data fresh, but without spinner
+        fetch(url).then(res => res.text()).then(text => spaCache.set(url, text));
+        return;
+      }
+
+      // 1. Show Spinner only if NOT in cache
+      const loader = document.createElement('div');
+      loader.className = 'spa-loader-wrap';
+      loader.innerHTML = '<div class="spa-spinner"></div><div class="spa-loader-text">Loading...</div>';
+      document.body.appendChild(loader);
+
+      contentEl.style.opacity = '0.3';
+      contentEl.style.transition = 'opacity 0.2s ease-out';
+
+      const res = await fetch(url);
+      const text = await res.text();
+      spaCache.set(url, text); // Save to cache
+
+      const success = await loadPage(text);
+      if (!success) window.location.href = url;
+
     } catch (err) {
       console.error('SPA Nav error:', err);
       window.location.href = url;
     } finally {
-      // 3. Remove Spinner & Fade In
       document.querySelectorAll('.spa-loader-wrap').forEach(el => el.remove());
       if (contentEl) {
         contentEl.style.opacity = '1';

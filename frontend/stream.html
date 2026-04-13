@@ -54,8 +54,7 @@ const API = window.location.hostname === 'localhost' || window.location.hostname
 
 async function init() {
   try {
-    const res = await fetch(`${API}/stream`);
-    const streams = await res.json();
+    const streams = await fetchWithCache(`${API}/stream`);
     renderContent(streams);
   } catch(e) {
     document.getElementById('streamContent').innerHTML = `<div class="empty-state" style="color:#aaa"><i class="fa fa-play-circle" style="font-size:48px;margin-bottom:16px;color:#cc0c39"></i><h3>Streaming platform offline</h3><p>We're bringing it back shortly!</p></div>`;
