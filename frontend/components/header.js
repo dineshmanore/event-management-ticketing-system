@@ -60,6 +60,24 @@
       const newContent = doc.querySelector('#app-content');
 
       if (newContent) {
+        // Handle Head Assets (CSS)
+        // 1. Clear old page-specific assets
+        document.querySelectorAll('.spa-head-asset').forEach(el => el.remove());
+        
+        // 2. Identify and inject new head assets
+        const newHeadAssets = doc.querySelectorAll('head link[rel="stylesheet"], head style');
+        newHeadAssets.forEach(asset => {
+          // Check if this global asset already exists to avoid double-loading
+          if (asset.tagName === 'LINK') {
+            const href = asset.getAttribute('href');
+            if (document.querySelector(`link[href="${href}"]`)) return;
+          }
+          
+          const clonedAsset = asset.cloneNode(true);
+          clonedAsset.classList.add('spa-head-asset');
+          document.head.appendChild(clonedAsset);
+        });
+
         contentEl.innerHTML = newContent.innerHTML;
         document.title = doc.title;
         history.pushState({ spa: true }, '', url);
