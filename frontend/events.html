@@ -81,18 +81,18 @@
 <script src="components/header.js"></script>
 <script src="components/footer.js"></script>
 <script>
-const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+var API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000/api'
   : 'https://event-management-ticketing-system.onrender.com/api';
-let allEvents = [], activeCat = 'all', activeCity = 'all', sortBy = 'date';
+var allEvents = [], activeCat = 'all', activeCity = 'all', sortBy = 'date';
 
-const catIcons = { concert:'fa-music', festival:'fa-star', comedy:'fa-laugh', workshop:'fa-hammer', exhibition:'fa-images', event:'fa-calendar' };
-const catColors = { concert:'#8b1a2e', festival:'#1a3a5c', comedy:'#3a5c1a', workshop:'#5c3a1a', exhibition:'#1a4a4a', event:'#4a1a5c' };
+var catIcons = { concert:'fa-music', festival:'fa-star', comedy:'fa-laugh', workshop:'fa-hammer', exhibition:'fa-images', event:'fa-calendar' };
+var catColors = { concert:'#8b1a2e', festival:'#1a3a5c', comedy:'#3a5c1a', workshop:'#5c3a1a', exhibition:'#1a4a4a', event:'#4a1a5c' };
 
 async function init() {
   try {
-    const events = await fetchWithCache(`${API}/events`);
-    allEvents = events;
+    const res = await fetch(`${API}/events`);
+    allEvents = await res.json();
     render();
   } catch(e) {
     document.getElementById('eventsGrid').innerHTML = `<div class="empty-state"><i class="fa fa-calendar-alt"></i><h3>Events coming soon!</h3><p>Check back later for events in your city.</p></div>`;

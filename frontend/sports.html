@@ -79,7 +79,7 @@
 <script src="components/header.js"></script>
 <script src="components/footer.js"></script>
 <script>
-const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+var API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000/api'
   : 'https://event-management-ticketing-system.onrender.com/api';
 let allSports = [], activeCat = 'all', activeCity = 'all', sortBy = 'date';
@@ -89,7 +89,8 @@ const sportBg = { cricket:'#0d2a3a', football:'#0a2e0a', kabaddi:'#2a0d0d', tenn
 
 async function init() {
   try {
-    const all = await fetchWithCache(`${API}/events`);
+    const res = await fetch(`${API}/events`);
+    const all = await res.json();
     allSports = all.filter(e => ['cricket','football','kabaddi','tennis','basketball','sport'].includes(e.category));
     render();
   } catch(e) {

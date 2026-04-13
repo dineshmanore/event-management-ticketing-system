@@ -14,7 +14,14 @@ let heroTrailer  = '';
 const urlParams  = new URLSearchParams(window.location.search);
 const activeCat  = urlParams.get('cat') || 'movies';
 
-// loadMovies() below uses fetchWithCache which is defined globally in header.js
+const catConfig = {
+  stream:     { title: 'Stream',     icon: 'fa-play-circle',    msg: 'Streaming content coming soon!' },
+  events:     { title: 'Events',     icon: 'fa-calendar-alt',   msg: 'No events found right now.' },
+  plays:      { title: 'Plays',      icon: 'fa-theater-masks',  msg: 'Theatre plays coming soon!' },
+  sports:     { title: 'Sports',     icon: 'fa-futbol',         msg: 'Sports events coming soon!' },
+  activities: { title: 'Activities', icon: 'fa-running',        msg: 'Activity listings coming soon!' }
+};
+
 async function loadMovies() {
   try {
     let url = `${API}/movies`;
@@ -26,10 +33,13 @@ async function loadMovies() {
     const queryString = params.toString();
     if (queryString) url += `?${queryString}`;
 
-    const [movies, streams] = await Promise.all([
-      fetchWithCache(url),
-      fetchWithCache(`${API}/stream`)
+    const [mRes, sRes] = await Promise.all([
+      fetch(url),
+      fetch(`${API}/stream`)
     ]);
+    
+    const movies = await mRes.json();
+    const streams = await sRes.json();
 
     if (activeCat && activeCat.toLowerCase() !== 'movies' && activeCat !== '') {
       renderCategoryPage(activeCat, movies);
