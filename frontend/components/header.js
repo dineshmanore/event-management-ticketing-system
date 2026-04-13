@@ -91,45 +91,55 @@
         // Update ONLY the nav states, don't re-render the whole header
         updateNavState();
 
-        // Re-execute scripts found in the new page (excluding global ones)
+        // Re-execute scripts found in the new page
         document.querySelectorAll('.spa-script').forEach(s => s.remove());
         const docBody = doc.querySelector('body');
-        const scripts = docBody.querySelectorAll('script');
+        const allPageScripts = Array.from(docBody.querySelectorAll('script'));
         
-        scripts.forEach(oldScript => {
-          // Skip core component scripts to avoid double initialization
-          if (oldScript.src && (oldScript.src.includes('header.js') || oldScript.src.includes('footer.js'))) return;
-          
-          const newScript = document.createElement('script');
-          newScript.classList.add('spa-script');
-          
-          if (oldScript.src) {
-            // Force re-execution by appending a cache-busting param
-            // This fixes the "Back to Movies" bug where api.js was skipped
+        // Split into external (src) and inline scripts
+        const externalScripts = allPageScripts.filter(s => s.src && 
+          !s.src.includes('header.js') && !s.src.includes('footer.js'));
+        const inlineScripts = allPageScripts.filter(s => !s.src);
+
+        // Helper: load one external script and wait for it
+        function loadExternalScript(oldScript) {
+          return new Promise((resolve) => {
+            const newScript = document.createElement('script');
+            newScript.classList.add('spa-script');
             const sep = oldScript.src.includes('?') ? '&' : '?';
             newScript.src = oldScript.src + sep + '_spa=' + Date.now();
-          } else {
-            // Fix for "Identifier already declared" errors in SPA navigation
-            // We convert these specific common constants and let variables to 'var' so they can be re-declared safely
-            let content = oldScript.innerHTML;
-            content = content.replace(/\bconst\s+API\b/g, 'var API');
-            content = content.replace(/\bconst\s+params\b/g, 'var params');
-            content = content.replace(/\bconst\s+urlParams\b/g, 'var urlParams');
-            content = content.replace(/\bconst\s+catIcons\b/g, 'var catIcons');
-            content = content.replace(/\bconst\s+catColors\b/g, 'var catColors');
-            content = content.replace(/\bconst\s+catConfig\b/g, 'var catConfig');
-            content = content.replace(/\blet\s+allEvents\b/g, 'var allEvents');
-            content = content.replace(/\blet\s+movies\b/g, 'var movies');
-            content = content.replace(/\blet\s+currentMovie\b/g, 'var currentMovie');
-            newScript.innerHTML = content;
-          }
-          
-          Array.from(oldScript.attributes).forEach(attr => {
-            if (attr.name !== 'src') newScript.setAttribute(attr.name, attr.value);
+            newScript.onload = resolve;
+            newScript.onerror = resolve; // don't block on error
+            document.body.appendChild(newScript);
           });
-          
+        }
+
+        // Step 1: Load all external scripts sequentially and await
+        for (const extScript of externalScripts) {
+          await loadExternalScript(extScript);
+        }
+
+        // Step 2: Run all inline scripts AFTER external scripts are ready
+        for (const oldScript of inlineScripts) {
+          const newScript = document.createElement('script');
+          newScript.classList.add('spa-script');
+          let content = oldScript.innerHTML;
+          // Normalize declarations to var to prevent redeclaration errors
+          content = content.replace(/\bconst\s+API\b/g, 'var API');
+          content = content.replace(/\bconst\s+params\b/g, 'var params');
+          content = content.replace(/\bconst\s+urlParams\b/g, 'var urlParams');
+          content = content.replace(/\bconst\s+catIcons\b/g, 'var catIcons');
+          content = content.replace(/\bconst\s+catColors\b/g, 'var catColors');
+          content = content.replace(/\bconst\s+catConfig\b/g, 'var catConfig');
+          content = content.replace(/\blet\s+allEvents\b/g, 'var allEvents');
+          content = content.replace(/\blet\s+allPlays\b/g, 'var allPlays');
+          content = content.replace(/\blet\s+allSports\b/g, 'var allSports');
+          content = content.replace(/\blet\s+movies\b/g, 'var movies');
+          content = content.replace(/\blet\s+currentMovie\b/g, 'var currentMovie');
+          content = content.replace(/\bconst\s+bgColors\b/g, 'var bgColors');
+          newScript.innerHTML = content;
           document.body.appendChild(newScript);
-        });
+        }
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
