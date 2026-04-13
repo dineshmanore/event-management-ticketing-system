@@ -18,14 +18,18 @@ const mailConfig = {
 const service = (process.env.EMAIL_SERVICE || '').toLowerCase();
 
 if (service === 'gmail') {
-  // Gmail on Render works best with port 587, but allow override if blocked
+  // Gmail on Render works best with port 587 + STARTTLS + Explicit Manual Config
   mailConfig.host = 'smtp.gmail.com';
-  mailConfig.port = parseInt(process.env.EMAIL_PORT || 587);
-  mailConfig.secure = mailConfig.port === 465; 
-  mailConfig.requireTLS = mailConfig.port !== 465;
-  mailConfig.connectionTimeout = 30000; // 30 seconds
+  mailConfig.port = 587;
+  mailConfig.secure = false; 
+  mailConfig.requireTLS = true;
+  mailConfig.connectionTimeout = 30000;
   mailConfig.greetingTimeout = 30000;
   mailConfig.socketTimeout = 30000;
+} else if (service === 'brevo' || service === 'sendinblue') {
+  mailConfig.host = 'smtp-relay.brevo.com';
+  mailConfig.port = 587;
+  mailConfig.secure = false;
 } else if (service) {
   mailConfig.service = service;
 } else {
