@@ -34,21 +34,6 @@ app.use('/api/admin', (req, res, next) => {
   next();
 }, adminRoutes);
 
-app.get('/api/test-email-config', async (req, res) => {
-  const { verifyConnection } = require('./utils/mailer');
-  const result = await verifyConnection();
-  res.json({
-    message: result.success ? "SMTP Connection Successful" : "SMTP Connection Failed",
-    ...result,
-    env_present: {
-      service: !!process.env.EMAIL_SERVICE,
-      host: !!process.env.EMAIL_HOST,
-      user: !!process.env.EMAIL_USER,
-      pass: !!process.env.EMAIL_PASS
-    }
-  });
-});
-
 const PORT = process.env.PORT || 5000
 connectMongo()
   .then(() => {
