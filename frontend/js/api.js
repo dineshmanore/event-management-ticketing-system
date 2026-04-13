@@ -1,5 +1,5 @@
 // api.js — homepage movie loading, category filtering, search
-const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+var API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000/api'
   : 'https://event-management-ticketing-system.onrender.com/api';
 

@@ -106,7 +106,19 @@
           if (oldScript.src) {
             newScript.src = oldScript.src;
           } else {
-            newScript.innerHTML = oldScript.innerHTML;
+            // Fix for "Identifier already declared" errors in SPA navigation
+            // We convert these specific common constants and let variables to 'var' so they can be re-declared safely
+            let content = oldScript.innerHTML;
+            content = content.replace(/\bconst\s+API\b/g, 'var API');
+            content = content.replace(/\bconst\s+params\b/g, 'var params');
+            content = content.replace(/\bconst\s+urlParams\b/g, 'var urlParams');
+            content = content.replace(/\bconst\s+catIcons\b/g, 'var catIcons');
+            content = content.replace(/\bconst\s+catColors\b/g, 'var catColors');
+            content = content.replace(/\bconst\s+catConfig\b/g, 'var catConfig');
+            content = content.replace(/\blet\s+allEvents\b/g, 'var allEvents');
+            content = content.replace(/\blet\s+movies\b/g, 'var movies');
+            content = content.replace(/\blet\s+currentMovie\b/g, 'var currentMovie');
+            newScript.innerHTML = content;
           }
           
           Array.from(oldScript.attributes).forEach(attr => {
