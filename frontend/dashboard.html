@@ -221,6 +221,7 @@ async function loadBookings() {
           <img class="ticket-poster"
                src="${b.poster || (isEvent ? 'https://via.placeholder.com/100x140/cc0c39/white?text=Event' : 'https://via.placeholder.com/100x140/cc0c39/white?text=Movie')}"
                alt="Poster"
+               crossorigin="anonymous"
                onerror="this.src='https://via.placeholder.com/100x140/cc0c39/white?text=Ticket'">
           
           <div class="ticket-details">
@@ -261,7 +262,7 @@ async function loadBookings() {
         
         <div class="ticket-right">
           <div class="qr-box">
-            <img src="${qrUrl}" alt="QR Code">
+            <img src="${qrUrl}" alt="QR Code" crossorigin="anonymous">
           </div>
           <div class="t-id">${ticketNo}</div>
           <div class="qr-caption">Scan at entry</div>
@@ -281,20 +282,36 @@ async function loadBookings() {
 
 function downloadTicketPDF(bookingId, ticketNo) {
   const element = document.getElementById(`ticket-container-${bookingId}`);
+  if (!element) return;
+
+  const actions = element.querySelector('.booking-actions');
+  const originalDisplay = actions.style.display;
+  const originalFilter = element.style.filter;
+  const originalBoxShadow = element.style.boxShadow;
+
+  // Cleanup for sharp PDF capture
+  actions.style.display = 'none';
+  element.style.filter = 'none';
+  element.style.boxShadow = 'none';
+  element.style.border = '1px solid #eee';
+
   const opt = {
     margin:       10,
     filename:     `ShowTime-Ticket-${ticketNo}.pdf`,
     image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true, logging: false },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    html2canvas:  { 
+      scale: 2, 
+      useCORS: true, 
+      logging: false,
+      scrollY: -window.scrollY // Fixes blank PDF if page is scrolled
+    },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  // Temporarily hide actions for the PDF capture
-  const actions = element.querySelector('.booking-actions');
-  actions.style.display = 'none';
-
-  html2pdf().set(opt).from(element).save().then(() => {
-    actions.style.display = 'flex';
+  html2pdf().set(opt).from(element).save().finally(() => {
+    actions.style.display = originalDisplay || 'flex';
+    element.style.filter = originalFilter;
+    element.style.boxShadow = originalBoxShadow;
   });
 }
 
@@ -312,22 +329,32 @@ async function shareTicket(ticketNo, title, bookingId) {
   const element = document.getElementById(`ticket-container-${bookingId}`);
   if (!element) return;
   
-  // Temporarily hide buttons for a clean capture
   const actions = element.querySelector('.booking-actions');
+  const originalDisplay = actions.style.display;
+  const originalFilter = element.style.filter;
+  const originalBoxShadow = element.style.boxShadow;
+
+  // Cleanup for sharp capture
   actions.style.display = 'none';
+  element.style.filter = 'none';
+  element.style.boxShadow = 'none';
+  element.style.border = '1px solid #eee';
 
   const opt = {
     margin: 10,
     filename: `Ticket-${ticketNo}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    html2canvas: { scale: 2, useCORS: true, scrollY: -window.scrollY },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
   try {
-    // Attempt to generate PDF as a blob
     const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
-    actions.style.display = 'flex';
+    
+    // Restore styling
+    actions.style.display = originalDisplay || 'flex';
+    element.style.filter = originalFilter;
+    element.style.boxShadow = originalBoxShadow;
     
     const file = new File([pdfBlob], `Ticket-${ticketNo}.pdf`, { type: 'application/pdf' });
     
