@@ -2,6 +2,10 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   --red: #cc0c39;
   --red-dark: #a50930;
@@ -17,6 +21,7 @@ body {
   font-family: 'Poppins', sans-serif;
   background: var(--bg);
   color: var(--text);
+  overscroll-behavior-y: none;
 }
 
 /* ── HEADER ─────────────────────────────── */
@@ -167,6 +172,8 @@ body {
   border-top: 1px solid var(--border);
   gap: 0;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 .nav-menu::-webkit-scrollbar { display: none; }
@@ -365,6 +372,9 @@ body {
   overflow-x: auto;
   padding-bottom: 10px;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  will-change: scroll-position;
+  scroll-snap-type: x proximity;
 }
 
 .movie-row::-webkit-scrollbar { display: none; }

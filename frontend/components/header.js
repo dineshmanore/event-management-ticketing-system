@@ -147,7 +147,7 @@
           document.body.appendChild(newScript);
         }
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'instant' });
       } else {
         window.location.href = url;
       }
