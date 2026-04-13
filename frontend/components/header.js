@@ -84,6 +84,12 @@
           document.head.appendChild(clonedAsset);
         });
 
+        // 3. Copy body style/class from the new page (fixes Stream dark bg, etc.)
+        const newBodyStyle = doc.body.getAttribute('style') || '';
+        const newBodyClass = doc.body.getAttribute('class') || '';
+        document.body.setAttribute('style', newBodyStyle);
+        document.body.setAttribute('class', newBodyClass);
+
         contentEl.innerHTML = newContent.innerHTML;
         document.title = doc.title;
         history.pushState({ spa: true }, '', url);
