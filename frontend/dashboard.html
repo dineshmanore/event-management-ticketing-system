@@ -126,6 +126,9 @@
     .booking-actions { display: flex; gap: 10px; margin-top: 14px; }
     .cancel-btn { background: white; color: #888; border: 1.5px solid #ddd; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
     .cancel-btn:hover { border-color: #cc0c39; color: #cc0c39; }
+    
+    .share-btn { background: #f8f9fa; color: #333; border: 1.5px solid #e5e7eb; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .share-btn:hover { border-color: #1dc26b; color: #1dc26b; background: white; }
   </style>
 </head>
 <body style="background: #f8f9fa;">
@@ -245,7 +248,8 @@ async function loadBookings() {
             </div>
             
             <div class="booking-actions">
-              <button class="cancel-btn" onclick="cancelBooking(${b.id})"><i class="fa fa-times" style="margin-right:6px"></i>Cancel Ticket</button>
+              <button class="cancel-btn" onclick="cancelBooking('${b.id}')"><i class="fa fa-times" style="margin-right:6px"></i>Cancel Ticket</button>
+              <button class="share-btn" onclick="shareTicket('${ticketNo}', '${b.title ? b.title.replace(/'/g, "\\'") : 'Event'}')"><i class="fa fa-share-nodes" style="margin-right:6px"></i>Share</button>
             </div>
           </div>
         </div>
@@ -278,6 +282,27 @@ async function cancelBooking(id) {
     if (!res.ok) throw new Error('Failed to cancel');
     loadBookings();
   } catch (err) { alert('Server error while canceling booking. Please try again.'); }
+}
+
+async function shareTicket(ticketNo, title) {
+  const shareData = {
+    title: `My ShowTime Ticket: ${title}`,
+    text: `I'm going to ${title}! My ticket number is ${ticketNo}. Get yours on ShowTime!`,
+    url: window.location.origin
+  };
+  
+  if (navigator.share) {
+    try {
+      await navigator.share(shareData);
+    } catch (err) {
+      console.log('User canceled share or error occurred.');
+    }
+  } else {
+    // Fallback for browsers that don't support native sharing
+    navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`).then(() => {
+      alert('Ticket details copied to clipboard! You can paste them anywhere.');
+    });
+  }
 }
 
 function formatDate(ts) {
