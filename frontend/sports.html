@@ -26,6 +26,7 @@
 
 <header id="header"></header>
 
+<main id="app-content">
 <div class="cat-hero" style="background:linear-gradient(135deg,#0d1b2a,#1b3a4b)">
   <div class="cat-hero-overlay"></div>
   <div class="cat-hero-content">
@@ -35,7 +36,7 @@
 </div>
 
 <div class="city-banner">
-  <div><strong id="cityLabel">Sports in Mumbai</strong><p>Live sports events near you</p></div>
+  <div><strong id="cityLabel">Sports in Mumbai</strong><p>Live sports near you</p></div>
   <select onchange="filterCity(this.value)" style="padding:8px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:rgba(255,255,255,.1);color:white;font-family:'Poppins',sans-serif;cursor:pointer;font-size:13px">
     <option value="all" selected>All Cities</option>
     <option value="Mumbai">Mumbai</option>
@@ -71,6 +72,7 @@
   <div class="results-count" id="resultsCount">Loading sports...</div>
   <div class="sports-grid" id="sportsGrid"></div>
 </div>
+</main>
 
 <footer id="footer"></footer>
 

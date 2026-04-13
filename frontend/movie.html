@@ -210,6 +210,7 @@
 
 <header id="header"></header>
 
+<main id="app-content">
 <div class="movie-banner-wrap" id="movieBanner">
   <div class="movie-banner-bg" id="bannerBg"></div>
   <div class="movie-banner-content">
@@ -233,9 +234,6 @@
   </div>
 </div>
 
-<!-- FIX #2: Added missing closing </div> tags — the white-background wrapper
-     was never closed, causing similar-section to inherit white background
-     and breaking the overall page layout. -->
 <div style="background:white;">
   <div class="movie-tabs">
     <div class="movie-tab active" onclick="switchTab(this, 'about')">About</div>
@@ -254,7 +252,6 @@
       <!-- cast cards injected by JS -->
     </div>
   </div>
-  <!-- FIX: closing </div> for <div style="background:white;"> was missing -->
 </div>
 
 <div class="similar-section">
@@ -271,6 +268,7 @@
     <div class="trailer-frame-wrap" id="trailerFrameWrap"></div>
   </div>
 </div>
+</main>
 
 <footer id="footer"></footer>
 

@@ -38,9 +38,83 @@
 
   const page = window.location.pathname.split('/').pop().replace('.html','') || 'index';
 
+  window.spaNavigate = async function(url, e) {
+    if (e) e.preventDefault();
+    if (url === window.location.pathname.split('/').pop()) return;
+
+    const contentEl = document.getElementById('app-content');
+    if (!contentEl) {
+      window.location.href = url;
+      return;
+    }
+
+    try {
+      // Add a loading fade effect
+      contentEl.style.opacity = '0.5';
+      contentEl.style.transition = 'opacity 0.2s';
+
+      const res = await fetch(url);
+      const text = await res.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'text/html');
+      const newContent = doc.querySelector('#app-content');
+
+      if (newContent) {
+        contentEl.innerHTML = newContent.innerHTML;
+        document.title = doc.title;
+        history.pushState({ spa: true }, '', url);
+        
+        // Update header active states
+        renderHeader();
+
+        // Re-execute scripts found in the new page (excluding global ones)
+        document.querySelectorAll('.spa-script').forEach(s => s.remove());
+        const docBody = doc.querySelector('body');
+        const scripts = docBody.querySelectorAll('script');
+        
+        scripts.forEach(oldScript => {
+          // Skip core component scripts to avoid double initialization
+          if (oldScript.src && (oldScript.src.includes('header.js') || oldScript.src.includes('footer.js'))) return;
+          
+          const newScript = document.createElement('script');
+          newScript.classList.add('spa-script');
+          
+          if (oldScript.src) {
+            newScript.src = oldScript.src;
+          } else {
+            newScript.innerHTML = oldScript.innerHTML;
+          }
+          
+          Array.from(oldScript.attributes).forEach(attr => {
+            if (attr.name !== 'src') newScript.setAttribute(attr.name, attr.value);
+          });
+          
+          document.body.appendChild(newScript);
+        });
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.location.href = url;
+      }
+    } catch (err) {
+      console.error('SPA Nav error:', err);
+      window.location.href = url;
+    } finally {
+      if (contentEl) contentEl.style.opacity = '1';
+    }
+  };
+
+  // Handle browser back/forward buttons
+  window.addEventListener('popstate', (e) => {
+    // For simplicity, we just reload on popstate to ensure correct state, 
+    // or we could implement the same fetch logic here.
+    location.reload(); 
+  });
+
   function navLink(label, href, pageName) {
-    const isActive = page === pageName || (page === 'index' && pageName === 'movies');
-    return `<a href="${href}" ${isActive ? 'class="active"' : ''}>${label}</a>`;
+    const currentPage = window.location.pathname.split('/').pop().replace('.html','') || 'index';
+    const isActive = currentPage === pageName || (currentPage === 'index' && pageName === 'movies');
+    return `<a href="${href}" ${isActive ? 'class="active"' : ''} onclick="spaNavigate('${href}', event)">${label}</a>`;
   }
 
   const cities = ['Mumbai','Delhi NCR','Bangalore','Pune','Hyderabad','Chennai','Kolkata','Ahmedabad'];
@@ -119,7 +193,7 @@
     <header class="header">
       <div class="top-header">
 
-        <a href="index.html" class="logo">
+        <a href="index.html" class="logo" onclick="spaNavigate('index.html', event)">
           <img src="logo.png" alt="ShowTime" style="height: 48px; width: 48px; object-fit: contain; border-radius: 8px;">
           <span class="logo-text">ShowTime</span>
         </a>
