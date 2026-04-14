@@ -3,6 +3,66 @@ var API = window.location.hostname === 'localhost' || window.location.hostname =
   ? 'http://localhost:5000/api'
   : 'https://event-management-ticketing-system.onrender.com/api';
 
+// ── AUTO HARD-REFRESH (Render cold-start fix) ────────────────────────────────
+// Silently ping the server the moment the page loads so it starts warming up.
+(function pingServer() {
+  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    fetch(API + '/movies?limit=1').catch(() => {});
+  }
+})();
+
+function _showWakeUpToast(secondsLeft) {
+  let toast = document.getElementById('_wakeup_toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = '_wakeup_toast';
+    toast.style.cssText = [
+      'position:fixed', 'bottom:28px', 'left:50%', 'transform:translateX(-50%)',
+      'background:rgba(20,20,30,0.96)', 'color:#fff', 'padding:14px 26px',
+      'border-radius:12px', 'font-size:14px', 'font-weight:500',
+      'display:flex', 'align-items:center', 'gap:12px',
+      'box-shadow:0 8px 32px rgba(0,0,0,0.4)', 'z-index:99999',
+      'border:1px solid rgba(204,12,57,0.4)', 'backdrop-filter:blur(8px)',
+      'transition:opacity 0.4s ease'
+    ].join(';');
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `
+    <span style="display:inline-block;width:18px;height:18px;border:2px solid #cc0c39;border-top-color:transparent;border-radius:50%;animation:_spin 0.8s linear infinite"></span>
+    <span>Waking up server… <strong>refreshing in ${secondsLeft}s</strong></span>`;
+  if (!document.getElementById('_spin_style')) {
+    const s = document.createElement('style');
+    s.id = '_spin_style';
+    s.textContent = '@keyframes _spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(s);
+  }
+}
+
+function _removeWakeUpToast() {
+  const t = document.getElementById('_wakeup_toast');
+  if (t) { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }
+}
+
+function _triggerHardRefresh() {
+  // Mark that we already tried once so we don't loop forever
+  sessionStorage.setItem('_api_refreshed', '1');
+  location.reload(true);
+}
+
+function _shouldAutoRefresh() {
+  // Only auto-refresh once, not on localhost
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const alreadyRefreshed = sessionStorage.getItem('_api_refreshed') === '1';
+  return !isLocal && !alreadyRefreshed;
+}
+
+function _onApiLoadSuccess() {
+  // Clear the refresh flag on success so future visits are clean
+  sessionStorage.removeItem('_api_refreshed');
+  _removeWakeUpToast();
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 
 var bannerIndex  = 0;
 var bannerTimer  = null;
@@ -47,9 +107,21 @@ async function loadMovies() {
       renderAll(movies, streams);
       setupBanner(movies);
     }
+    _onApiLoadSuccess();
   } catch (err) {
     console.error('Could not load movies:', err);
-    showError('Could not connect to server. Make sure the backend is running on port 5000.');
+    if (_shouldAutoRefresh()) {
+      // Countdown then hard-refresh
+      let secs = 6;
+      _showWakeUpToast(secs);
+      const iv = setInterval(() => {
+        secs--;
+        if (secs <= 0) { clearInterval(iv); _triggerHardRefresh(); }
+        else { _showWakeUpToast(secs); }
+      }, 1000);
+    } else {
+      showError('Server is starting up. Please wait a moment and refresh the page.');
+    }
   }
 }
 
